@@ -27,7 +27,7 @@ One finding names one smell and lists everywhere it occurs:
 |-------|---------|
 | `smell` | The routing key, in the canonical vocabulary ([smell-vocabulary.md](smell-vocabulary.md)). The mapper picks a guide by this, never by the tool. |
 | `language` | Optional. When present, the mapper prefers that language's guide before the generic one. The runner stamps it from the producing plugin (see [habit-sensors.spec.md](habit-sensors.spec.md)); a sensor rarely sets it itself. |
-| `details` | A bag of facts about the smell as a whole — e.g. the threshold that was exceeded. The smell decides its shape ([smell-vocabulary.md](smell-vocabulary.md)). |
+| `details` | A bag of facts about the smell as a whole — e.g. the threshold that was exceeded. The smell decides its shape: whatever its guide template reads, its sensors provide. |
 | `issues` | One entry per occurrence. Each has a `key` and its own `details` bag. |
 
 An issue's `key` is what snoozing acts on, so a sensor chooses it to control what
@@ -39,6 +39,7 @@ conventionally carries:
 |-------|---------|
 | `file` | path the occurrence was found in |
 | `line` / `column` | location within the file |
+| `content` | optional snippet shown after the location by the shared guide includes ([guide-includes.spec.md](guide-includes.spec.md)) — e.g. the function signature |
 | `message` | the tool's human-readable message |
 | `source` | provenance, e.g. `ruff:PLR0913` |
 
