@@ -1,48 +1,5 @@
 # habit-hooks-ruby notes
 
-## Architecture
-
-### The project's `.rubocop.yml` decides everything
-
-The sensor passes no `--only` and no `--config`. RuboCop finds the project's
-config by its own upward walk, so a project's habit-hooks run is the run it gets
-from RuboCop directly. There is no shipped fallback config, and the plugin never
-writes one into a project. The README carries a suggested `.rubocop.yml` as
-documentation only — unlike jscpd or pmd, RuboCop's config already exists in
-almost every real Ruby project, so this plugin has no fallback case to cover.
-
-`--force-exclusion` is the one flag the sensor adds, and it is not optional.
-RuboCop applies `AllCops: Exclude:` to the files it *discovers*, but treats a
-file named on the command line as a deliberate request and lints it anyway.
-Since habit-hooks always names a scope, without that flag a project's own
-exclusions would stop meaning anything the moment this tool ran.
-
-### An unmapped cop is forwarded, not dropped
-
-This is the same exception to "a sensor emits vocabulary smells only" that the
-root `CLAUDE.md` makes for eslint: a cop that fired is one the project's own
-`.rubocop.yml` turned on, so forwarding it forwards the project's own decision.
-
-The smell key is the cop name verbatim, `Style/StringLiterals`. Nothing downstream breaks on one: the
-guide lookup misses, the finding renders through `uncoached.md`, and the root
-`uncoached` key (default `suggest`) decides whether it fails the run.
-
-Two cops are unmapped **on purpose** rather than by omission, so do not "fix"
-them by adding rows. `Metrics/ClassLength` and `Metrics/ModuleLength` measure a
-class or module, and the vocabulary has no class-scoped smell for them to back.
-They stay **uncoached** — forwarded under their own names, rendered through
-`uncoached.md`, `suggest` until a class and module scoped coach exists.
-
-The three complexity cops all map to `high-complexity` (human decision). They
-are correlated but independent — `PerceivedComplexity` weights nesting and
-`AbcSize` counts assignments and calls, so either fires without
-`CyclomaticComplexity` — and an unmapped complexity cop coached a genuinely
-tangled method through `uncoached.md` when the real guide applied verbatim. The
-old objection, one method reported three times over, is dissolved by the
-mapper: this sensor groups every cop that fired on a smell into one finding's
-issue list, which is never deduped (issue #140), so a method tripping two cops
-keeps both measurements inside a single coaching block.
-
 ## Gotchas
 
 ### RuboCop reads a file argument as options, then as a glob

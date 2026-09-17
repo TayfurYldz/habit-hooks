@@ -1,9 +1,8 @@
 """Unit tests for the one place that asks git about a branch's history.
 
 A scoped run and a lapsing snooze put the same question to git, so they share
-one implementation ([DECISIONS.md](../docs/DECISIONS.md)); these pin what that
-implementation answers, including the silences each caller then interprets
-differently. How each caller phrases its failure is pinned next door, in
+one implementation; these pin what that implementation answers, including the
+silences each caller then interprets differently. How each caller phrases its failure is pinned next door, in
 ``test_scope.py`` and ``test_changed_files.py``.
 """
 
