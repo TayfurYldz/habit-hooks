@@ -125,7 +125,7 @@ Biome   noTooMany.. ─┘
 
 A smell key is tool-independent but not necessarily language-universal:
 `explicit-any` is TypeScript-only, yet it still names the *smell*, never the tool
-or its rule ID. The naming rules and the canonical catalogue live in
+or its rule ID. The canonical catalogue lives in
 [smell-vocabulary.md](smell-vocabulary.md).
 
 ## Plugins
@@ -227,5 +227,5 @@ the config format that drives it is in [config.md](config.md).
 | [habit-hooks-init.spec.md](habit-hooks-init.spec.md) | setting a project up: the config it writes and what it reports |
 | [authoring-plugins.spec.md](authoring-plugins.spec.md) | building a plugin: sensor, transformer, guide |
 | [config.md](config.md) | the TOML config format |
-| [smell-vocabulary.md](smell-vocabulary.md) | the canonical smell catalogue and naming rules |
+| [smell-vocabulary.md](smell-vocabulary.md) | the canonical smell catalogue |
 | [executable_spec.md](executable_spec.md) | how the `*.spec.md` files run as tests |

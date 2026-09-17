@@ -1,31 +1,10 @@
 # Smell vocabulary
 
-The canonical, tool-independent catalogue of code smells. Sensors translate
-raw tool output *into* these keys; the mapper routes *from* them to guidance.
-
-## Naming rules
-
-- **kebab-case**, lowercase, no namespace prefix (`too-many-parameters`,
-  not `size/too-many-parameters` or `eslint:max-params`).
-- Name the **smell**, never the tool or the tool's rule ID.
-- A key may be language-specific (`explicit-any`) but must not be
-  tool-specific.
-- The default guide for a smell is `guides/<smell>.md` (the key, verbatim).
-
-A smell may define the shape of the smell-level `details` and of each issue's
-`details` (per-occurrence) that its sensors must provide and its prompt template
-consumes — e.g. `duplicated-code` carries the duplicated block and its
-occurrences, not just a single `file`/`line`. See the finding contract in
-[sensor-interface.spec.md](sensor-interface.spec.md).
-
-A plugin section below lists only that plugin's own translation. Nothing here
-records which languages ship a given smell, so adding a plugin — or extending an
-existing one — cannot leave this page stale.
+To ensure compatibility between plugins this catalogue defines the most frequently used code smells. All plugins sensors should aim to output these keys where possible, but they may define their own custom keys for unrelated or language-specific smells.
 
 ## Catalogue
 
-Default severity: `enforced` fails the run (exit 1); `suggested` coaches but
-exits 0. The mapper config can override it per project.
+Default severity: `enforced` fails the run (exit 1); `suggested` coaches but exits 0. The mapper config can override it per project.
 
 | Smell key                   | Title                                 | Default severity |
 |-----------------------------|---------------------------------------|------------------|
@@ -55,185 +34,11 @@ exits 0. The mapper config can override it per project.
 | `swallowed-exception`       | Swallowed exception                   | suggested        |
 | `parse-error`               | Parse / config error                  | enforced         |
 
-## TypeScript/JavaScript plugin translation
+## Proposing new smells
 
-The raw rule IDs the TS/JS plugin's sensors translate into the smell keys (no
-map-block), and the smell key each maps to.
+All changes to the list must be approved by core maintainers, and should be submitted for discussion as a separate PR. 
 
-| Raw key (tool:rule)                               | Smell key                   |
-|---------------------------------------------------|-----------------------------|
-| `eslint:max-lines-per-function`                   | `oversized-function`        |
-| `eslint:max-params`                               | `too-many-parameters`       |
-| `eslint:@typescript-eslint/max-params`            | `too-many-parameters`       |
-| `eslint:complexity`                               | `high-complexity`           |
-| `eslint:max-depth`                                | `deep-nesting`              |
-| `eslint:max-lines`                                | `oversized-file`            |
-| `eslint:no-unused-vars`                           | `unused-variable`           |
-| `eslint:@typescript-eslint/no-unused-vars`        | `unused-variable`           |
-| `eslint:eqeqeq`                                   | `loose-equality`            |
-| `eslint:no-var`                                   | `var-declaration`           |
-| `eslint:prefer-const`                             | `non-const-binding`         |
-| `eslint:no-duplicate-imports`                     | `duplicate-import`          |
-| `eslint:no-warning-comments`                      | `warning-comment`           |
-| `eslint:@typescript-eslint/no-explicit-any`       | `explicit-any`              |
-| `eslint:@typescript-eslint/no-non-null-assertion` | `non-null-assertion`        |
-| `eslint:@typescript-eslint/no-inferrable-types`   | `redundant-type-annotation` |
-| `comment:non-essential`                           | `non-essential-comment`     |
-| `jscpd:duplication`                               | `duplicated-code`           |
-| `knip:classMembers`, `knip:enumMembers`           | `unused-class-member`       |
-| `knip:files`                                      | `unused-file`               |
-| `knip:exports`, `knip:types`, `knip:nsExports`, `knip:nsTypes` | `unused-export` |
-| `knip:dependencies`, `knip:devDependencies`, `knip:optionalPeerDependencies` | `unused-dependency` |
-| `knip:production:*`                               | `test-only-dead-code`       |
-| `eslint:fatal`                                    | `parse-error`               |
-
-The knip sensor runs two passes when the config marks production patterns with a
-trailing `!`. The default pass produces the `knip:<key>` smells above; the gated
-`knip --production` pass contributes the dead code the default pass did not name
-(code kept alive only by a test) as `test-only-dead-code`, sourced
-`knip:production:<key>`.
-
-A knip key with no row above (`binaries`, `duplicates`, `catalog`, and for now
-`unlisted`/`unresolved`) is **dropped at the sensor**. Translating a tool's key
-set into this vocabulary is the sensor's job, and a key forwarded under knip's own
-name would have no guide and no severity behind it. The eslint sensor deliberately
-does the opposite — it passes an unmapped rule ID through, because that ID comes
-from a config the project wrote and turned on itself.
-
-## Python plugin translation
-
-The raw rule IDs the Python plugin's sensors translate into the smell keys (no
-map-block), and the smell key each maps to (the rest of the catalogue is shared —
-only the plugin's sensors differ).
-
-| Raw key (tool:rule) | Smell key             |
-|---------------------|-----------------------|
-| `ruff:C901`         | `high-complexity`     |
-| `ruff:PLR0913`      | `too-many-parameters` |
-| `ruff:PLR0915`      | `oversized-function`  |
-| `ruff:F841`         | `unused-variable`     |
-| `ruff:F401`         | `unused-import`       |
-| `ruff:BLE001`       | `swallowed-exception` |
-| `ruff:invalid-syntax` | `parse-error`       |
-| `jscpd:duplication` | `duplicated-code`     |
-| `deptry:DEP002`     | `unused-dependency`   |
-| `line-count:max-module-lines` | `oversized-file` |
-
-`oversized-file` has no clean ruff rule, so the Python plugin reuses the generic
-line-count sensor (its `--max` threshold, default 200). There is no row for
-`deep-nesting`: ruff's `PLR1702` is preview/unstable, so it is deferred rather
-than opting into ruff `--preview`.
-
-## PHP plugin translation
-
-The raw rule names PHPMD emits, and the smell key each maps to (the rest of the
-catalogue is shared — only the plugin's sensors differ).
-
-| Raw key (tool:rule)         | Smell key             |
-|-----------------------------|-----------------------|
-| `phpmd:ExcessiveParameterList` | `too-many-parameters` |
-| `phpmd:CyclomaticComplexity`   | `high-complexity`     |
-| `phpmd:ExcessiveMethodLength`  | `oversized-function`  |
-| `phpmd:UnusedLocalVariable`    | `unused-variable`     |
-| `line-count:max-module-lines`  | `oversized-file`      |
-
-The PHP plugin runs PHPMD (`codesize,unusedcode` rulesets) through a thin sensor
-that normalises PHPMD's exit-2-on-violations and maps its rule names to canonical
-smells. `oversized-file` has no clean PHPMD rule, so the PHP plugin reuses the
-generic line-count sensor — add `generic` to the project's `plugins` list
-alongside `php` to get it. PHPMD's `NPathComplexity` overlaps
-`CyclomaticComplexity`, so only the latter is mapped to avoid double-reporting the
-same function.
-
-## Java plugin translation
-
-The raw rule names PMD emits, and the smell key each maps to (the rest of the
-catalogue is shared — only the plugin's sensors differ).
-
-| Raw key (tool:rule)         | Smell key             |
-|-----------------------------|-----------------------|
-| `pmd:ExcessiveParameterList` | `too-many-parameters` |
-| `pmd:CyclomaticComplexity`   | `high-complexity`     |
-| `pmd:AvoidDeeplyNestedIfStmts` | `deep-nesting`      |
-| `pmd:NcssCount`              | `oversized-function`  |
-| `pmd:UnusedLocalVariable`    | `unused-variable`     |
-| `pmd:UnnecessaryImport`      | `unused-import`       |
-| `pmd:EmptyCatchBlock`        | `swallowed-exception` |
-
-The Java plugin runs PMD (`pmd check --format json`) through a thin sensor that
-normalises PMD's exit-4-on-violations and maps its rule names to canonical smells.
-PMD 7 no longer ships `ExcessiveMethodLength`/`ExcessiveClassLength`, so
-`oversized-function` comes from `NcssCount`. Both `NcssCount` and
-`CyclomaticComplexity` report classes, methods and constructors off one rule
-each — the sensor keeps only the method/constructor violations (PMD's own
-message distinguishes them) and drops the class-level ones, so a class of many
-simple methods tripping PMD's default `classReportLevel` is never coached as
-one over-complex function.
-The bundled fallback sets `AvoidDeeplyNestedIfStmts` to `problemDepth=3`
-explicitly, so the third nested `if` is the first one reported; a project-owned
-ruleset only receives that smell when it enables the PMD rule itself.
-PMD never discovers a project ruleset, so the sensor reaches for one only after
-checking the conventional locations (`src/main/resources/pmd/ruleset.xml`,
-`pmd/ruleset.xml`, `ruleset.xml`, `pmd.xml`) or a `--rulesets` in its args, then
-falls back to the bundled `pmd-ruleset.xml` — a project's own ruleset wins
-([config.md](config.md)). PMD 7's `UnnecessaryImport` is the renamed
-`UnusedImports`.
-
-## Ruby plugin translation
-
-The cops the Ruby plugin's sensor translates into smell keys (the rest of the
-catalogue is shared, only the plugin's sensors differ).
-
-| Raw key (tool:rule)              | Smell key             |
-|----------------------------------|-----------------------|
-| `rubocop:Metrics/ParameterLists`        | `too-many-parameters` |
-| `rubocop:Metrics/MethodLength`          | `oversized-function`  |
-| `rubocop:Metrics/BlockLength`           | `oversized-block`     |
-| `rubocop:Metrics/CyclomaticComplexity`  | `high-complexity`     |
-| `rubocop:Metrics/PerceivedComplexity`   | `high-complexity`     |
-| `rubocop:Metrics/AbcSize`               | `high-complexity`     |
-| `rubocop:Metrics/BlockNesting`          | `deep-nesting`        |
-| `rubocop:Lint/UselessAssignment`        | `unused-variable`     |
-| `rubocop:Lint/SuppressedException`      | `swallowed-exception` |
-| `rubocop:Lint/Syntax`                   | `parse-error`         |
-
-**A cop with no row above is forwarded under its own name, not dropped.** This
-is a deliberate exception to "a sensor emits vocabulary smells only", for the
-same reason the eslint sensor is one. The test is whose vocabulary a key
-belongs to: knip's key set is knip's own, but a cop only fires because the
-project's `.rubocop.yml` switched it on, so forwarding it is forwarding the
-project's own decision. What arrives uncatalogued is then the root `uncoached`
-key's business, which coaches without failing the run unless a project says
-otherwise.
-
-The sensor passes no `--only` and no `--config`. Which cops run, and at what
-thresholds, is what the project's `.rubocop.yml` already says, and RuboCop finds
-that file by its own upward walk. The one flag the sensor adds is
-`--force-exclusion`, which keeps `AllCops: Exclude:` applying once habit-hooks
-names files on the command line.
-
-Two cops are deliberately left uncoached.
-
-`Metrics/ClassLength` and `Metrics/ModuleLength` measure a class or module,
-and the vocabulary has no class-scoped smell for them to back. Like every
-unmapped cop they are forwarded under their own names, rendered through the
-generic `uncoached.md` guidance, and `suggest` by default (see
-[Uncoached smells](#uncoached-smells)) until a class and module scoped coach exists.
-
-The three Metrics complexity cops share `high-complexity`: they are correlated
-but independent (`PerceivedComplexity` weights nesting, `AbcSize` counts
-assignments and calls), and either can fire without `CyclomaticComplexity`.
-A method tripping two of them lands in the sensor's one `high-complexity`
-finding, whose issue list is never deduped — the mapper merges across findings,
-never within one (#140) — so both measurements survive inside a single coaching
-block rather than printing the guide twice.
-
-## Uncoached smells
-
-A smell with no entry above still renders — through the generic `uncoached.md`
-guidance — so a sensor a project wrote itself is always surfaced. It does not
-fail the run: this catalogue is the record of what is worth failing a build over,
-and a name absent from it has had no such decision made about it. A project moves
-that answer with the root `uncoached` key (`suggest` / `ignore` / `enforce`, see
-[config.md](config.md)), or per smell with `[smells.<name>] severity`, which wins
-over it.
+**Guidelines:**
+- Smell names should follow established smell names that are well documented in literature
+- When no such name exists, name the smell by the problem it creates, not the detection tool or the observation
+- For a smell to be approved it must come with a default guide in `guides/<smell>.md` that can be reasonably expected to work with a large number of languages.

@@ -1,5 +1,8 @@
 # habit-hooks notes
 
+## Rules
+- The core shouldn't know about the plugins in any way. This also applies to documentation. 
+
 ## Gotchas
 
 ### Two agents running pytest in one checkout fail each other's tests
