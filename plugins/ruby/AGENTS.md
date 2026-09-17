@@ -67,7 +67,7 @@ climbing out of the project on every run. A gem stops the climb by having a
 gemspec; everything else stops it by pinning `TargetRubyVersion`.
 
 That is RuboCop's own behaviour and the sensor reproduces it rather than
-papering over it, per the precedence rule in the root `CLAUDE.md`. It matters
+papering over it, per the precedence rule in the root `AGENTS.md`. It matters
 for the tests because the spec harness runs each case in
 `<repo>/.spec-runs/tmpXXXX/`: a case pinning neither climbs through this
 checkout and out into the home directory, where a sandboxed dev machine denies
@@ -75,7 +75,7 @@ the glob outright and the sensor fails for a reason that has nothing to do with
 the case. Every case in `docs/ruby-plugin.spec.md` and
 `tests/installed_projects.ruby_project` pins `TargetRubyVersion`.
 
-It is the RuboCop counterpart of the root `CLAUDE.md`'s `GIT_CEILING_DIRECTORIES`
+It is the RuboCop counterpart of the root `AGENTS.md`'s `GIT_CEILING_DIRECTORIES`
 rule and of jscpd's `.gitignore` walk: a wrapped tool that searches upward has
 to be given a floor, or it finds ours.
 
