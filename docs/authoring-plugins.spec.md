@@ -146,7 +146,11 @@ by a `jq` that succeeded on empty input.
 
 Every finding has the shape `{smell, language?, details, issues:[{key, details}]}`:
 one finding per smell, one `issues` entry per occurrence, the issue `key` being
-what snoozing acts on (default: the file path).
+what snoozing acts on (default: the file path). The `smell` key is the sensor's
+translation of the tool's output into the shared vocabulary
+([smell-vocabulary.md](smell-vocabulary.md)) — the mapper routes on it, never on
+the tool — and a key the catalogue has no row for coaches through the generic
+`uncoached.md` guidance instead.
 
 ### A native sensor: grep for TODO, shaped with jq
 
