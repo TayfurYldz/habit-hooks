@@ -1,277 +1,59 @@
-# Config
+# Configuring your project
 
-All configuration is TOML. There are **two kinds of file, the same shape**:
+Habit hooks has **two kinds of configuration files**:
+- **Project config** (`.habit-hooks/config.toml`) defines which plugins to run, and provides overrides to plugin defaults.
+- **Plugin configs** (`habit_hooks_<plugin>/config.toml`) define a plugin's defaults.
 
-- **Plugin defaults** — `config.toml` shipped as package data inside each plugin's
-  installed package (`habit_hooks_<plugin>/config.toml`). They state what the
-  plugin contributes and the language it speaks. Plugins are separate installable
-  packages, discovered at run time through the `habit_hooks.plugins` entry-point
-  group ([architecture.md](architecture.md)).
-- **Project overrides** — `.habit-hooks/config.toml` in the consumer repo. It
-  tunes the run and the plugins, holding only what differs from the defaults.
+In most cases end users should modify the project config, but plugin level defaults use the same structure for convenience.
 
-The two are merged in resolution order — generic defaults, then each language
-plugin's defaults, then the project — with the **project last and winning**.
-Override, never overwrite: the resolution and override chain (and how plugins are
-discovered and selected) is owned by [architecture.md](architecture.md); this
-document is only the field reference for the format that drives it.
+## Installing the plugins
 
-Every field is optional. An empty `.habit-hooks/config.toml` is valid — it means
-"use the plugin defaults".
-
-## One file, two readers
-
-There is no physical split between the two stages of the pipeline. The single
-config file is read by both, each picking out the keys it cares about:
-
-| Stage | Reads |
-|-------|-------|
-| **`habit-sensors`** (the runner) | `plugins`, `transformers`, `files`, `[scope]`, `[sensors.*]` |
-| **`habit-mapper`** (the router)  | `[smells.*]`, `uncoached`, `[runners]` |
-
-## Root keys
-
-These live at the top level of the **project** `config.toml`.
-
-| Key            | Meaning |
-|----------------|---------|
-| `plugins`      | An **ordered** list of plugins to activate, **selecting among the installed plugin packages** by name. The order is a priority: it is the order sensors run, and the order the mapper looks up guides — for a finding it takes the first plugin whose declared language matches, in this order, then falls back to the languageless `generic` last (so a language plugin's guide wins over generic's wherever `generic` sits in the list). A listed plugin that is neither installed nor overridden under `.habit-hooks/<plugin>/` fails with an error naming its `pip install habit-hooks-<plugin>` command. `generic` is listed explicitly like any other plugin, so a project can drop it. |
-| `transformers` | An ordered list of transformers applied to the concatenated findings of the whole run, in order. **Defaults to `["snooze"]`**, so a checked-in snooze index takes effect with no wiring; the core ships that transformer, so the default resolves whatever `plugins` names. Naming the key replaces the list wholesale — write `transformers = []` to drop snooze. |
-| `files`        | Discovery globs (pathspec / gitignore) — what this project counts as source, in **every** scope mode. Defaults to what the loaded plugins declare (below); naming it replaces those wholesale. |
-| `uncoached`    | What happens to a smell the catalogue does not name: `suggest` (**the default** — coached, exits 0), `ignore` (dropped), or `enforce` (coached, fails the run). Any other value is rejected by name. |
-| `[scope]`      | Git-scoping defaults for a run with no scope flag. |
-
-```toml
-plugins = ["generic", "python"]
-transformers = ["snooze"]
-files = ["**/*.py"]
-uncoached = "suggest"
-```
-
-### The transformer the core ships
-
-Plugins may ship their own; the core ships `snooze`, so the name resolves
-whatever `plugins` says ([habit-snooze.spec.md](habit-snooze.spec.md)). A
-snoozed issue stays dropped only while its file still holds the content that was
-approved with it; `snooze-until-changed` is a deprecated alias of the same
-transformer.
-
-| Transformer | An issue whose `key` is in the index is dropped… |
-|-------------|--------------------------------------------------|
-| `snooze` | …while its file still holds the approved content. Editing the file brings its issues back, and `--snooze` approves what is there now. **The default.** |
-| `snooze-until-changed` | Deprecated alias of `snooze`, kept so an existing config resolves. |
-
-The index it reads holds keys the runner has already **anchored**: a sensor's paths
-are re-expressed relative to the project before any key reaches the index
-([sensor-interface.spec.md](sensor-interface.spec.md)), so a key recorded on one
-machine matches on every other. Nothing in a project's config has to arrange
-that, and a sensor a project writes itself gets it without knowing it exists.
-
-### Installing the plugins you list
-
-`plugins` only **selects** among plugins that are installed; each name must
-resolve to an installed package (or a `.habit-hooks/<plugin>/` override). The
-first-party plugins are exposed as **install extras** on `habit-hooks`, so one
-install pulls the core plus the plugin packages you want:
+For maximum compatibility between languages all sensors and guides are inside plugins. When setting up a project start by installing the plugins relevant for your project.
 
 ```bash
-pip install "habit-hooks[python]"            # core + habit-hooks-python
-pip install "habit-hooks[python,typescript]" # several at once
+pip install "habit-hooks[generic,python]"            # core + generic + python plugin
+pip install "habit-hooks[generic,python,typescript]" # several at once
 ```
 
-The `generic` plugin ships as part of the core install; each extra (`python`,
-`typescript`, `php`, `java`, `ruby`) installs the matching
-`habit-hooks-<name>` distribution; a third-party plugin is just a package you
-`pip install habit-hooks-<name>` directly. The core then finds every installed
-plugin through its entry point — nothing else is configured for discovery.
+The generic plugin contains language agnostic sensors and guides. Since most language-specific plugins rely on the generic plugin, installing it is strongly recommended.
 
-### Overriding an installed plugin
+## Configure Which Files Are in Scope
 
-A project tunes any installed plugin by dropping replacement files under
-`.habit-hooks/<plugin>/`, which mirror the package's data layout and win over it:
-
-```
-.habit-hooks/<plugin>/<file>   →   installed habit_hooks_<plugin> package data/<file>
-```
-
-So `.habit-hooks/python/sensors/ruff.toml` replaces only that one sensor, leaving
-the rest of the installed `python` plugin intact. `config.toml` merges field by
-field the same way (project last); every other file is whole-file replacement.
-This is the mechanism owned by [architecture.md](architecture.md).
-
-### Pinning plugins at run time
-
-Because plugins are ordinary packages, pin them like any dependency — the run is
-reproducible only to the extent the installed plugin versions are. Recommended:
-
-- Install the core and its plugins together as extras
-  (`habit-hooks[python,typescript]`) and lock them in your project's lockfile, so
-  every machine and CI run resolves the same plugin versions.
-- Prefer a per-project virtualenv over a global tool install when the project
-  relies on plugin behaviour, so a plugin upgrade is a deliberate, reviewable
-  lockfile change rather than an ambient one.
-- `habit-sensors` already prepends `node_modules/.bin` and `.venv/bin` to `PATH`
-  ([habit-sensors.spec.md](habit-sensors.spec.md)), so a plugin's sensor commands
-  pick up the project-local tools (`ruff`, `eslint`, …) those plugins shell out to.
-
-### `files` globs have no brace expansion
-
-`files` uses pathspec (gitignore) matching, which has **no brace expansion**.
-Write a list of patterns, one per extension — never a `{…}` alternation:
+The `files` key takes a list of pathspec matchers (no brace expansion):
 
 ```toml
 files = ["**/*.ts", "**/*.tsx"] # ✅
 # files = "**/*.{ts,tsx}"        ❌ matched literally, never expanded
 ```
 
-### `files` describes every mode, not just `--all`
+Scope flags for a single run:
+- `--all` — every file the project keeps
+- `--file <path>` — a single file
+- `--branch [base]`, `--last <n>`, `--since <ref>` — git-derived
 
-`files` is applied wherever the scope came from — `--all`, `--file`, and every
-git-derived mode ([habit-sensors.spec.md](habit-sensors.spec.md)). A branch that
-bumps a lockfile is therefore not scored on it, and a run scoped to a branch is
-scoped to that branch's *source* changes. Paths the work tree no longer has are
-dropped as well: a file deleted on the branch has no smells left to find.
+## Silence or demote a smell
 
-### `files` defaults to what the plugins declare
+Per-smell routing overrides live under `[smells.<name>]`; a smell with no override uses the catalogue default ([smell-vocabulary.md](smell-vocabulary.md)).
 
-A plugin states what its sensors consider source in its own `config.toml`
-([authoring-plugins.spec.md](authoring-plugins.spec.md)). With no project
-`files`, the run scans the union of every active plugin's globs, in `plugins`
-order — so a project running `python` and `typescript` scans both languages
-without configuring anything:
+- **`severity`**: `enforced` (fails the run, exit 1) or `suggested` (coaches only, exit 0).
+- **`disabled`**: drop the smell — neither coached nor counted.
+- **`guide`**: use a named guide file instead of `<smell>.md`.
 
 ```toml
-# habit_hooks_python/config.toml
-#   files = ["**/*.py", "!**/site-packages/**", "!**/.venv/**", "!**/venv/**"]
-# habit_hooks_typescript/config.toml
-#   files = ["**/*.ts", "**/*.tsx", "!**/node_modules/**"]
+[smells.duplicated-code]
+severity = "suggested"
 
-plugins = ["python", "typescript"]   # scans both languages, neither's dependencies
+[smells.redundant-type-annotation]
+guide = "style-nit.md"
 ```
 
-A plugin's exclusions apply to the whole union, not just to the globs its own
-plugin declared. They are collected after every positive glob for that reason:
-pathspec is last-match-wins, so an exclusion left in place would bind only what
-preceded it, and the next plugin's `**/*.py` would hand back the `node_modules`
-the one before it had just excluded — `node_modules` ships Python, and node-gyp
-alone puts 58 files there. Which plugin you list first decides guide priority, and
-must not also decide what is scanned.
+## Turn a sensor off or narrow it
 
-Two rules cover the rest:
+A `[sensors.<name>]` block overrides a sensor the plugin defines.
 
-- **The project's own `files` is authoritative.** Naming it replaces the plugins'
-  defaults wholesale rather than adding to them, the same way naming
-  `transformers` does. Order is kept as written, so a later pattern can negate an
-  earlier one.
-- **A plugin that declares no `files` states no opinion, not "everything".**
-  `generic` declares none, so a project whose plugins all stay silent scans
-  **nothing at all** — discovery is opt-in, not a denylist. A default install
-  scans nothing until it names what it wants scanned, rather than sweeping
-  `node_modules`, `.venv` and `.git`; the run says so on stderr instead of
-  reporting clean over an empty scope.
-
-### `uncoached` — what a smell nobody catalogued does
-
-Sensors can report smells this product has never taken a decision about: a
-project's own sensor, or a wrapped tool naming something the catalogue
-([smell-vocabulary.md](smell-vocabulary.md)) has no entry for. `uncoached` is
-that decision, taken once for all of them:
-
-| Value       | The finding is… |
-|-------------|-----------------|
-| `suggest`   | **The default.** Coached with the generic `uncoached.md` guidance and counted in the report, but it does not fail the run. The catalogue is the record of what is worth failing a build over, so a name absent from it has had no such decision made about it. |
-| `ignore`    | Dropped — neither coached nor counted, exactly as `[smells.<name>] disabled` drops one smell. Use it when a tool's extra output is noise here. |
-| `enforce`   | Coached and **fails the run** (exit 1). Use it to hold the line that anything a sensor reports must be either fixed or given a home in config. |
-
-```toml
-uncoached = "suggest"
-```
-
-A misspelled value is **rejected** (exit 2) naming the key, what you wrote and
-the three it accepts — a typo must never quietly pick a policy for you.
-
-**A `[smells.<name>] severity` wins over it, in all three values.** Declaring a
-severity is the project deciding about that one smell, which takes it out of
-`uncoached`'s reach — so a single smell can be promoted to blocking without
-promoting the rest, and `uncoached = "ignore"` still reports the one smell you
-declared. Smells the catalogue *does* name are never affected: `uncoached`
-answers only for the ones it does not.
-
-### `[scope]`
-
-When a run is invoked with no explicit scope flag (`--all`, `--branch`, …), the
-scope is derived from `[scope]`. The scope flags themselves live in
-[habit-sensors.spec.md](habit-sensors.spec.md).
-
-| Field               | Default  | Meaning |
-|---------------------|----------|---------|
-| `changedOnly`       | `false`  | Restrict the default run to uncommitted work: staged and unstaged edits, plus untracked (non-ignored) new files. |
-| `autoBranchOffMain` | `false`  | When not on `mainBranch`, default to diffing against `branchBase`. Left at its default, a run with no scope flag scans **every** file the `files` globs match. |
-| `branchBase`        | `"main"` | Base ref for branch-relative scoping (used by `--branch` and `autoBranchOffMain`). It must exist in the checkout: a ref a real repository cannot resolve **fails the run**, rather than scoping it to nothing and reporting clean. Scoping starts at the merge base of this ref and `HEAD`, so work landed on the base after you branched is never scanned as yours. |
-| `mainBranch`        | `"main"` | The branch name on which `autoBranchOffMain` does *not* kick in. |
-
-The block below is an example, not the defaults — `autoBranchOffMain` is the one
-value in it that differs from what you get by writing no `[scope]` at all:
-
-```toml
-[scope]
-changedOnly = false
-autoBranchOffMain = true   # not the default
-branchBase = "main"
-mainBranch = "main"
-```
-
-## Plugin-node keys
-
-A plugin's own `config.toml` (shipped as package data in
-`habit_hooks_<plugin>/config.toml`, or shadowed by a
-`.habit-hooks/<plugin>/config.toml` override) uses a different, smaller set of
-root keys — it describes the plugin, not the whole run:
-
-| Key            | Meaning |
-|----------------|---------|
-| `language`     | The language this plugin **declares**. A plugin is not a language: its name need not match, several plugins can declare the same language, and the runner stamps this onto the plugin's findings. `generic` declares none. |
-| `sensors`      | An ordered list of the sensor names the plugin runs. |
-| `transformers` | An ordered list of the plugin's own transformers, applied to its sensors' concatenated findings before the result joins the larger run. |
-| `detectors`    | The external tools this plugin's sensors reach for, each a `{ name, kind, install, search_paths }` table: what to look for, how to look for it (`command` — on `PATH`; `node-module` — a package `node` resolves from the project, for one read as a library rather than spawned), the command that installs it, and — optionally — `search_paths`, a list of directories under the project that a `command` is looked for in ahead of the default path (`node_modules/.bin`, `.venv/bin`, then `PATH`) — however the recipe names it, `${detector:<name>}` or a bare `argv[0]`. A project never declares these: it names the plugins it runs, and what each of those needs installed is the plugin's to say. |
-
-```toml
-# habit_hooks_ruby/config.toml
-language = "ruby"
-sensors = ["rubocop"]
-transformers = []
-detectors = [
-  # search_paths is optional: bundler's binstubs live in bin/, which the
-  # default path does not search.
-  { name = "rubocop", kind = "command", install = "gem install rubocop", search_paths = ["bin"] },
-]
-```
-
-`name`, `kind` and `install` are required, and required to say something: an
-entry that is not a table, one missing one of them, or one whose `name` or
-`install` is empty is **rejected** (exit 2) quoting the detector it is about —
-a tool named with no way to install it leaves the reader to go and find it,
-which is the whole thing a detector exists to avoid. A `search_paths` entry
-must be a non-empty directory under the project — absolute paths (including
-Windows drive forms), `..` components and `:`/`;` separators are rejected —
-because a directory the project does not keep cannot be where its pinned tools
-live, and a separator would splice one into the lookup (the entries are joined
-into one search path with exactly those characters).
-
-## `[sensors.<name>]`
-
-The full spec for a sensor lives in the plugin's `sensors/<name>.toml`
-([sensor-interface.spec.md](sensor-interface.spec.md)); the `[sensors.<name>]`
-block in a project config only *overrides* a sensor the plugin already defines.
-Each key replaces the sensor spec's default wholesale — to change anything a key
-below does not cover, drop a whole `.habit-hooks/<plugin>/sensors/<name>.toml`
-replacement instead.
-
-| Field      | Meaning |
-|------------|---------|
-| `disabled` | Drop the sensor entirely. |
-| `files`    | Narrow the run's scope to these globs for this sensor alone (list form — no brace expansion). |
-| `args`     | Replace the sensor's default CLI args wholesale, and hand them to the tool the sensor runs. Only a sensor whose `command` spells `${args}` can take arguments at all; of the shipped ones that is `line-count`, `eslint`, `knip` and `pmd`. Setting `args` on any other sensor **stops the run** (exit 2) naming the sensor, rather than accepting it and dropping it. `args = []` is a value, not an absence: it is how a project clears a default it cannot use. |
+- **`disabled`**: drop the sensor entirely.
+- **`files`**: narrow the run's scope for this sensor alone (list form — no brace expansion). Narrows, never widens — a sensor never sees a file the run was not measuring.
+- **`args`**: replace the sensor's default CLI args wholesale. Only a sensor whose `command` spells `${args}` accepts them (`line-count`, `eslint`, `knip`, `pmd`); `args` on any other sensor stops the run (exit 2). `args = []` clears a default.
 
 ```toml
 # Turn off a sensor the plugin ships.
@@ -283,36 +65,39 @@ disabled = true
 files = ["src/**/*.py"]
 ```
 
-`files` does not widen a run: it selects a subset of the files the run's scope
-already picked ([scope]/[files] and the scope flags), so a sensor still never
-sees a path the run as a whole was not measuring.
+## Set the default scope
 
-## `[smells.<name>]`
+With no scope flag, the run's scope comes from `[scope]`. The flags themselves live in [habit-sensors.spec.md](habit-sensors.spec.md).
 
-Per-smell routing overrides, keyed by smell. A smell with no override uses the
-catalogue default ([smell-vocabulary.md](smell-vocabulary.md)).
+- **`changedOnly`** (default `false`): restrict a run with no scope flag to uncommitted work — staged and unstaged edits, plus untracked (non-ignored) files.
+- **`autoBranchOffMain`** (default `false`): when not on `mainBranch`, default to diffing against `branchBase`; at its default a run with no scope flag scans every file the `files` globs match.
+- **`branchBase`** (default `"main"`): base ref for branch-relative scoping (`--branch`, `autoBranchOffMain`). Must resolve in the checkout, or the run fails. Scoping starts at its merge base with `HEAD`, so work landed on the base after you branched is not scanned as yours.
+- **`mainBranch`** (default `"main"`): the branch name on which `autoBranchOffMain` does not kick in.
 
-| Field                 | Meaning |
-|-----------------------|---------|
-| `severity`            | `enforced` (fails the run, exit 1) or `suggested` (coaches only, exit 0). |
-| `disabled`            | Drop the smell — neither coached nor counted. |
-| `guide`               | Use a named guide file instead of `<smell>.md`. |
+## Handling smells the catalogue does not name
+
+`uncoached` decides, once for all of them, what happens to a smell no catalogue entry covers:
+
+- **`suggest`** (the default): coached with the generic `uncoached.md` guidance and counted, but it does not fail the run.
+- **`ignore`**: dropped — neither coached nor counted.
+- **`enforce`**: coached and fails the run (exit 1).
+
+A misspelled value is rejected (exit 2), naming the key and the three values it accepts.
+
+## Adding your own smell
+
+A sensor may emit a smell the catalogue does not name; declared under `[smells.<name>]`, it is routed deliberately:
 
 ```toml
-[smells.duplicated-code]
-severity = "suggested"
-
-[smells.redundant-type-annotation]
-guide = "style-nit.md"
+[smells.custom-marker]
+severity = "enforced"
 ```
 
-## `[runners]`
+The declaration lifts the smell out of `uncoached`'s reach, so it keeps blocking however `uncoached` is set. Pair it with a sensor that emits the smell (`sensors/<name>.toml`) and a matching `guides/custom-marker.md`.
 
-The mapper renders each smell's guide. A `.md` guide is always rendered as a
-template and needs no runner. Any other extension needs one: `[runners]` maps a
-guide-file extension to the command that runs it, and the mapper invokes
-`<command> guides/<smell>.<ext>` with the finding on stdin. No non-`.md` guide
-executes unless its extension is opted in here.
+## Run a fixer script from a guide
+
+`[runners]` maps a guide-file extension to the command that executes it; the mapper invokes `<command> guides/<smell>.<ext>` with the finding on stdin. `.md` guides are templates and need no runner; no other extension executes unless opted in here.
 
 ```toml
 [runners]
@@ -320,36 +105,9 @@ py = "python"
 js = "node"
 ```
 
-`[runners]` resolves through the same override chain as everything else, so a
-**plugin can ship its own `[runners]`** — a language plugin can register the
-fixer command for its guides' extension and run its own language-specific fixers
-by default, without the project configuring anything.
-
-## Custom smells
-
-A project (or plugin) sensor may emit a smell that is not in the catalogue.
-Undeclared, it is whatever `uncoached` says — by default coached with the generic
-prompt and green. Declare it under `[smells.<name>]` with a `severity` to route it
-the way you want instead:
-
-```toml
-[smells.custom-marker]
-severity = "enforced"
-```
-
-That declaration is what lifts the smell out of the `uncoached` policy, so it
-keeps blocking however that key is set — and, conversely, an
-`uncoached = "enforce"` project can hold one experimental smell at `suggested`
-while everything unknown blocks.
-
-Pair the declaration with a sensor that emits the smell (a `sensors/<name>.toml`
-whose command produces findings with that `smell` key) and a matching
-`guides/custom-marker.md`.
-
 ## A worked example
 
-A single `.habit-hooks/config.toml` for a TypeScript project — every key below
-is optional:
+A single `.habit-hooks/config.toml` for a TypeScript project — every key below is optional:
 
 ```toml
 # .habit-hooks/config.toml — all optional; an empty file means "plugin defaults".
@@ -390,3 +148,29 @@ guide = "style-nit.md"
 [smells.custom-marker]
 severity = "enforced"
 ```
+
+## What a plugin declares
+
+Plugins are also defined by their `config.toml` files.
+
+They typically define these keys:
+- **`language`**: the language its findings carry; `generic` declares none.
+- **`sensors`**: the sensors it runs.
+- **`transformers`**: its own transformers, applied before the findings join the run.
+- **`detectors`**: the external tools its sensors need, and how to install them.
+
+For more information read [authoring-plugins.spec.md](authoring-plugins.spec.md).
+
+## Which tool versions run
+
+- Sensors prefer the project's own tools: `node_modules/.bin` and `.venv/bin` are searched before `PATH` ([habit-sensors.spec.md](habit-sensors.spec.md)) — the versions your project pins are the versions that run.
+- Plugins are ordinary pip packages: install core and plugins together as extras (`habit-hooks[python,typescript]`) and let the lockfile pin them, so every machine and CI run resolves the same versions.
+
+## Precedence
+
+When config values conflict it is resolved in the following order:
+- project override takes precedence over everything else
+- installed plugin settings in reverse order
+- generic defaults
+
+Config files merge field by field; any other override file replaces the plugin's file wholesale.
