@@ -25,7 +25,6 @@ from habit_hooks.snooze import (
     run,
     save_index,
 )
-from habit_hooks.snooze_lapse import content_hash
 
 
 def _write_index(project_dir: Path, content: str) -> Path:
@@ -157,48 +156,14 @@ def test_save_index_writes_atomically_leaving_no_temp_files(tmp_path: Path) -> N
     assert load_index(tmp_path) == {"src/x.ts": {}}
 
 
-def _a_project_with(project_dir: Path, name: str, text: str) -> None:
-    path = project_dir / name
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(text.encode("utf-8"))
-
-
-def test_prune_keeps_the_recordings_of_a_key_it_keeps(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_list_prints_bare_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Rebuilding a bare list of keys would strip every approval on the next
-    prune."""
-    _a_project_with(tmp_path, "src/x.ts", "export const a = 1;\n")
-    _feed_stdin(monkeypatch, [_finding("src/x.ts")])
-    assert run(parse_args(["--snooze"]), tmp_path) == 0
-    recorded = load_index(tmp_path)["src/x.ts"]
+    """`--list` shows what is snoozed, not the bookkeeping that decides for how
+    long."""
+    from snooze_project import a_project_with, finding, snooze
 
-    _feed_stdin(monkeypatch, [_finding("src/x.ts")])
-    assert run(parse_args(["--prune"]), tmp_path) == 0
-    assert load_index(tmp_path) == {"src/x.ts": recorded}
-
-
-def test_prune_drops_an_anchor_the_run_no_longer_reports(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """An anchor goes stale inside a live entry: one file is deleted while the
-    key is still reported through another, so pruning by key alone would leave
-    the dead one recorded forever."""
-    _a_project_with(tmp_path, "src/a.py", "import requests\n")
-    _a_project_with(tmp_path, "src/b.py", "import requests\nrequests.get()\n")
-    aliased = {
-        "smell": "unused-dependency",
-        "details": {},
-        "issues": [
-            {"key": "requests", "details": {"file": "src/a.py"}},
-            {"key": "requests", "details": {"file": "src/b.py"}},
-        ],
-    }
-    _feed_stdin(monkeypatch, [aliased])
-    assert run(parse_args(["--snooze"]), tmp_path) == 0
-
-    _feed_stdin(monkeypatch, [{**aliased, "issues": aliased["issues"][1:]}])
-    assert run(parse_args(["--prune"]), tmp_path) == 0
-    assert load_index(tmp_path) == {
-        "requests": {"src/b.py": content_hash(tmp_path / "src/b.py")}
-    }
+    a_project_with(tmp_path, "src/x.ts", "export const a = 1;\n")
+    snooze(tmp_path, monkeypatch, [finding("src/x.ts", "src/x.ts")])
+    assert run(parse_args(["--list"]), tmp_path) == 0
+    assert capsys.readouterr().out == "src/x.ts\n"
