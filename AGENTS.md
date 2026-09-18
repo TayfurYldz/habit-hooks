@@ -12,6 +12,12 @@
 
 ## Gotchas
 
+### The dogfooding gate needs the node devDependencies installed
+
+`uv run habit-hooks --all` runs jscpd from `node_modules/.bin`, which only
+exists after `pnpm install --frozen-lockfile`. A missing tool fails the run —
+install it and re-run the gate; "the tool is absent here" is not a pass.
+
 ### Two agents running pytest in one checkout fail each other's tests
 
 Two suites keep their working state *inside the checkout* rather than in a
