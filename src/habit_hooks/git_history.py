@@ -1,13 +1,9 @@
 """Ask git what it remembers: where a branch left its base ref, and which paths
 differ since.
 
-Two callers put the same question in the same words — a scoped run
-(``scope.py``) and a lapsing snooze (``changed_files.py``) — and they differ only
-in what they make of silence. The facts live here so there is one answer:
-``[scope] branchBase`` cannot come to mean one thing in a run and another in a
-snooze, and a flag this module gets right cannot be missing from the other
-caller. Each caller keeps its own policy for the two silences: a directory git
-cannot place, and a ref a real repository does not have.
+A scoped run (``scope.py``) is the caller, and it is also the policy: which
+silences mean what — a directory git cannot place, a ref a real repository does
+not have — is decided here rather than in the asking.
 
 What git says about the working tree *as it stands* — which files the project
 holds, which of them it ignores — is ``git_listing``, asked from here only to

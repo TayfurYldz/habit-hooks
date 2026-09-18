@@ -3,7 +3,7 @@ questions about.
 
 Every case here needs the same thing: a real repository, on a known branch, with
 something committed to compare against. This module only builds those; what a
-run must then conclude from them lives in ``test_changed_files.py`` and the
+run must then conclude from them lives in ``test_scope.py`` and the
 ``test_a_scan_*`` modules.
 """
 

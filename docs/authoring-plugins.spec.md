@@ -411,13 +411,13 @@ command = "jq '<transform>'"
 A transformer runs as its own process, so it cannot see the run's `--config` on
 its own. Add `${config}` to its command and the runner expands it to
 `--config <path>` when the run named one, or to nothing otherwise — the whole
-flag, so a `--config`-less run leaves no dangling argument. This is how the
-shipped `snooze-until-changed` reads `[scope] branchBase` from the same file the
-sensors stage scoped from, rather than always `.habit-hooks/config.toml`:
+flag, so a `--config`-less run leaves no dangling argument. A transformer that
+wants the run's config names it explicitly, and reads the same file the sensors
+stage scoped from rather than always `.habit-hooks/config.toml`:
 
 ```toml
-# transformers/snooze-until-changed.toml
-argv = ["${python}", "-m", "habit_hooks.snooze", "--until-changed", "${config}"]
+# transformers/baseline.toml
+argv = ["${python}", "-m", "baseline_check", "${config}"]
 ```
 
 > **A transformer must pass through every finding it does not handle.**

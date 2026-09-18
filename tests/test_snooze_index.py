@@ -25,6 +25,7 @@ from habit_hooks.snooze import (
     run,
     save_index,
 )
+from habit_hooks.snooze_lapse import content_hash
 
 
 def _write_index(project_dir: Path, content: str) -> Path:
@@ -52,7 +53,7 @@ def test_prune_drops_a_key_that_no_longer_appears(
     _write_index(tmp_path, json.dumps(["src/x.ts", "src/y.ts"]))
     _feed_stdin(monkeypatch, [_finding("src/x.ts")])
     assert run(parse_args(["--prune"]), tmp_path) == 0
-    assert load_index(tmp_path) == ["src/x.ts"]
+    assert load_index(tmp_path) == {"src/x.ts": {}}
 
 
 def test_prune_refuses_to_empty_a_populated_index_on_no_findings(
@@ -66,7 +67,7 @@ def test_prune_refuses_to_empty_a_populated_index_on_no_findings(
     _write_index(tmp_path, json.dumps(["src/x.ts", "src/y.ts"]))
     monkeypatch.setattr(sys, "stdin", io.StringIO(""))
     assert run(parse_args(["--prune"]), tmp_path) == 1
-    assert load_index(tmp_path) == ["src/x.ts", "src/y.ts"]
+    assert load_index(tmp_path) == {"src/x.ts": {}, "src/y.ts": {}}
     assert "prune" in capsys.readouterr().err.lower()
 
 
@@ -78,7 +79,7 @@ def test_prune_still_clears_an_index_it_was_asked_to_when_findings_exist(
     _write_index(tmp_path, json.dumps(["src/x.ts"]))
     _feed_stdin(monkeypatch, [_finding("src/other.ts")])
     assert run(parse_args(["--prune"]), tmp_path) == 0
-    assert load_index(tmp_path) == []
+    assert load_index(tmp_path) == {}
 
 
 @pytest.mark.parametrize(
@@ -111,8 +112,93 @@ def test_a_corrupt_index_fails_as_a_tool_error(
     assert main([index_op]) == EXIT_TOOL_ERROR
 
 
+def test_an_index_of_bare_keys_still_loads(tmp_path: Path) -> None:
+    """Every entry records nothing, which is how an index a project already
+    has checked in reads: those keys keep the behaviour they have until a
+    `--snooze` approves them."""
+    _write_index(tmp_path, json.dumps(["src/x.ts", "src/y.ts"]))
+    assert load_index(tmp_path) == {"src/x.ts": {}, "src/y.ts": {}}
+
+
+def test_an_index_mixing_both_shapes_loads(tmp_path: Path) -> None:
+    """Which is how a project migrates: one `--snooze` at a time, never a flag
+    day, so a half-migrated index is the normal state for a while."""
+    recorded = {"key": "src/y.ts", "anchors": {"src/y.ts": "sha256:abc"}}
+    _write_index(tmp_path, json.dumps(["src/x.ts", recorded]))
+    assert load_index(tmp_path) == {
+        "src/x.ts": {},
+        "src/y.ts": {"src/y.ts": "sha256:abc"},
+    }
+
+
+def test_an_entry_with_a_field_the_index_cannot_mean_fails_by_name(tmp_path: Path) -> None:
+    """A reason pasted beside the key used to survive a load only to be dropped
+    on the next write — a silent way to mean nothing (#94)."""
+    _write_index(tmp_path, json.dumps([{"key": "src/a.py", "reason": "we discussed it"}]))
+    with pytest.raises(SnoozeError) as excinfo:
+        load_index(tmp_path)
+    assert "expected each entry" in str(excinfo.value)
+
+
+def test_an_entry_recording_nothing_is_written_as_a_bare_key(tmp_path: Path) -> None:
+    """So a project nothing has approved into keeps the file it knows, and the
+    diff of the first approval shows only the entry that earned one."""
+    save_index({"src/x.ts": {}, "src/y.ts": {"src/y.ts": "sha256:abc"}}, tmp_path)
+    assert json.loads((tmp_path / INDEX_PATH).read_text(encoding="utf-8")) == [
+        "src/x.ts",
+        {"key": "src/y.ts", "anchors": {"src/y.ts": "sha256:abc"}},
+    ]
+
+
 def test_save_index_writes_atomically_leaving_no_temp_files(tmp_path: Path) -> None:
-    save_index(["src/x.ts"], tmp_path)
+    save_index({"src/x.ts": {}}, tmp_path)
     index_dir = tmp_path / INDEX_PATH.parent
     assert [p.name for p in index_dir.iterdir()] == ["snooze.json"]
-    assert load_index(tmp_path) == ["src/x.ts"]
+    assert load_index(tmp_path) == {"src/x.ts": {}}
+
+
+def _a_project_with(project_dir: Path, name: str, text: str) -> None:
+    path = project_dir / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(text.encode("utf-8"))
+
+
+def test_prune_keeps_the_recordings_of_a_key_it_keeps(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Rebuilding a bare list of keys would strip every approval on the next
+    prune."""
+    _a_project_with(tmp_path, "src/x.ts", "export const a = 1;\n")
+    _feed_stdin(monkeypatch, [_finding("src/x.ts")])
+    assert run(parse_args(["--snooze"]), tmp_path) == 0
+    recorded = load_index(tmp_path)["src/x.ts"]
+
+    _feed_stdin(monkeypatch, [_finding("src/x.ts")])
+    assert run(parse_args(["--prune"]), tmp_path) == 0
+    assert load_index(tmp_path) == {"src/x.ts": recorded}
+
+
+def test_prune_drops_an_anchor_the_run_no_longer_reports(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An anchor goes stale inside a live entry: one file is deleted while the
+    key is still reported through another, so pruning by key alone would leave
+    the dead one recorded forever."""
+    _a_project_with(tmp_path, "src/a.py", "import requests\n")
+    _a_project_with(tmp_path, "src/b.py", "import requests\nrequests.get()\n")
+    aliased = {
+        "smell": "unused-dependency",
+        "details": {},
+        "issues": [
+            {"key": "requests", "details": {"file": "src/a.py"}},
+            {"key": "requests", "details": {"file": "src/b.py"}},
+        ],
+    }
+    _feed_stdin(monkeypatch, [aliased])
+    assert run(parse_args(["--snooze"]), tmp_path) == 0
+
+    _feed_stdin(monkeypatch, [{**aliased, "issues": aliased["issues"][1:]}])
+    assert run(parse_args(["--prune"]), tmp_path) == 0
+    assert load_index(tmp_path) == {
+        "requests": {"src/b.py": content_hash(tmp_path / "src/b.py")}
+    }

@@ -1,9 +1,9 @@
 """The project's own names for things: what it calls a path, and where its tools are.
 
 The one place that decides whether a path belongs to the project and what it is
-called there. Both ends of a snooze rest on it: a sensor's paths are anchored on
-the way in (``sensors/finding_paths.py``), and the git question behind a lapsing
-snooze asks about the very same repo-relative paths (``changed_files.py``).
+called there. Snoozing rests on it: a sensor's paths are anchored on the way in
+(``sensors/finding_paths.py``), and the content a snooze approves is recorded
+and compared under those same repo-relative names.
 
 "Where does this project keep its tools" is the same kind of question and gets
 one answer here for the same reason: ``sensors/spawn.py`` runs every command

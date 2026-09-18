@@ -424,15 +424,11 @@ The index is portable by construction: every path a sensor reports is re-express
 before a key is formed, so an index recorded on your machine matches on a teammate's checkout and in CI, even
 though `ruff` and `eslint` report absolute paths.
 
-**Make it a ratchet.** A plain snooze holds until someone edits the index, so a snoozed file stays exempt even
-after it doubles in size. Swap in the second transformer:
-
-```toml
-transformers = ["snooze-until-changed"]
-```
-
-An exemption then holds only while its file is unchanged since your branch left `[scope] branchBase`. Touch
-the file and its issues come back — which is exactly when you are in a position to clear them.
+**The ratchet is built in.** A snooze records the content that was approved: edit a
+snoozed file and its issues come back — which is exactly when you are in a position to clear
+them. Run `habit-snooze --snooze` again to approve what is there now, and the finding is
+dropped until the next edit. An index written by an older version keeps holding until its
+first re-approval, so upgrading re-arms nothing on its own.
 
 Details, including how `--file` bypasses the index:
 [`docs/habit-snooze.spec.md`](https://github.com/habit-hooks/habit-hooks/blob/main/docs/habit-snooze.spec.md).

@@ -1,13 +1,8 @@
-# The opt-in ratchet: the same index as `snooze`, but an exemption holds only
-# while its file is unchanged against `[scope] branchBase`. Shipped next to
-# `snooze` rather than replacing it — an upgrade must never make a project's
-# existing snoozes start re-arming by themselves; naming this transformer is how
-# a project asks for that.
+# Deprecated alias of `snooze`: what this transformer was the opt-in for — an
+# exemption that lapses when the file changes — is now what snoozing is, so both
+# names run the same command. The name is still accepted so an existing config
+# keeps resolving; a new project names `snooze`.
 #
 # `${python} -m`, not the bare console script, for the same reason as snooze.toml:
 # the bin directory is not always on PATH.
-#
-# `${config}` forwards the run's `--config` so `[scope] branchBase` is read from
-# the same file the sensors stage scoped from — one config answer for the whole
-# run (#86). It expands to nothing when the run named no `--config`.
-argv = ["${python}", "-m", "habit_hooks.snooze", "--until-changed", "${config}"]
+argv = ["${python}", "-m", "habit_hooks.snooze"]

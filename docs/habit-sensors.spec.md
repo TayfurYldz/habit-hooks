@@ -306,12 +306,13 @@ habit-sensors --all | jq '[.[].issues[].key]'
 ]
 ```
 
-### The core also supplies the opt-in `snooze-until-changed`
+### The deprecated `snooze-until-changed` name runs the same transformer
 
-The core ships a second snooze transformer whose exemptions lapse as soon as the
-file changes ([habit-snooze.spec.md](habit-snooze.spec.md)); a project opts in
-by naming it. Both keys below are snoozed and both files are committed, but only
-`src/big.py` is then edited — so only its issue comes back.
+What used to be the opt-in ratchet is now what snoozing is, and the old name is
+kept as an alias ([habit-snooze.spec.md](habit-snooze.spec.md)). A config
+naming it still resolves, and a recorded approval still lapses on an edit: both
+keys below are approved through the real command, then only `src/big.py` is
+edited — so only its issue comes back.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -335,11 +336,6 @@ command = "cat ${dir}/alpha.json"
 [{"smell":"oversized-file","details":{},"issues":[{"key":"src/big.py","details":{"file":"src/big.py"}},{"key":"src/ok.py","details":{"file":"src/ok.py"}}]}]
 ```
 
-📄.habit-hooks/snooze.json
-```json
-["src/big.py", "src/ok.py"]
-```
-
 📄src/big.py
 ```python
 VALUES = [1]
@@ -351,12 +347,7 @@ VALUES = [2]
 ```
 
 ```bash
-git init -q -b main . &&
-  git config user.email spec@example.com &&
-  git config user.name "Spec Runner" &&
-  git config commit.gpgsign false &&
-  git add src &&
-  git commit -q -m baseline &&
+habit-sensors --all | habit-snooze --snooze &&
   printf 'VALUES.append(2)\n' >> src/big.py
 ```
 
@@ -833,9 +824,9 @@ why is often the only actionable part. Whatever the transformer wrote to stderr
 is carried into the notice, so a pipeline user reads the diagnosis instead of
 guessing at it.
 
-The real case: `snooze-until-changed` exits non-zero when `[scope] branchBase`
-is missing from the checkout ([habit-snooze.spec.md](habit-snooze.spec.md)), and
-the setting that fixes it is named in *its* message, not the runner's.
+The real case: a project's own gate transformer refuses the run and says why —
+whatever it wrote to stderr is carried into the notice, so a pipeline user reads
+the diagnosis instead of guessing at it.
 
 The failed run also appends the reserved `incomplete-run` finding (#88); this
 case filters it out to keep the focus on the untransformed findings passing
@@ -845,7 +836,7 @@ through — the marker's own shape is asserted under *A failed run is coached*.
 ```toml
 plugins      = ["generic"]
 files = ["**"]
-transformers = ["snooze-until-changed"]
+transformers = ["gate"]
 ```
 
 📄.habit-hooks/generic/config.toml
@@ -863,24 +854,14 @@ command = "cat ${dir}/ok.json"
 [{"smell":"oversized-file","details":{},"issues":[{"key":"src/notes.txt","details":{"file":"src/notes.txt"}}]}]
 ```
 
-📄.habit-hooks/snooze.json
-```json
-["src/notes.txt"]
+📄.habit-hooks/generic/transformers/gate.toml
+```toml
+command = "echo 'baseline is stale — rerun habit-sensors --baseline' >&2; exit 1"
 ```
 
 📄src/notes.txt
 ```text
 one line
-```
-
-```bash
-git init -q -b main . &&
-  git config user.email spec@example.com &&
-  git config user.name "Spec Runner" &&
-  git config commit.gpgsign false &&
-  git add src &&
-  git commit -q -m baseline &&
-  git branch -m main trunk
 ```
 
 ```bash
@@ -894,8 +875,8 @@ habit-sensors --all | jq -c '[.[] | select(.smell != "incomplete-run") | .issues
 
 🚨
 ```text
-habit-sensors: transformer 'snooze-until-changed' failed: '${python}' -m habit_hooks.snooze --until-changed '${config}'
-habit-snooze: base ref 'main' does not resolve in this checkout — set [scope] branchBase to a ref it has
+habit-sensors: transformer 'gate' failed: echo 'baseline is stale — rerun habit-sensors --baseline' >&2; exit 1
+baseline is stale — rerun habit-sensors --baseline
 ```
 
 ### A transformer that prints nothing is a failure, not an empty run

@@ -36,7 +36,7 @@ These live at the top level of the **project** `config.toml`.
 | Key            | Meaning |
 |----------------|---------|
 | `plugins`      | An **ordered** list of plugins to activate, **selecting among the installed plugin packages** by name. The order is a priority: it is the order sensors run, and the order the mapper looks up guides — for a finding it takes the first plugin whose declared language matches, in this order, then falls back to the languageless `generic` last (so a language plugin's guide wins over generic's wherever `generic` sits in the list). A listed plugin that is neither installed nor overridden under `.habit-hooks/<plugin>/` fails with an error naming its `pip install habit-hooks-<plugin>` command. `generic` is listed explicitly like any other plugin, so a project can drop it. |
-| `transformers` | An ordered list of transformers applied to the concatenated findings of the whole run, in order. **Defaults to `["snooze"]`**, so a checked-in snooze index takes effect with no wiring; the core ships that transformer, so the default resolves whatever `plugins` names. Naming the key replaces the list wholesale — write `transformers = []` to drop snooze, or name `snooze-until-changed` for the ratchet variant below. |
+| `transformers` | An ordered list of transformers applied to the concatenated findings of the whole run, in order. **Defaults to `["snooze"]`**, so a checked-in snooze index takes effect with no wiring; the core ships that transformer, so the default resolves whatever `plugins` names. Naming the key replaces the list wholesale — write `transformers = []` to drop snooze. |
 | `files`        | Discovery globs (pathspec / gitignore) — what this project counts as source, in **every** scope mode. Defaults to what the loaded plugins declare (below); naming it replaces those wholesale. |
 | `uncoached`    | What happens to a smell the catalogue does not name: `suggest` (**the default** — coached, exits 0), `ignore` (dropped), or `enforce` (coached, fails the run). Any other value is rejected by name. |
 | `[scope]`      | Git-scoping defaults for a run with no scope flag. |
@@ -48,23 +48,20 @@ files = ["**/*.py"]
 uncoached = "suggest"
 ```
 
-### The transformers the core ships
+### The transformer the core ships
 
-Plugins may ship their own; these two come with the core, so either name
-resolves whatever `plugins` says ([habit-snooze.spec.md](habit-snooze.spec.md)).
-They read the same `.habit-hooks/snooze.json` index and differ only in how long
-an exemption lasts, so list **one** of them.
+Plugins may ship their own; the core ships `snooze`, so the name resolves
+whatever `plugins` says ([habit-snooze.spec.md](habit-snooze.spec.md)). A
+snoozed issue stays dropped only while its file still holds the content that was
+approved with it; `snooze-until-changed` is a deprecated alias of the same
+transformer.
 
 | Transformer | An issue whose `key` is in the index is dropped… |
 |-------------|--------------------------------------------------|
-| `snooze` | …always. The exemption lasts until someone takes the key out of the index. **The default.** |
-| `snooze-until-changed` | …only while its file is unchanged since this branch left `[scope] branchBase` (measured from the merge base, so someone else's later work on the base ref lapses nothing). Commit a change to that file, or just edit it in the working tree, and its issues come back — the index is a ratchet, not an exemption list. Opt in by naming it. A path git cannot place counts as unchanged; a `branchBase` a real repository cannot resolve **fails the run** rather than silently exempting everything. |
+| `snooze` | …while its file still holds the approved content. Editing the file brings its issues back, and `--snooze` approves what is there now. **The default.** |
+| `snooze-until-changed` | Deprecated alias of `snooze`, kept so an existing config resolves. |
 
-```toml
-transformers = ["snooze-until-changed"]
-```
-
-Both read an index of keys the runner has already **anchored**: a sensor's paths
+The index it reads holds keys the runner has already **anchored**: a sensor's paths
 are re-expressed relative to the project before any key reaches the index
 ([sensor-interface.spec.md](sensor-interface.spec.md)), so a key recorded on one
 machine matches on every other. Nothing in a project's config has to arrange

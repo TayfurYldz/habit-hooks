@@ -81,9 +81,10 @@ python    = transformers([])       ∘ concat( ruff, deptry, line-count )
 — so `habit-sensors` itself is just the outermost group. Snoozing is a
 transformer: it reads every finding and drops the ones a project has chosen to
 ignore, passing the rest through. It sits at the outermost level because that is
-where it sees the whole run's findings. The core ships two of them — the default
-`snooze`, and the opt-in `snooze-until-changed`, whose exemptions lapse as soon
-as the file changes. See [habit-snooze.spec.md](habit-snooze.spec.md).
+where it sees the whole run's findings. The core ships `snooze`: an exemption
+holds while the file still has the content that was approved with it, so editing
+the file brings its issues back. `snooze-until-changed` is a deprecated alias.
+See [habit-snooze.spec.md](habit-snooze.spec.md).
 
 ## The finding
 
