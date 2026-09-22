@@ -1,0 +1,124 @@
+[
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 5,
+          "file": "complex.py",
+          "line": 1,
+          "message": "`maze` is too complex (13 > 10)",
+          "source": "ruff:C901"
+        },
+        "key": "complex.py"
+      }
+    ],
+    "smell": "high-complexity"
+  },
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 5,
+          "file": "long.py",
+          "line": 1,
+          "message": "Too many statements (60 > 50)",
+          "source": "ruff:PLR0915"
+        },
+        "key": "long.py"
+      }
+    ],
+    "smell": "oversized-function"
+  },
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 12,
+          "file": "broken.py",
+          "line": 1,
+          "message": "Expected a parameter or the end of the parameter list",
+          "source": "ruff:invalid-syntax"
+        },
+        "key": "broken.py"
+      },
+      {
+        "details": {
+          "column": 13,
+          "file": "broken.py",
+          "line": 1,
+          "message": "Expected `)`, found newline",
+          "source": "ruff:invalid-syntax"
+        },
+        "key": "broken.py"
+      }
+    ],
+    "smell": "parse-error"
+  },
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 12,
+          "file": "broad.py",
+          "line": 4,
+          "message": "Do not catch blind exception: `Exception`",
+          "source": "ruff:BLE001"
+        },
+        "key": "broad.py"
+      }
+    ],
+    "smell": "swallowed-exception"
+  },
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 5,
+          "file": "billing.py",
+          "line": 4,
+          "message": "Too many arguments in function definition (6 > 5)",
+          "source": "ruff:PLR0913"
+        },
+        "key": "billing.py"
+      }
+    ],
+    "smell": "too-many-parameters"
+  },
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 8,
+          "file": "billing.py",
+          "line": 1,
+          "message": "`os` imported but unused",
+          "source": "ruff:F401"
+        },
+        "key": "billing.py"
+      }
+    ],
+    "smell": "unused-import"
+  },
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "column": 5,
+          "file": "billing.py",
+          "line": 5,
+          "message": "Local variable `unused` is assigned to but never used",
+          "source": "ruff:F841"
+        },
+        "key": "billing.py"
+      }
+    ],
+    "smell": "unused-variable"
+  }
+]

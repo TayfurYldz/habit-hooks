@@ -42,6 +42,9 @@ def _target_files() -> list[Path]:
         *(REPO_ROOT / "plugins").glob("*/tests"),
     ]
     files = [path for root in roots for path in root.rglob("*.py")]
+    # Scenario samples are planted violations -- fixture data, some of it not
+    # even parseable, not source this repo holds to any invariant.
+    files = [path for path in files if "scenarios" not in path.parts]
     files.append(REPO_ROOT / "conftest.py")
     return files
 

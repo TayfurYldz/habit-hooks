@@ -10,13 +10,15 @@ in [smell-vocabulary.md](smell-vocabulary.md).
 plugins = ["python"]
 ```
 
-## ruff adapter maps rule IDs to canonical smells
+## ruff sensor maps rule IDs to canonical smells
 
-The `ruff` adapter selects `C901,PLR0913,PLR0915,F841,F401,BLE001` and a
-Python helper beside the sensor spec (`ruff_sensor.py`) groups the flat
-output into one finding per smell, stamping `source: "ruff:<code>"` on each
-issue. The shipped `ruff.toml` carries `max-args = 3`, so a four-argument
-function trips `PLR0913`.
+The `ruff` sensor is spelled inline in the plugin's `config.toml`: it runs
+`ruff check` with a pinned `--select` (the plugin's own vocabulary) and a jq
+transform beside the config (`ruff.jq`) groups the flat output into one finding
+per smell, stamping `source: "ruff:<code>"` on each issue. A code the transform
+has no smell for passes through under the code's own name, where the run's
+`uncoached` handling catches it. The shipped `ruff.toml` carries `max-args = 3`,
+so a four-argument function trips `PLR0913`.
 
 📄ruff.toml @plugins/python/src/habit_hooks_python/ruff.toml
 
@@ -342,11 +344,12 @@ habit-sensors: sensor 'deptry' failed: '${python}' '${dir}/deptry_sensor.py' '${
 
 ## A crashing ruff fails the run, never reports clean
 
-The `ruff` sensor runs a Python helper (`ruff_sensor.py`) rather than piping
-the tool into `jq`. A crashing `ruff` (here, a malformed `ruff.toml` that makes
-the tool exit non-zero) is a genuine crash, not a violation: ruff's own
-contract is 0 clean, 1 violations found, and the helper treats any other exit
-as broken, exiting 2 itself with nothing on stdout. `habit-sensors` then
+The `ruff` sensor is spelled inline, so ruff itself is the command the run
+spawns — no helper between them. A crashing `ruff` (here, a malformed
+`ruff.toml` that makes the tool exit non-zero) is a genuine crash, not a
+violation: ruff's own contract is 0 clean, 1 violations found, and the sensor
+declares exactly those as its success codes, so any other exit is broken.
+`habit-sensors` then
 raises, names the sensor on stderr, and exits 1, carrying only the reserved
 `incomplete-run` marker on stdout
 ([habit-sensors.spec.md](../../../docs/habit-sensors.spec.md)).
@@ -388,5 +391,5 @@ habit-sensors --all 2>&1 >/dev/null | sed -n 1p
 
 🖥️ ❌ 1
 ```text
-habit-sensors: sensor 'ruff' failed: '${python}' '${dir}/ruff_sensor.py' '${detector:ruff}' '${files}'
+habit-sensors: sensor 'ruff' failed: ruff check --output-format=json --select=C901,PLR0913,PLR0915,F841,F401,BLE001 '${files}'
 ```

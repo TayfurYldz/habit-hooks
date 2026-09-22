@@ -1,3 +1,7 @@
+# Scenario samples are planted violations — fixture data the plugin's approved
+# scenarios run the real ruff over, never source to lint.
+extend-exclude = ["scenarios"]
+
 [lint.mccabe]
 max-complexity = 10
 

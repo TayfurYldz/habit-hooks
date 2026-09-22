@@ -1,0 +1,17 @@
+[
+  {
+    "details": {},
+    "issues": [
+      {
+        "details": {
+          "file": "pyproject.toml",
+          "message": "'rich' defined as a dependency but not used in the codebase",
+          "module": "rich",
+          "source": "deptry:DEP002"
+        },
+        "key": "rich"
+      }
+    ],
+    "smell": "unused-dependency"
+  }
+]

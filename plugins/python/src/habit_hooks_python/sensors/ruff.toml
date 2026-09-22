@@ -1,1 +1,0 @@
-argv = ["${python}", "${dir}/ruff_sensor.py", "${detector:ruff}", "${files}"]

@@ -6,10 +6,10 @@ plugins = ["python", "generic"]
 
 # Discovery is opt-in (#97): name the source to scan, and nothing else is in
 # scope — there is no .git, .venv, node_modules or dist to exclude by hand. The
-# python plugin's own subtree is left unnamed on purpose: plugins/python/.../
-# ruff.toml and .../sensors/ruff.toml are literally named `ruff.toml`, so ruff's
-# upward config discovery from a file there would load them as its own config
-# (a sensor spec is not valid ruff config and crashes). Naming only the other
+# python plugin's own subtree is left unnamed on purpose: its shipped
+# plugins/python/.../ruff.toml is literally named `ruff.toml`, so ruff's
+# upward config discovery from a file there would load it as its own config
+# and apply its thresholds instead of the repo-root pyproject's. Naming only the other
 # plugins keeps that subtree out with no exclusion line; they lint cleanly
 # against the repo-root pyproject.
 #

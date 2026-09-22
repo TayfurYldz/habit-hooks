@@ -249,21 +249,20 @@ proves nothing about jscpd.** An ordinary checkout and CI are unaffected (no
 ignored segment in their paths). To check duplication from inside a worktree,
 run jscpd with positional relative paths, as the fallback branch does.
 
-### A sensor named `ruff.toml` collides with ruff's config discovery
+### A ruff.toml in a scanned subtree hijacks ruff's config discovery
 
-`plugins/python/sensors/ruff.toml` is a sensor spec (`argv = [...]`),
-but ruff treats any file literally named `ruff.toml` as its own config.
-A `ruff check` whose upward config-discovery walk passes through
-`plugins/python/sensors/` hard-fails with `unknown field 'argv'`.
-Harmless in normal consumer operation — the file lives inside the
-habit-hooks package, off the consumer's discovery path — but a future
-dogfooding ruff run from inside that tree will be mystifying. Point ruff
-at an explicit `--config pyproject.toml` if you hit this — never a
-separate repo-root `ruff.toml`, which ruff prefers over `pyproject.toml`
-on every local run and will silently shadow (and drift from) the real
-`[tool.ruff]` config. The dogfooding config
-(`.habit-hooks/config.toml`) already excludes the python-plugin subtree
-for the same reason.
+ruff treats any file literally named `ruff.toml` as its own config. A `ruff
+check` whose upward config-discovery walk passes through a directory holding
+one loads it — the shipped `plugins/python/src/habit_hooks_python/ruff.toml`
+(thresholds for consumers who copy it) silently applies to any file scanned
+under it, shadowing the repo-root `[tool.ruff]`. (Its old sibling sensor spec
+`sensors/ruff.toml` — which hard-failed with `unknown field 'argv'` — died with
+the ruff helper's migration to the inline form.) Harmless in normal consumer
+operation — the file lives inside the habit-hooks package, off the consumer's
+discovery path — but a ruff run from inside that tree will be mystifying. Point
+ruff at an explicit `--config pyproject.toml` if you hit this — never a separate
+repo-root `ruff.toml`, which ruff prefers over `pyproject.toml` on every local
+run and will silently shadow (and drift from) the real `[tool.ruff]` config.
 
 ### Each released package needs its own publish environment
 
