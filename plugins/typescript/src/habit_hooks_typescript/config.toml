@@ -5,7 +5,28 @@ language = "typescript"
 # in a monorepo — and reaching into it buries the project's own findings under
 # tens of thousands from other people's packages.
 files = ["**/*.ts", "**/*.tsx", "!**/node_modules/**"]
-sensors = ["eslint", "knip", "comment"]
+# Programs, not data: each helper keeps a judgement a static recipe cannot
+# spell — eslint retries the project's own config before the shipped one (the
+# #171 stopgap), knip merges a production pass gated on config markers into the
+# default one, comment is a bespoke ts-morph analyzer. `argv` as an inline
+# entry rather than a `command` string because a shell recipe cannot run where
+# there is no POSIX shell, which is every native Windows machine.
+sensors = [
+  # The helper spawns eslint itself, so this argv is the helper's own.
+  # `${args}` — the project's `[sensors.eslint] args` — comes first and the
+  # scoped files last, with `--` between them: eslint options and file paths
+  # are both bare words, so without a separator the helper could not tell an
+  # option's value from a path (`--config configs/eslint.mjs` ends in an
+  # extension it lints).
+  { name = "eslint", tool = "node", args = ["${dir}/sensors/eslint.cjs", "${args}", "--", "${files}"] },
+  # The helper spawns knip itself, so `${args}` — the project's own
+  # `[sensors.knip] args` — arrives as the helper's argv and is forwarded from
+  # there. A `--config` among them is the project naming its config, and the
+  # helper treats it as one: ours is not named alongside it, and the production
+  # gate reads the markers of the config the args chose.
+  { name = "knip", tool = "node", args = ["${dir}/sensors/knip.cjs", "${args}"] },
+  { name = "comment", tool = "node", args = ["${dir}/sensors/comment.cjs", "${files}"] },
+]
 transformers = []
 
 # node comes first because everything under it needs it: every one of these

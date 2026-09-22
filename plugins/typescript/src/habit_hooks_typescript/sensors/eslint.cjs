@@ -65,14 +65,14 @@ const NO_CONFIG_FOUND = "couldn't find an eslint.config";
 // What the scope may hand this sensor that eslint has nothing to say about.
 const LINTABLE = /\.(tsx?|jsx?|[cm]js)$/;
 
-// Where the sensor's own arguments stop and the scoped files begin, in the argv
-// `sensors/eslint.toml` spells. Read from the END: this one is the runner's, and
-// a project's own `[sensors.eslint] args` may spell one too.
+// Where the sensor's own arguments stop and the scoped files begin, in the
+// config.toml argv. Read from the END: this one is the runner's, and a
+// project's own `[sensors.eslint] args` may spell one too.
 const FILES_FOLLOW = "--";
 
 const UNSEPARATED_ARGV =
   "eslint sensor: its argv must spell '--' between the sensor's arguments and " +
-  "the scoped files — see sensors/eslint.toml\n";
+  "the scoped files — see the eslint entry in config.toml\n";
 
 // Only eslint can say whether the project has a config, because its lookup runs
 // from each linted FILE's directory (eslint 10 `lib/config/config-loader.js`) —

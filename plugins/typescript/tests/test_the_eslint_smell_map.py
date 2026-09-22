@@ -1,4 +1,4 @@
-"""The smell map in ``sensors/eslint.toml``, against the rule IDs eslint emits.
+"""The smell map in ``sensors/eslint.cjs``, against the rule IDs eslint emits.
 
 A rule the map does not name arrives under its raw ID — uncoached, and keyed
 differently from the same smell everywhere else in the vocabulary, so a snooze

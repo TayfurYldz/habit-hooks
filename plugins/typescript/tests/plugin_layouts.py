@@ -12,10 +12,10 @@ a Node helper. **Under** the project directory — the README's vendoring route
 Every layout copies the **whole** package, byte for byte. Byte for byte because a
 rewritten copy would prove only that the rewrite works; whole because that is what
 vendoring for real means (``docs/habit-hooks-init.spec.md``) and what a sensor has
-always needed — the ``.toml`` that names it, the config it falls back to, and the
-module beside it that spawns the tool it wraps. ``${dir}`` is the directory the
-sensor's ``.toml`` was resolved from, so those files can only ever be found
-together anyway.
+always needed — the ``config.toml`` that names it, the eslint config it falls
+back to, and the module beside it that spawns the tool it wraps. ``${dir}`` is
+the directory the plugin's ``config.toml`` was resolved from, so those files can
+only ever be found together anyway.
 """
 
 from __future__ import annotations

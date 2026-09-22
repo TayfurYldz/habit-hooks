@@ -107,17 +107,19 @@ def sensor_argv(
 ) -> list[str]:
     """The eslint sensor's argv, expanded as the runner expands it.
 
-    ``sensors/command_text.py`` substitutes ``${dir}`` inside the element it
-    stands in and replaces an element that is exactly ``${args}`` or ``${files}``
-    with the arguments it stands for — quoted not at all, because no shell reads
-    an argv.
+    Read from the plugin config's inline entry rather than restated here, so
+    the suite and the shipped recipe cannot drift apart. ``${dir}`` is the
+    plugin config's directory, so ``${dir}/sensors/eslint.cjs`` expands to the
+    helper inside the package.
     """
-    spec = tomllib.loads(SENSORS.joinpath("eslint.toml").read_text(encoding="utf-8"))
+    config = tomllib.loads((PACKAGE / "config.toml").read_text(encoding="utf-8"))
+    entry = next(e for e in config["sensors"] if e.get("name") == "eslint")
+    argv = [entry["tool"], *entry["args"]]
     lists = {"${args}": list(args), "${files}": list(files)}
     return [
         argument
-        for element in spec["argv"]
-        for argument in lists.get(element, [element.replace("${dir}", str(SENSORS))])
+        for element in argv
+        for argument in lists.get(element, [element.replace("${dir}", str(PACKAGE))])
     ]
 
 
