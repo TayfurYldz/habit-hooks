@@ -6,10 +6,11 @@ with a known smell and assert the canonical finding comes out, mapped to the
 smell keys in [smell-vocabulary.md](smell-vocabulary.md).
 
 `habit-sensors` is the installed CLI; `pmd` is on the system `PATH`. The sensor
-runs `pmd check --format json`, normalises PMD's exit-4-on-violations into a
-clean run, and reaches for a ruleset the project wrote only after checking the
-conventional Java locations, then falls back to the bundled `pmd-ruleset.xml`
-when the project has none (PMD itself never discovers one).
+is a shipped program (`pmd_sensor.py`): which ruleset is in force — a project's
+own `-R`, then the conventional Java locations, then the bundled
+`pmd-ruleset.xml` — is a judgement static args cannot spell. It runs
+`pmd check --format json` and normalises PMD's exit-4-on-violations into a
+clean run.
 
 📄.habit-hooks/config.toml
 ```toml

@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 SENSOR = (
-    Path(__file__).resolve().parents[1] / "src/habit_hooks_java/sensors/pmd_sensor.py"
+    Path(__file__).resolve().parents[1] / "src/habit_hooks_java/pmd_sensor.py"
 )
 RULESET_HEADER = """<?xml version="1.0"?>
 <ruleset name="custom" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"

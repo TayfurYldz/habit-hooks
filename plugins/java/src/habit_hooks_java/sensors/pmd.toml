@@ -1,1 +1,0 @@
-argv = ["${python}", "${dir}/pmd_sensor.py", "${detector:pmd}", "${args}", "--", "${files}"]

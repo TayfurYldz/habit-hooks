@@ -12,7 +12,12 @@ language = "java"
 # `build` is not in that class, and a bare `!**/build/**` here stopped a
 # python+java project scanning its own `scripts/build/*.py`.
 files = ["**/*.java", "!**/target/**/*.java", "!**/build/**/*.java"]
-sensors = ["pmd"]
+# A program, not data: whose ruleset is in force is a judgement — a project's
+# `-R` wins, then the conventional locations, then the bundled fallback — that
+# static args cannot spell (#171).
+sensors = [
+  { name = "pmd", tool = "${python}", args = ["${dir}/pmd_sensor.py", "${detector:pmd}", "${args}", "--", "${files}"] },
+]
 transformers = []
 
 # The pmd sensor spawns the pmd binary directly.

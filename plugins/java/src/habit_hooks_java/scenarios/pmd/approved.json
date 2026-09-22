@@ -1,0 +1,43 @@
+[
+  {
+    "smell": "unused-class-member",
+    "details": {},
+    "issues": [
+      {
+        "key": "Members.java",
+        "details": {
+          "file": "Members.java",
+          "line": 2,
+          "message": "Avoid unused private fields such as 'staleField'.",
+          "source": "pmd:UnusedPrivateField",
+          "content": "private int staleField = 1;"
+        }
+      },
+      {
+        "key": "Members.java",
+        "details": {
+          "file": "Members.java",
+          "line": 4,
+          "message": "Avoid unused private methods such as 'staleMethod()'.",
+          "source": "pmd:UnusedPrivateMethod",
+          "content": "private void staleMethod() {}"
+        }
+      }
+    ]
+  },
+  {
+    "smell": "deep-nesting",
+    "details": {},
+    "issues": [
+      {
+        "key": "Nested.java",
+        "details": {
+          "file": "Nested.java",
+          "line": 5,
+          "message": "Deeply nested if..then statements are hard to read",
+          "source": "pmd:AvoidDeeplyNestedIfStmts"
+        }
+      }
+    ]
+  }
+]

@@ -31,7 +31,7 @@ def _shipped_part_specs() -> list[Path]:
 
 def test_every_shipped_part_spells_argv() -> None:
     specs = _shipped_part_specs()
-    assert len(specs) == 8, specs  # a part added here must be judged too
+    assert len(specs) == 7, specs  # a part added here must be judged too
 
     shell_recipes = [path for path in specs if "argv" not in read_toml(path)]
 

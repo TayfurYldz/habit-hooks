@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 SENSOR = (
-    Path(__file__).resolve().parents[1] / "src/habit_hooks_java/sensors/pmd_sensor.py"
+    Path(__file__).resolve().parents[1] / "src/habit_hooks_java/pmd_sensor.py"
 )
 
 FIVE_PARAMETER_METHOD_WITH_UNUSED_IMPORT = """import java.io.File;

@@ -9,7 +9,6 @@ RULESET = (
     Path(__file__).resolve().parents[1]
     / "src"
     / "habit_hooks_java"
-    / "sensors"
     / "pmd-ruleset.xml"
 )
 PMD_NAMESPACE = {"pmd": "http://pmd.sourceforge.net/ruleset/2.0.0"}

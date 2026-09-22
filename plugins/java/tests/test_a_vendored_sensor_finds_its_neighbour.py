@@ -23,7 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SENSORS = Path(__file__).resolve().parents[1] / "src" / "habit_hooks_java" / "sensors"
+PACKAGE = Path(__file__).resolve().parents[1] / "src" / "habit_hooks_java"
 
 FIVE_PARAMETER_METHOD = """class Billing {
     double charge(double a, double b, double c, double d, double e) {
@@ -33,18 +33,22 @@ FIVE_PARAMETER_METHOD = """class Billing {
 """
 
 
-def _vendored_sensor(project: Path) -> Path:
-    """The plugin's sensor files copied where a project vendoring them puts them."""
-    sensors = project / ".habit-hooks" / "java" / "sensors"
-    shutil.copytree(SENSORS, sensors, ignore=shutil.ignore_patterns("__pycache__"))
-    return sensors / "pmd_sensor.py"
+def _vendored_plugin(project: Path) -> Path:
+    """The plugin's files copied where a project vendoring them puts them."""
+    plugin = project / ".habit-hooks" / "java"
+    shutil.copytree(
+        PACKAGE,
+        plugin,
+        ignore=shutil.ignore_patterns("__pycache__", "scenarios"),
+    )
+    return plugin / "pmd_sensor.py"
 
 
 def test_a_vendored_sensor_reports_a_smell_with_no_package_around_it(
     tmp_path: Path, pmd: str
 ) -> None:
     (tmp_path / "Billing.java").write_text(FIVE_PARAMETER_METHOD, encoding="utf-8")
-    sensor = _vendored_sensor(tmp_path)
+    sensor = _vendored_plugin(tmp_path)
 
     result = subprocess.run(
         [sys.executable, "-S", str(sensor), pmd, "--", "Billing.java"],
