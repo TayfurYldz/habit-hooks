@@ -440,7 +440,8 @@ habit-sensors --all | jq .
           "source": "comment"
         }
       }
-    ]
+    ],
+    "language": "python"
   }
 ]
 ```

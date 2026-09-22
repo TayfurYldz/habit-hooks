@@ -25,7 +25,10 @@ DOCSTRING_NODES = (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionD
 
 
 def docstring_issues(source: str, file: str) -> list[dict]:
-    tree = ast.parse(source)
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return []
     issues = []
     for node in ast.walk(tree):
         if not isinstance(node, DOCSTRING_NODES):
