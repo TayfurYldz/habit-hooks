@@ -1,552 +1,76 @@
 # Authoring plugins
 
-This is the end-to-end manual for building a plugin: a small installable package
-holding a sensor that finds a smell, the adapter trick for wrapping an existing
-linter, a transformer that reshapes findings, and a guide that coaches the fix.
-It runs top to bottom — each step builds on the last.
+A plugin is a small installable package: a `config.toml` saying what it
+contributes, each sensor spelled inline in that config, one jq file per wrapped
+tool, and — optionally — guides and scenarios. This page is the whole manual;
+the moving parts are in [architecture.md](architecture.md), the finding shape in
+[sensor-interface.spec.md](sensor-interface.spec.md), the config keys in
+[config.md](config.md).
 
-It assumes you already know the moving parts: what a plugin is and how resolution
-works ([architecture.md](architecture.md)), the exact finding shape every stage
-passes ([sensor-interface.spec.md](sensor-interface.spec.md)), and the config
-format ([config.md](config.md)). Read those first; this manual links back rather
-than re-explaining them.
+## A plugin is an installable package
 
-## 1. A plugin is an installable package
-
-A plugin is a self-contained **Python package** — no core code. You build it,
-publish it, and a consumer `pip install`s it; the core finds it at run time
-through a packaging **entry point**, never by looking inside this repo. A plugin
-does not need to live in the habit-hooks repo at all.
-
-The package follows one naming convention: the **distribution** is
-`habit-hooks-<name>` (what you `pip install`) and the **import package** is
-`habit_hooks_<name>` (where the files live). The sensors, guides, transformers,
-and `config.toml` ship as **package data** inside that import package:
+- Distribution `habit-hooks-<name>` (what you `pip install`), import package
+  `habit_hooks_<name>`, everything shipped as package data. A plugin does not
+  need to live in this repo — the core finds it through the
+  `habit_hooks.plugins` entry-point group.
 
 ```
 habit-hooks-<name>/
-  pyproject.toml                       # declares the dist + the entry point
+  pyproject.toml
   src/habit_hooks_<name>/
-    __init__.py                        # may be empty; must import cleanly
-    config.toml                        # what this plugin contributes, and the language it speaks
-    sensors/                           # how it finds smells       — package data
-    transformers/                      # how it reshapes findings  — package data
-    guides/                            # how it coaches each fix    — package data
+    __init__.py            # may be empty
+    config.toml            # language, files, sensors, detectors
+    scenarios/             # approved outputs, one directory per sensor
+    guides/                # per-smell coaching (optional)
 ```
-
-`pyproject.toml` registers the plugin under the `habit_hooks.plugins`
-entry-point group, mapping the **plugin name** (what a project lists in its
-`plugins`) to the **import package** whose bundled files are the plugin's
-defaults:
 
 ```toml
-# habit-hooks-lua/pyproject.toml
-[project]
-name = "habit-hooks-lua"
-version = "0.0.0"
-requires-python = ">=3.11"
-
+# pyproject.toml — the entry point is the only requirement beyond packaging
 [project.entry-points."habit_hooks.plugins"]
 lua = "habit_hooks_lua"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/habit_hooks_lua"]
 ```
 
-`config.toml` is where the plugin *declares the language it speaks*. The runner
-stamps that `language` onto every finding the plugin's sensors emit, so the
-mapper can prefer this plugin's guide for that language. A plugin is not a
-language — several plugins may declare the same one — and `generic` declares
-none. The concept is in [architecture.md](architecture.md); the field-by-field
-format is in [config.md](config.md).
+`config.toml` declares the language the plugin speaks and the tools it reaches
+for; every key is in [config.md](config.md).
 
 ```toml
 # src/habit_hooks_lua/config.toml
 language = "lua"
-files = ["**/*.lua"]           # what this plugin's sensors scan by default
-sensors = ["todo"]             # the sensors this plugin enables, in order
-detectors = [                  # the external tools those sensors reach for
-  { name = "jq", kind = "command", install = "brew install jq" },
-]
+files = ["**/*.lua"]
+sensors = [{ tool = "some-linter", args = ["--json", "${files}"], transform = "some-linter.jq" }]
+detectors = [{ name = "some-linter", kind = "command", install = "brew install some-linter" }]
 ```
 
-`detectors` is how the plugin says what a consumer has to have installed for it
-to work. Your sensors spawn tools you did not ship — the one below pipes `grep`
-through `jq` — and a missing one is a crashed sensor, which is a poor way to
-learn you needed it. Each entry names the tool, how to look for it (`command`
-for one on `PATH`, `node-module` for a package read as a library) and the
-command that installs it, so a consumer can be told what is missing *and*
-handed the fix. Declaring one costs you nothing else: it is a statement, not a
-dependency, and it does not make the tool appear. The field-by-field format,
-and what a malformed entry is refused with, are in [config.md](config.md).
+- `detectors` names each external tool, how to find it (`command` on PATH,
+  `node-module` read by node), and the install command a consumer is handed when
+  it is missing. Declaring is a statement, not a dependency.
+- A sensor naming a tool no plugin declares is refused as the config loads; a
+  declared tool that is not installed is the ordinary missing-tool notice.
+- `search_paths` adds project directories ahead of PATH (a language's own `bin`).
 
-A consumer who installs the package and lists `lua` in `plugins` gets these
-defaults; to *tune* them per project they drop overriding files under
-`.habit-hooks/lua/`, which win over the installed package data
-([architecture.md](architecture.md)). Everything below adds package-data files
-into this bundle; §6 builds, installs, and runs the finished package.
+## A sensor is one inline table
 
-## 2. Write a sensor
+One shape for every sensor — an entry in the plugin's `sensors` list:
 
-A sensor *senses*: it runs a tool or a script over the files in scope and prints
-a findings array. It takes no findings as input. Each sensor is one
-`sensors/<name>.toml` — both the static descriptor and the recipe for running it.
-
-```toml
-# src/habit_hooks_lua/sensors/todo.toml
-command = "grep -Hrn TODO ${files} | jq -Rn '<transform>'"   # this or argv
-files = ["**/*.lua"]                                        # optional; overrides the plugin globs
-```
-
-| Field | Required | Meaning |
+| Field | | Meaning |
 |-------|----------|---------|
-| `command` | this or `argv` | Shell command, run through `bash -c`; it must print a JSON array of findings. Take it for syntax a list cannot carry — a pipe into `jq`, `set -o pipefail` — and know that it needs a POSIX shell, which native Windows has not. `${files}` expands to the scoped file list; `${dir}` to this spec's directory (for bundled scripts); `${args}` to this sensor's `args`; `${python}` to the interpreter running habit-sensors (use it to invoke bundled Python scripts portably, since a bare `python` may not be on PATH); `${detector:<name>}` to the file this project runs for a tool the plugin declared (below); `${config}` to `--config <path>` when the run named one (else nothing) — see [transformers](#4-write-a-transformer). Everything spliced in is quoted first, so a filename can never be read as syntax. |
-| `argv` | this or `command` | The argument list to spawn, with no shell in between: `argv = ["ruff", "check", "${files}"]`. Nothing is quoted, because nothing reads it as syntax — a filename with a space, a quote or a `$` in it arrives as the one argument it is. Prefer it whenever you do not need shell syntax: it is the only form that runs where there is no POSIX shell. The same placeholders serve, in two kinds. `${python}`, `${dir}` and `${detector:<name>}` are substituted *inside* an element, so `"${dir}/count.py"` stays one argument; `${files}`, `${args}` and `${config}` each expand into arguments of their own and must therefore be an element of their own — `"--paths=${files}"` is refused rather than joined into one very long filename. |
-| `args` | no | Default CLI args, expanded into `command` via `${args}`. They live here, not in the plugin `config.toml` (where `sensors` as a list and `[sensors.<name>]` as a table would collide). A project replaces them via `[sensors.<name>] args`. Set them only on a `command` that spells `${args}`: args a command cannot expand stop the run rather than being dropped (below). |
-| `files` | no | Narrows the run's scope to these globs for this sensor alone — a subset of what the scope already picked, never a second discovery pass. A project replaces them via `[sensors.<name>] files`. |
-
-`${detector:<name>}` is how a sensor names the tool it wraps. It expands to the
-file this project runs for that tool — the same lookup that decides whether the
-tool is reported missing — so a Windows `.cmd` or `.bat` shim is reached, which a
-bare command name is not. The tool must be one the plugin declares in its
-`config.toml` `detectors` with `kind = "command"`: a name no active plugin
-declares, and a name declared `node-module`, are both refused as the config loads
-(exit 2), naming the sensor. A declared tool that is simply not installed stays
-the ordinary missing-tool failure — the sensor is never spawned, and the notice
-names the tool it needed, without your script having to say so.
-
-A bare `argv[0]` that names a declared `command` detector is resolved to that
-same file, along the detector's own `search_paths`, and fails the same way when
-it is not installed; only a name no plugin declares is left for the spawn to
-look up along the default path.
-
-Hand that file to a bundled script rather than looking the tool up again inside
-it. Every shipped sensor that names a tool passes it as the script's first
-argument:
-
-```toml
-# src/habit_hooks_python/sensors/ruff.toml
-argv = ["${python}", "${dir}/ruff_sensor.py", "${detector:ruff}", "${files}"]
-```
-
-Whatever the command prints is taken verbatim as the sensor's findings; a clean
-run prints `[]`, never nothing ([sensor-interface.spec.md](sensor-interface.spec.md)).
-
-The command may exit `0` or `1` — `1` is how most linters say "I found things",
-so it is accepted *alongside* the findings that justify it. Any other code, or a
-non-zero exit with nothing on stdout, is a crashed sensor: the run fails, and
-whatever the command wrote to stderr is carried into the notice so the tool's own
-diagnosis reaches the user ([habit-sensors.spec.md](habit-sensors.spec.md)). Pipe
-a tool into `jq` with `set -o pipefail`, or the tool's failing exit is swallowed
-by a `jq` that succeeded on empty input.
-
-Every finding has the shape `{smell, language?, details, issues:[{key, details}]}`:
-one finding per smell, one `issues` entry per occurrence, the issue `key` being
-what snoozing acts on (default: the file path). The `smell` key is the sensor's
-translation of the tool's output into the shared vocabulary
-([smell-vocabulary.md](smell-vocabulary.md)) — the mapper routes on it, never on
-the tool — and a key the catalogue has no row for coaches through the generic
-`uncoached.md` guidance instead.
-
-### A native sensor: grep for TODO, shaped with jq
-
-The command pipes `grep` through `jq` to emit one `warning-comment` finding whose
-`issues` lists each TODO. Run the pipeline directly against a sample file to see
-exactly what the sensor emits. The `-H` flag forces grep to print the `file:`
-prefix even when the scope is a single file — GNU grep omits it otherwise, which
-would break the capture on Linux.
-
-📄src/util.lua
-```lua
-local function add(a, b)
-  -- TODO: validate inputs
-  return a + b
-end
-```
-
-```bash
-grep -Hrn TODO src | jq -Rn '[
-  inputs | capture("(?<file>[^:]+):(?<line>[0-9]+):(?<text>.*)")
-  | { key: .file,
-      details: { file: .file,
-                 line: (.line | tonumber),
-                 message: (.text | gsub("^\\s*--\\s*"; "")) } }
-] | { smell: "warning-comment", details: {}, issues: . }'
-```
-
-🖥️ ✅
-```text
-{
-  "smell": "warning-comment",
-  "details": {},
-  "issues": [
-    {
-      "key": "src/util.lua",
-      "details": {
-        "file": "src/util.lua",
-        "line": 2,
-        "message": "TODO: validate inputs"
-      }
-    }
-  ]
-}
-```
-
-A sensor emits an *array* of findings; here it is a single one. Anything `jq`
-cannot express becomes a script — `command = "${python} ${dir}/todo.py ${files}"` —
-as long as it prints the same array.
-
-### A sensor whose command has no `${args}` refuses arguments
-
-`${args}` is the only way arguments reach the tool, so a sensor that omits it
-takes none — and a project that sets `[sensors.<name>] args` for it is asking for
-something the sensor cannot do. The run stops and says so, rather than accepting
-the setting and dropping it: args that never reach the tool are a wrong answer
-delivered as a clean one.
-
-📄.habit-hooks/config.toml
-```toml
-plugins = ["demo"]
-
-[sensors.todo]
-args = ["--ignore-case"]
-```
-
-📄.habit-hooks/demo/config.toml
-```toml
-files = ["**/*.lua"]
-sensors = ["todo"]
-```
-
-📄.habit-hooks/demo/sensors/todo.toml
-```toml
-command = "grep -Hrn TODO ${files} | jq -Rn '[]'"
-```
-
-📄src/util.lua
-```lua
--- TODO: validate inputs
-```
-
-```bash
-habit-sensors --all
-```
-
-🖥️ ❌ 2
-
-🚨
-```text
-habit-sensors: sensor 'todo' cannot take arguments — its command has no '${args}' to expand ['--ignore-case'] into; remove the 'args', clear a plugin's own default with [sensors.todo] args = [], or override the sensor with a command that spells '${args}'
-```
-
-The same refusal covers a plugin that ships an unusable `args` default in its own
-`sensors/<name>.toml`: it is the same packaging mistake, and a consumer who needs
-the run to proceed clears it with `[sensors.<name>] args = []` — an override
-replaces wholesale, so an empty list is a value, not an absence.
-
-## 3. The adapter technique
-
-Most linters already emit JSON. An **adapter sensor** is just a native sensor
-whose `command` pipes that JSON through `jq` to reshape it into findings — there
-is no separate mapping language, the transform lives in the command.
-
-```toml
-# src/habit_hooks_python/sensors/ruff.toml
-command = "ruff check --output-format json ${files} | jq '<transform>'"
-```
-
-The two examples below are pure `jq`, so they run today with no habit-hooks code.
-Each maps a tool's flat or nested output into **one finding per smell**, grouping
-occurrences into `issues` with `key` = the file.
-
-### Ruff's flat list maps with one jq expression
-
-Ruff prints a flat array of violations. Group them by smell, then by file into
-`issues`.
-
-⌨️
-```json
-[
-  {
-    "code": "PLR0913",
-    "filename": "src/billing.py",
-    "location": { "row": 2, "column": 1 },
-    "message": "Too many arguments in function definition"
-  }
-]
-```
-
-```bash
-jq 'map(. + {smell: ({"PLR0913": "too-many-parameters"}[.code])})
-  | group_by(.smell)
-  | map({
-      smell: .[0].smell,
-      details: {},
-      issues: map({
-        key: .filename,
-        details: {
-          file: .filename,
-          line: .location.row,
-          column: .location.column,
-          message: .message,
-          source: ("ruff:" + .code)
-        }
-      })
-    })'
-```
-
-🖥️ ✅
-```text
-[
-  {
-    "smell": "too-many-parameters",
-    "details": {},
-    "issues": [
-      {
-        "key": "src/billing.py",
-        "details": {
-          "file": "src/billing.py",
-          "line": 2,
-          "column": 1,
-          "message": "Too many arguments in function definition",
-          "source": "ruff:PLR0913"
-        }
-      }
-    ]
-  }
-]
-```
-
-### ESLint's per-file messages flatten with `.messages[]`
-
-ESLint nests messages under each file. Flatten with `.messages[]`, carrying the
-`filePath` down, then group the same way.
-
-Guard the rule ID before you index the smell map with it. ESLint raises messages
-about a *file* rather than a rule — an ignored file, an `eslint-disable` nothing
-used — and those carry `ruleId: null`. Indexing an object with `null` is a jq
-**error**, not a miss, so it kills the sensor and every smell in the run with it;
-`select` them out first.
-
-⌨️
-```json
-[
-  {
-    "filePath": "src/billing.ts",
-    "messages": [
-      {
-        "ruleId": "max-params",
-        "line": 2,
-        "column": 22,
-        "message": "Too many parameters (4)"
-      }
-    ]
-  }
-]
-```
-
-```bash
-jq '[.[] | .filePath as $file | .messages[] | select(.ruleId != null) | {
-      smell: {"max-params": "too-many-parameters"}[.ruleId],
-      file: $file, line: .line, column: .column,
-      message: .message, ruleId: .ruleId
-    }]
-  | group_by(.smell)
-  | map({
-      smell: .[0].smell,
-      details: {},
-      issues: map({
-        key: .file,
-        details: {
-          file: .file,
-          line: .line,
-          column: .column,
-          message: .message,
-          source: ("eslint:" + .ruleId)
-        }
-      })
-    })'
-```
-
-🖥️ ✅
-```text
-[
-  {
-    "smell": "too-many-parameters",
-    "details": {},
-    "issues": [
-      {
-        "key": "src/billing.ts",
-        "details": {
-          "file": "src/billing.ts",
-          "line": 2,
-          "column": 22,
-          "message": "Too many parameters (4)",
-          "source": "eslint:max-params"
-        }
-      }
-    ]
-  }
-]
-```
-
-## 4. Write a transformer
-
-A transformer *transforms*: it receives the whole findings array on **stdin** and
-prints a new one on **stdout**. It may add, drop, or rewrite findings. Each is one
-`transformers/<name>.toml` with a `command` — or an `argv`, the same two forms a
-sensor has — listed in the plugin's `config.toml`; the runner pipes the
-concatenated sensor output through the plugin's transformers in order
-([architecture.md](architecture.md)).
-
-```toml
-# src/habit_hooks_lua/transformers/tag-fixme.toml
-command = "jq '<transform>'"
-```
-
-A transformer runs as its own process, so it cannot see the run's `--config` on
-its own. Add `${config}` to its command and the runner expands it to
-`--config <path>` when the run named one, or to nothing otherwise — the whole
-flag, so a `--config`-less run leaves no dangling argument. A transformer that
-wants the run's config names it explicitly, and reads the same file the sensors
-stage scoped from rather than always `.habit-hooks/config.toml`:
-
-```toml
-# transformers/baseline.toml
-argv = ["${python}", "-m", "baseline_check", "${config}"]
-```
-
-> **A transformer must pass through every finding it does not handle.**
-
-That single rule is what lets transformers compose freely. The transform below
-annotates `warning-comment` findings and leaves everything else untouched — note
-the `else .` branch carrying unrelated findings through verbatim.
-
-⌨️
-```json
-[
-  { "smell": "warning-comment", "details": {},
-    "issues": [{ "key": "src/util.lua", "details": { "file": "src/util.lua", "line": 2, "message": "TODO: validate inputs" } }] },
-  { "smell": "too-many-parameters", "details": {},
-    "issues": [{ "key": "src/billing.py", "details": { "file": "src/billing.py", "line": 7 } }] }
-]
-```
-
-```bash
-jq 'map(if .smell == "warning-comment"
-        then .details += {reviewed: true}
-        else . end)'
-```
-
-🖥️ ✅
-```text
-[
-  {
-    "smell": "warning-comment",
-    "details": {
-      "reviewed": true
-    },
-    "issues": [
-      {
-        "key": "src/util.lua",
-        "details": {
-          "file": "src/util.lua",
-          "line": 2,
-          "message": "TODO: validate inputs"
-        }
-      }
-    ]
-  },
-  {
-    "smell": "too-many-parameters",
-    "details": {},
-    "issues": [
-      {
-        "key": "src/billing.py",
-        "details": {
-          "file": "src/billing.py",
-          "line": 7
-        }
-      }
-    ]
-  }
-]
-```
-
-To *replace* a finding, emit the replacement and drop the original; to *add*,
-append. There is no dependency graph and no special mode — order between
-transformers is the only thing that matters.
-
-## 5. Write a guide
-
-A guide coaches the fix for **one smell**. It lives in `guides/` and resolves
-across the override chain; a finding's `language` selects this plugin's guide
-before the generic one ([architecture.md](architecture.md)).
-
-### `guides/<smell>.md` — a Jinja2 template
-
-The mapper renders `guides/<smell>.md` once against the whole finding: read
-smell-level facts straight off `details`, and loop `issues` for the
-per-occurrence ones, reading each occurrence's own `details`.
-
-```markdown
-<!-- src/habit_hooks_lua/guides/warning-comment.md -->
-{% for v in issues -%}
-{{ v.details.file }}:{{ v.details.line }} — {{ v.details.message }}
-{% endfor %}
-Resolve or remove these markers before merging.
-```
-
-`smell` and `language` are in scope too, and `details.<field>` reads a
-smell-level fact (a threshold, say). A plain markdown file with no interpolation
-is the degenerate case; templates may `{% include %}` partials from the same
-override chain.
-
-### `guides/<smell>.<ext>` — a script run by a runner
-
-A guide can instead be a script in any language. The core does **not** run it
-directly: it looks up the command registered for `<ext>` under `[runners]` and
-runs `<command> guides/<smell>.<ext>` with the finding on stdin. The script's
-stdout/stderr is shown to the agent and its exit code drives pass/fail (non-zero
-contributes exit 1 for an `enforced` smell; a spawn/timeout failure always
-blocks).
-
-`.md` is always rendered; **every other extension needs a runner, or nothing
-executes**. A plugin therefore ships its **own** `[runners]` in its
-`config.toml`, so its language-specific fixers run by default — core registers
-only the `.md` renderer.
-
-```toml
-# src/habit_hooks_python/config.toml
-language = "python"
-files = ["**/*.py"]
-
-[runners]
-py = "python"                  # guides/<smell>.py -> python guides/<smell>.py
-```
-
-Author a guide only where the language needs its own wording; otherwise the smell
-falls back to the generic guide, or the `uncoached.md` default. Keep prompts short
-and outcome-focused — use the `habit-hooks-prompting` skill's ROSE pattern.
-
-Keep plugin changes local:
-
-- Avoid duplicating prompt files from `generic`; reuse its guide unless the
-  language genuinely needs different coaching. Raise a framework change instead
-  when the difference is only formatting.
-- Avoid modifying the core unless the framework change has been agreed with the
-  maintainers first.
-
-### A plugin's own `[runners]` runs its guide with no project config
-
-A plugin's `[runners]` is merged into the run (project last), so a
-language-specific fixer runs without the project registering it. Here the project
-only names the plugin; the `sh` runner and the `.sh` guide both ship inside the
-plugin, and the fixer's output reaches the agent.
+| `tool` | required | the tool's name (a declared detector, resolved to the file this project runs) or a shipped program: `"${dir}/helper.py"` |
+| `args` | | the argument list. `${files}` is the scoped files, each glob-escaped so a filename is a name, never a pattern; `${dir}`, `${python}`, `${detector:<name>}` and `${config}` substitute inside an element |
+| `success_exit_codes` | optional | default `[0]`. Most linters exit `1` to say "I found things" — declare `[0, 1]` and the findings are trusted alongside it |
+| `transform` | optional | a jq program beside the config; absent → the tool's stdout is already findings JSON |
+| `report` | optional | the framework hands the tool a fresh file for `${report}` and reads it back — for tools that write reports instead of printing |
+| `files` | optional | narrows the run's scope for this sensor alone |
+| `name` | optional | the sensor's name; defaults to `tool`, required when the tool is a placeholder or path |
+
+The framework owns everything around the tool: resolving it, judging the exit
+code, timeouts, Windows shims. Output that is not JSON, a transform that does
+not answer one findings array, or a finding outside the contract — each is the
+sensor's own failed run, carrying the tool's last words. Never a silent clean.
+
+### A sensor end to end
+
+A stub linter (any executable printing JSON will do — here a shell script)
+mapped to findings by a jq program, run exactly as a consumer's project runs it.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -555,137 +79,102 @@ plugins = ["demo"]
 
 📄.habit-hooks/demo/config.toml
 ```toml
-[runners]
-sh = "bash"
+files = ["**/*.todo"]
+sensors = [{ tool = "stub-lint", args = ["${files}"], transform = "map.jq", success_exit_codes = [0, 1] }]
+detectors = [{ name = "stub-lint", kind = "command", install = "chmod +x tools/stub-lint", search_paths = ["tools"] }]
 ```
 
-📄.habit-hooks/demo/guides/oversized-file.sh
+📄.habit-hooks/demo/map.jq
+```jq
+map({smell: .rule, details: {}, issues: [{key: .file, details: {file: .file, line: .line, message: .message}}]})
+```
+
+📄tools/stub-lint
 ```sh
-echo "src/legacy.ts is too large — split it into focused modules."
+#!/bin/sh
+out="["
+first=yes
+for file in "$@"; do
+  [ "$first" = yes ] || out="$out,"
+  first=
+  out="$out{\"file\":\"$file\",\"line\":2,\"rule\":\"STUB-1\",\"message\":\"stub violation\"}"
+done
+printf '%s]\n' "$out"
+exit 1
 ```
 
-⌨️
-```json
-[
-  {
-    "smell": "oversized-file",
-    "details": { "lines": 800 },
-    "issues": [
-      { "key": "src/legacy.ts", "details": { "file": "src/legacy.ts" } }
-    ]
-  }
-]
+📄src/app.todo
+```text
+write the real adapter
 ```
 
 ```bash
-habit-mapper
+chmod +x tools/stub-lint && habit-sensors --all
 ```
 
 🖥️ ✅
 ```text
-── oversized-file (1 issue) ──
-
-src/legacy.ts is too large — split it into focused modules.
+[{"smell": "STUB-1", "details": {}, "issues": [{"key": "src/app.todo", "details": {"file": "src/app.todo", "line": 2, "message": "stub violation"}}]}]
 ```
 
-## 6. Build it, install it, run it
+## The transform is jq
 
-Now assemble the `habit-hooks-lua` package from the pieces above, install it the
-way a consumer would, and run the whole pipeline against a Lua file. A plugin
-ships as a wheel, so a sensor must print a JSON **array** — here the `jq` from §2
-wrapped in `[ … ]` so its single object becomes a one-element array.
+`transform` names a jq program shipped beside the config. Its contract:
 
-📄habit-hooks-lua/pyproject.toml
-```toml
-[project]
-name = "habit-hooks-lua"
-version = "0.0.0"
-requires-python = ">=3.11"
+- **stdin** (as jq input): the tool's stdout, parsed as JSON.
+- **stdout**: exactly one findings array — `[{smell, details, issues: [{key,
+  details}]}]`, one finding per smell, one `issues` entry per occurrence, `key`
+  being what snoozing acts on (usually the file path).
+- The result is validated against the findings contract; any miss — a program
+  that errors, answers nothing, or answers a non-array — is the sensor's failed
+  run, never a silent clean one.
 
-[project.entry-points."habit_hooks.plugins"]
-lua = "habit_hooks_lua"
+jq is the whole mapping language: what a tool's output means is the plugin's to
+say, and it is said in one small file a tool's format change edits.
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+## Smells are an open vocabulary
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/habit_hooks_lua"]
+Map the codes you know to catalogue smells
+([smell-vocabulary.md](smell-vocabulary.md)) and pass the rest through under
+their own name — `smell: .rule` above, not a lookup table with a default of
+"drop". An unmapped code becoming a finding of its own name is caught by
+`uncoached`, which the project tunes ([config.md](config.md)); a dropped code is
+a clean run nobody ran.
+
+## Scenarios: approve what your sensor finds
+
+Each sensor may ship an approved-output scenario — the drift gate for everything
+above:
+
+```
+scenarios/<sensor>/
+  sample/          the sample codebase; it is the run's scope
+  approved.json    the findings the sensor must produce over sample/ — findings
+                   JSON only, never guide strings
+  scenario.toml    optional: tool = "<name>" — a machine without the tool skips
+                   the scenario (visibly, in pytest -rs); a machine with it never does
 ```
 
-📄habit-hooks-lua/src/habit_hooks_lua/__init__.py
-```python
-```
+- The scenario runs the sensor through the plugin's own config, exactly as a
+  run does. The gate is `tests/test_approved_scenarios.py`; ship `scenarios/`
+  as package data so it reaches the installed plugin.
+- To regenerate after a deliberate change: put `[]` in `approved.json`, run the
+  gate, and copy the "this run" side of the diff it prints.
 
-📄habit-hooks-lua/src/habit_hooks_lua/config.toml
-```toml
-language = "lua"
-files = ["**/*.lua"]
-sensors = ["todo"]
-detectors = [
-  { name = "jq", kind = "command", install = "brew install jq" },
-]
-```
+## Guides and transformers
 
-📄habit-hooks-lua/src/habit_hooks_lua/sensors/todo.toml
-```toml
-command = "grep -Hrn TODO ${files} | jq -Rn '[[inputs | capture(\"(?<file>[^:]+):(?<line>[0-9]+):(?<text>.*)\") | { key: .file, details: { file: .file, line: (.line | tonumber), message: (.text | gsub(\"^\\\\s*--\\\\s*\"; \"\")) } }] | { smell: \"warning-comment\", details: {}, issues: . }]'"
-```
+- `guides/<smell>.md` is a Jinja2 template rendered against the whole finding;
+  write one only where the language needs its own wording, else the generic or
+  `uncoached` guide serves. Keep prompts short and outcome-focused.
+- Script guides run through `[runners]` (extension → command,
+  [config.md](config.md)).
+- A transformer receives the whole findings array on stdin and prints a new
+  one; it must pass through every finding it does not handle
+  ([architecture.md](architecture.md)).
 
-📄habit-hooks-lua/src/habit_hooks_lua/guides/warning-comment.md
-```markdown
-{% for v in issues -%}
-{{ v.details.file }}:{{ v.details.line }} — {{ v.details.message }}
-{% endfor %}
-Resolve or remove these markers before merging.
-```
+## The legacy sensor form is going away
 
-Build the wheel and install it into a local target dir, then point Python at it —
-exactly what `pip install habit-hooks-lua` would do, minus a registry. The core
-discovers the plugin through its entry point, no path into this package required.
-
-```bash
-uv pip install --quiet --target vendor ./habit-hooks-lua
-```
-
-✏️PYTHONPATH
-```text
-vendor
-```
-
-The project turns the installed plugin on by listing it — and nothing else. The
-plugin's own `files` scopes the run to Lua sources, so the sensor sees only them
-without the project restating it ([config.md](config.md)).
-
-📄.habit-hooks/config.toml
-```toml
-plugins = ["lua"]
-```
-
-📄src/util.lua
-```lua
-local function add(a, b)
-  -- TODO: validate inputs
-  return a + b
-end
-```
-
-```bash
-habit-sensors --all | habit-mapper
-```
-
-🖥️ ✅
-```text
-── warning-comment (1 issue) ──
-
-src/util.lua:2 — TODO: validate inputs
-
-Resolve or remove these markers before merging.
-```
-
-A Lua file with a `TODO` now surfaces `warning-comment`, routed to your guide —
-from an installed package the core never had to be told the location of. What
-each stage guarantees is pinned in
-[sensor-interface.spec.md](sensor-interface.spec.md),
-[habit-sensors.spec.md](habit-sensors.spec.md), and
-[habit-mapper.spec.md](habit-mapper.spec.md).
+`sensors/<name>.toml` spec files with `command`/`argv` are the pre-inline form
+and pending removal — do not start a new one. A migration is mechanical: the
+argv becomes `tool` + `args`, the jq pipeline beside the script becomes the
+`transform`.
