@@ -1,17 +1,7 @@
-"""Run the jscpd CLI and print ``duplicated-code`` findings.
+"""Run jscpd against a temp report and print ``duplicated-code`` findings.
 
-jscpd writes its result to a report file rather than stdout, and exits non-zero
-when duplication crosses its configured threshold. This wrapper runs it against a
-temp report, reads that report regardless of the exit code, and shapes each clone
-into a finding.
-
-The config it runs under is the project's whenever the project has one: the
-plugin's bundled ``.jscpd.json`` arrives as ``--fallback-config`` and is reached
-for only when jscpd's own discovery would come up empty.
-
-jscpd itself arrives as the first argument, already resolved to a file: the
-sensor's recipe names it (``${detector:jscpd}`` in ``jscpd.toml``) and the run
-hands over what this project runs for that name.
+Whose config is in play is a judgement, not data (#125), so this stays a
+program until the framework owns the policy (#171).
 """
 
 from __future__ import annotations
@@ -35,11 +25,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def manifest_of(project: Path) -> dict:
-    """``package.json``'s contents, or nothing — unreadable counts as absent.
-
-    jscpd warns about a manifest it cannot parse and carries on with its other
-    sources. Raising here instead would let a typo in a file this sensor only
-    peeks at turn every run into a run that never completed.
+    """``package.json``'s contents, or nothing — a typo in a file this
+    sensor only peeks at must not fail the run.
     """
     manifest = project / PACKAGE_JSON
     if not manifest.is_file():
@@ -52,12 +39,8 @@ def manifest_of(project: Path) -> dict:
 
 
 def project_configures_jscpd(project: Path) -> bool:
-    """Whether jscpd's own discovery finds a config of the project's in ``project``.
-
-    jscpd reads exactly two places, both relative to the directory it runs in:
-    ``.jscpd.json``, then a ``jscpd`` key in ``package.json`` (``prepareOptions``
-    in jscpd 4's ``init/options``). Answering from any wider set would tell a
-    project its config was honoured where jscpd would never have read it.
+    """Whether jscpd's own discovery finds a config of the project's: a
+    ``.jscpd.json``, or a ``jscpd`` key in ``package.json`` — those two only.
     """
     if (project / JSCPD_CONFIG).is_file():
         return True
@@ -69,16 +52,10 @@ def scan_paths(config: str) -> list[str]:
 
 
 def config_arguments(fallback: str, project: Path) -> list[str]:
-    """The config and scan paths to hand jscpd, given whose config is in play.
-
-    A project that configures jscpd itself is handed nothing: jscpd's own
-    discovery reads that config, and resolves its relative ``path`` entries
-    against the project, because that is where the config sits.
-
-    Ours is named only when the project has none — and then its ``path`` has to
-    travel as positional arguments, because jscpd resolves a config's relative
-    ``path`` against the *config file's* directory, and ours sits inside the
-    installed package where ``src`` names nothing the project owns.
+    """Ours is named only when the project has none (#125); its ``path``
+    then travels as positionals, because jscpd resolves a config's relative
+    ``path`` against the config file's directory, where ``src`` names
+    nothing the project owns.
     """
     if project_configures_jscpd(project):
         return []
@@ -88,12 +65,7 @@ def config_arguments(fallback: str, project: Path) -> list[str]:
 def run_jscpd(
     jscpd: str, arguments: list[str], output: Path
 ) -> subprocess.CompletedProcess[str]:
-    """What jscpd said, spawned as the file it was handed rather than by name.
 
-    A project that has no jscpd never reaches here: the run resolves the name
-    the recipe holds, and a name it cannot resolve fails the sensor as the
-    missing command it is, before anything is spawned.
-    """
     return subprocess.run(
         [jscpd, "--reporters", "json", "--output", str(output), *arguments],
         capture_output=True,
@@ -130,19 +102,10 @@ def findings(report: Path) -> list[dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Print the findings, or fail the way the tool did.
-
-    Neither signal jscpd gives is conclusive alone, so both are read:
-
-    - **exit 0, no report** — it scanned and found no clones. jscpd only writes a
-      report when it has duplicates to put in it, so this is the ordinary clean
-      case and must stay clean.
-    - **exit 0, report** — clones under the configured threshold.
-    - **non-zero, report** — duplication crossed the threshold. A real result;
-      the report is read regardless of the exit code.
-    - **non-zero, no report** — jscpd itself broke. Saying ``[]`` here would be
-      this wrapper promising a clean run on behalf of a tool that never
-      delivered one, so its complaint is forwarded and the sensor fails.
+    """Print the findings, or fail the way the tool did: a report is read
+    regardless of the exit code (a crossed threshold is a result, not a
+    failure), and no report with a non-zero exit is a complaint, not a
+    clean run.
     """
     args = parse_args(argv if argv is not None else sys.argv[1:])
     arguments = config_arguments(args.fallback_config, Path.cwd())

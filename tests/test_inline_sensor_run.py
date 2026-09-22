@@ -1,13 +1,5 @@
-"""The declarative sensor's one pipeline: spawn, judge, transform, validate.
-
-Every case here is an inline ``{ tool = ..., args = [...] }`` entry whose tool is
-a fixture script the case wrote — a fake linter printing a made-up JSON shape,
-exiting a chosen code. What is under test is the framework half: exit codes
-against ``success_exit_codes``, the jq transform, the findings contract, and
-the glob-escaped filenames (the rule the rubocop sensor taught, now the
-framework's). The report half has its own module
-(``test_inline_sensor_report.py``).
-"""
+"""The declarative sensor's one pipeline, end to end: a fixture tool prints a
+made-up JSON shape and exits a chosen code; the entry turns it into findings."""
 
 from __future__ import annotations
 

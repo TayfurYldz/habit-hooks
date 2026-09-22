@@ -1,17 +1,8 @@
 """The declarative sensor's running half: one pipeline for every inline sensor.
 
-Spawn the tool the entry names (as a file, exactly as any other ``argv[0]``),
-judge its exit code against the codes the entry declared, read its output —
-stdout, or the framework-managed report file the entry asked for — turn it into
-findings through the entry's jq program, and hold the result to the findings
-contract. Every miss on the way is the sensor's own failed run, carrying the
-tool's last words: never a silent clean one.
-
-Nothing here knows a tool. What the framework supplies because every wrapped
-linter needs it: the glob-escaped filename (a scope filename is a name, never a
-pattern — the rule the rubocop sensor taught, now the framework's to keep), and
-the exit code a linter uses to say "I found things", which is the entry's to
-declare rather than the tool's to be trusted on.
+Spawn, judge the declared exit codes, transform through jq, hold the result to
+the findings contract — and every miss is the sensor's failed run with the
+tool's last words, never a silent clean one.
 """
 
 from __future__ import annotations

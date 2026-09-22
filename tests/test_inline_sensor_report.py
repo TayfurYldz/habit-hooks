@@ -1,12 +1,5 @@
-"""The report file an inline sensor's tool is handed, and reading it back.
-
-``report = true`` buys a tool that answers in a report rather than stdout: the
-framework hands it a fresh file through ``${report}`` and reads back what it
-wrote. Nothing at all is a run that never delivered: a tool that answers in a
-report writes one even when it finds nothing, so a missing report is a failed
-run, never a clean one (the #139 class, where a report-writing tool that wrote
-nothing read as clean).
-"""
+"""``report = true``: a fresh file handed through ``${report}``, and a missing
+report read as a run that never delivered, not a clean one."""
 
 from __future__ import annotations
 

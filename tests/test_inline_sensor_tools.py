@@ -1,10 +1,5 @@
-"""The tools an inline sensor names: the file a detector cleared, and the
-filenames it is handed.
-
-The bare ``tool`` name of an inline entry is resolved exactly as any other
-``argv[0]`` is (``named_tools``), and every scope filename arrives in the
-literal spelling a globbing tool still reads as a name (``inline_run``).
-"""
+"""The file a declared detector is resolved to, and the literal filenames
+the tool is handed."""
 
 from __future__ import annotations
 

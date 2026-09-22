@@ -24,17 +24,9 @@ def chunked_commands(
 ) -> list[list[str]]:
     """One invocation's argv per chunk of the already-spelled ``files``.
 
-    A recipe that splices ``${files}`` — or its one-argument ``${files:comma}``
-    joining — is split so a huge list never fails
-    the spawn (a raw ``OSError`` ``_safe_sensor`` never caught, escaping an
-    ordinary CI-sized run as a traceback); one that reads its own paths
-    (``knip``, ``deptry``, ``jscpd``) runs once, not once per chunk.
-
-    Each form spends the budget on what it actually carries. A ``command``
-    part's paths are quoted into one ``bash -c`` argument; an ``argv``
-    part's are arguments of their own, quoted not at all. Either way the
-    rest of the argv is paid for first, so the batch is measured against
-    what is left rather than against the whole.
+    A recipe that splices the files — either spelling — is split so a
+    work-tree-sized scope never overflows one spawn; one that reads its own
+    paths runs once. The budget is what is left after the rest of the argv.
     """
     split = spells_files(sensor) and files
     budget = argument_budget() - argument_cost(expand([]))

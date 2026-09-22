@@ -1,11 +1,6 @@
-"""The report file a report-writing tool is handed, and reading it back.
+"""The report file a report-writing tool is handed through ``${report}``,
+and what it means when nothing was written there."""
 
-``report = true`` on an inline entry buys a tool that answers in a report
-rather than stdout: the framework reserves a fresh file, hands its path to the
-tool wherever the recipe spells ``${report}``, and reads back what the tool
-wrote there. Nothing written at all is the sensor's failed run rather than a
-clean one.
-"""
 
 from __future__ import annotations
 

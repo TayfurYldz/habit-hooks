@@ -1,17 +1,7 @@
 """The declarative sensor's loading half: an entry in a plugin's config.toml.
 
-A plugin may spell a sensor inline, as a table in its ``sensors`` list —
-``sensors = [{ tool = "golangci-lint", args = [...] }]`` — rather than a
-``sensors/<name>.toml`` spec. The table names the tool in the same vocabulary an
-``argv[0]`` uses, and the pipeline around it (``inline_run``) is the framework's:
-exit codes, the jq transform, the findings contract. This module is the reading
-of the table — every misspelling answered here, at load, because a config key
-silently ignored is a documented-but-dead key (#102).
-
-The entry is a table *in the list* because TOML allows no other mixing: a
-``sensors = [...]`` array and a ``[sensors.<name>]`` section cannot coexist in
-one file, so the section form the plan sketched is unspellable. A plugin keeps
-its spec-file sensors and its inline ones in one list.
+Every misspelling is answered here, at load, because a config key silently
+ignored is a documented-but-dead key (#102).
 """
 
 from __future__ import annotations

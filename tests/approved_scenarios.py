@@ -1,22 +1,12 @@
 """The approved-output scenario runner: one gate for every scenario any plugin ships.
 
-A scenario is a directory named after its sensor inside a plugin's
-``scenarios/`` tree::
-
     scenarios/<sensor>/
       sample/          the sample codebase the sensor runs over — it is the run's scope
-      approved.json    the findings the sensor must produce over sample/, and
-                       nothing else — never guide strings, which change more often
-      scenario.toml    optional: ``tool = "<name>"`` names the sensor's tool, so a
-                       machine without that tool skips the scenario instead of
-                       failing; a machine with it never silently skips
+      approved.json    the findings the sensor must produce — JSON only, never guide strings
+      scenario.toml    optional: ``tool = "<name>"``, so a machine without it skips
 
-``check`` runs the sensor the way a run does — through the plugin's own config,
-inline or legacy form — and diffs the findings against ``approved.json``, both
-sides printed on a drift. The format's rules are enforced here with messages
-that name what broke them, because a shipped scenario is documentation that
-executes: when the sensor changes what it finds, the approval is what must
-change, deliberately.
+``check`` runs the sensor through the plugin's own config and diffs the
+findings against ``approved.json``; a drift prints both sides.
 """
 
 from __future__ import annotations

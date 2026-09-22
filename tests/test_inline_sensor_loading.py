@@ -1,10 +1,4 @@
-"""Loading the declarative inline sensor: an entry in a plugin's config.toml.
-
-An inline entry is a table in the ``sensors`` list — ``sensors = [{ tool = ... }]``
-— naming the tool, its arguments, and the pipeline that turns its output into
-findings. Loading is where every misspelling is answered: an unknown key, a
-missing transform program, a table that shadows a shipped ``sensors/<name>.toml``.
-"""
+"""Loading an inline sensor entry: every misspelling answered at load."""
 
 from __future__ import annotations
 
