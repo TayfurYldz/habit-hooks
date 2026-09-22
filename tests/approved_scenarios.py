@@ -24,7 +24,6 @@ from __future__ import annotations
 import difflib
 import json
 import shutil
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -41,36 +40,26 @@ from habit_hooks.sensors.model import Part
 SCENARIO_KEYS = frozenset({"tool"})
 
 
-@dataclass(frozen=True)
-class Staged:
-    """A scenario prepared to run: its sample copied into a project that enables
-    only its plugin, and the config that project loaded."""
-
-    plugin: str
-    scenario: Path
-    project: Path
-    config: Config
-
-    @classmethod
-    def from_scenario(cls, plugin: str, scenario: Path, project: Path) -> Staged:
-        if not (scenario / "sample").is_dir():
-            _refuses(
-                scenario,
-                "ships no sample/ directory — the sample codebase is the "
-                "run's scope",
-            )
-        if not (scenario / "approved.json").is_file():
-            _refuses(
-                scenario,
-                "ships no approved.json — the findings the sensor must "
-                "produce over sample/, and nothing else",
-            )
-        shutil.copytree(scenario / "sample", project, dirs_exist_ok=True)
-        (project / ".habit-hooks").mkdir(parents=True, exist_ok=True)
-        (project / ".habit-hooks" / "config.toml").write_text(
-            f"plugins = [{plugin!r}]\n", encoding="utf-8"
+def _staged(plugin: str, scenario: Path, project: Path) -> Config:
+    """The project ready to run: sample copied in, only this plugin enabled."""
+    if not (scenario / "sample").is_dir():
+        _refuses(
+            scenario,
+            "ships no sample/ directory — the sample codebase is the "
+            "run's scope",
         )
-        return cls(plugin, scenario, project, load_config(project))
+    if not (scenario / "approved.json").is_file():
+        _refuses(
+            scenario,
+            "ships no approved.json — the findings the sensor must "
+            "produce over sample/, and nothing else",
+        )
+    shutil.copytree(scenario / "sample", project, dirs_exist_ok=True)
+    (project / ".habit-hooks").mkdir(parents=True, exist_ok=True)
+    (project / ".habit-hooks" / "config.toml").write_text(
+        f"plugins = [{plugin!r}]\n", encoding="utf-8"
+    )
+    return load_config(project)
 
 
 def scenarios_in(plugin_dir: Path) -> list[Path]:
@@ -83,9 +72,10 @@ def scenarios_in(plugin_dir: Path) -> list[Path]:
 
 def check(plugin: str, scenario: Path, project: Path) -> None:
     """Run the scenario's sensor over its sample and hold it to its approval."""
-    staged = Staged.from_scenario(plugin, scenario, project)
-    sensor = _sensor_named(staged)
-    _skip_when_tool_absent(staged)
+    config = _staged(plugin, scenario, project)
+    loader = PluginLoader(Resolver.discover(project), config)
+    sensor = _sensor_named(plugin, scenario, loader)
+    _skip_when_tool_absent(scenario, config, project)
     run = Execution(
         project_dir=project, scope=Scope(files=_scoped_paths(project))
     ).run_sensors([sensor])
@@ -97,22 +87,21 @@ def check(plugin: str, scenario: Path, project: Path) -> None:
     _matches_approved(scenario, run.findings)
 
 
-def _sensor_named(staged: Staged) -> Part:
-    loader = PluginLoader(Resolver.discover(staged.project), staged.config)
-    sensors = loader.load_plugin(staged.plugin).sensors
+def _sensor_named(plugin: str, scenario: Path, loader: PluginLoader) -> Part:
+    sensors = loader.load_plugin(plugin).sensors
     for sensor in sensors:
-        if sensor.name == staged.scenario.name:
+        if sensor.name == scenario.name:
             return sensor
     enabled = ", ".join(sorted(sensor.name for sensor in sensors)) or "none"
     pytest.fail(
-        f"the scenario directory is named {staged.scenario.name!r}, but the "
-        f"{staged.plugin!r} plugin enables no sensor by that name (it "
+        f"the scenario directory is named {scenario.name!r}, but the "
+        f"{plugin!r} plugin enables no sensor by that name (it "
         f"enables: {enabled}) — a scenario directory is named after the "
         "sensor it runs"
     )
 
 
-def _skip_when_tool_absent(staged: Staged) -> None:
+def _skip_when_tool_absent(scenario: Path, config: Config, project: Path) -> None:
     """Skip a scenario whose tool this machine has not installed.
 
     Asked with the same detector machinery a run's setup uses, so a skip and a
@@ -120,22 +109,22 @@ def _skip_when_tool_absent(staged: Staged) -> None:
     plugin declares is a broken scenario, not a skip: it would silently vanish
     from every machine, including the ones that have it.
     """
-    meta = staged.scenario / "scenario.toml"
+    meta = scenario / "scenario.toml"
     if not meta.is_file():
         return
     spec = read_toml(meta)
-    reject_unknown(SCENARIO_KEYS, spec, f"scenario {staged.scenario.name!r}")
-    tool = _tool_named_in(staged.scenario, spec)
-    declared = [d for d in staged.config.plugin_detectors if d.name == tool]
+    reject_unknown(SCENARIO_KEYS, spec, f"scenario {scenario.name!r}")
+    tool = _tool_named_in(scenario, spec)
+    declared = [d for d in config.plugin_detectors if d.name == tool]
     if not declared:
         _refuses(
-            staged.scenario,
+            scenario,
             f"names the tool {tool!r} in scenario.toml, which no plugin "
             "declares as a detector",
         )
-    if missing_tools(declared, staged.project):
+    if missing_tools(declared, project):
         pytest.skip(
-            f"scenario {staged.scenario.name!r}: its tool {tool!r} is not "
+            f"scenario {scenario.name!r}: its tool {tool!r} is not "
             "installed on this machine"
         )
 

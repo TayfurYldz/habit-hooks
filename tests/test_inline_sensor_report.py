@@ -13,36 +13,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from plugin_fixture import loader_for, write_plugin, write_project_config
-
-from habit_hooks.scope import Scope
-from habit_hooks.sensors.execution import Execution
-
-MADE_UP = {"violations": [
-    {"where": "src/a.py", "rule": "MAGIC-1", "note": "too magic"},
-    {"where": "src/b.py", "rule": "MAGIC-1", "note": "also magic"},
-]}
-GROUPING = (
-    '.violations | group_by(.rule) | map({smell: "made-up-smell", details: {}, '
-    'issues: map({key: .where, details: {file: .where, message: .note}})})'
-)
-FINDING = {
-    "smell": "made-up-smell",
-    "details": {},
-    "issues": [
-        {"key": "src/a.py", "details": {"file": "src/a.py", "message": "too magic"}},
-        {"key": "src/b.py", "details": {"file": "src/b.py", "message": "also magic"}},
-    ],
-}
-
-
-def inline_run(project: Path, entry: str, files: dict[str, str]):
-    write_project_config(project, 'plugins = ["fixt"]')
-    write_plugin(project, "fixt", {"config.toml": f"sensors = [{entry}]", **files})
-    sensor = loader_for(project).load_plugin("fixt").sensors[0]
-    return Execution(
-        project_dir=project, scope=Scope(files=["src/a.py"])
-    ).run_sensors([sensor])
+from test_inline_sensor_run import FINDING, GROUPING, MADE_UP, inline_run
 
 
 def report_entry(body: str, extra: str) -> tuple[str, dict[str, str]]:

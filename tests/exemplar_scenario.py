@@ -14,12 +14,6 @@ import stat
 import sys
 from pathlib import Path
 
-VIOLATION = {
-    "file": "src/notes.txt",
-    "line": 3,
-    "rule": "T-1",
-    "message": "a TODO left behind",
-}
 FINDINGS = [
     {
         "smell": "left-todo",

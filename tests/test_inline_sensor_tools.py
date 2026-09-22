@@ -18,21 +18,6 @@ from plugin_fixture import loader_for, write_plugin, write_project_config
 from habit_hooks.scope import Scope
 from habit_hooks.sensors.execution import Execution
 
-LINT = (
-    'detectors = [{ name = "lint", kind = "command", '
-    'install = "echo lint", search_paths = ["bin"] }]'
-)
-
-
-def inline_lint(project: Path, args: str):
-    write_plugin(
-        project,
-        "fixt",
-        {"config.toml": f'sensors = [{{ tool = "lint", args = [{args}] }}]\n{LINT}'},
-    )
-    write_project_config(project, 'plugins = ["fixt"]')
-    return loader_for(project).load_plugin("fixt").sensors[0]
-
 
 def test_glob_metacharacters_in_a_filename_are_escaped_for_the_tool(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
