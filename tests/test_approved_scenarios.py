@@ -12,6 +12,7 @@ cannot read is a gate nobody obeys.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -106,6 +107,22 @@ def _shipped() -> list[tuple[str, Path]]:
         for plugin, plugin_dir in sorted(installed_plugin_dirs().items())
         for scenario in scenarios.scenarios_in(plugin_dir)
     ]
+
+
+@pytest.fixture(autouse=True)
+def _repo_tools_on_the_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The repo's own devDependencies are this machine's tools.
+
+    A shipped scenario names its tool in scenario.toml, and a tool the machine
+    cannot reach is a skip — but `pnpm install` at the root put jscpd in the
+    repo's ``node_modules/.bin``, so that directory goes on the scenario's PATH
+    before the question is asked. A checkout without it keeps the honest skip.
+    """
+    repo_bin = Path(__file__).resolve().parents[1] / "node_modules" / ".bin"
+    if repo_bin.is_dir():
+        monkeypatch.setenv(
+            "PATH", f"{repo_bin}{os.pathsep}{os.environ.get('PATH', '')}"
+        )
 
 
 @pytest.mark.parametrize(

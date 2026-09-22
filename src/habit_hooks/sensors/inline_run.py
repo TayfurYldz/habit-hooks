@@ -2,7 +2,7 @@
 
 Spawn the tool the entry names (as a file, exactly as any other ``argv[0]``),
 judge its exit code against the codes the entry declared, read its output —
-stdout, or the framework-managed report file the entry asked for — turn it into
+stdout, or the framework-managed report path the entry asked for — turn it into
 findings through the entry's jq program, and hold the result to the findings
 contract. Every miss on the way is the sensor's own failed run, carrying the
 tool's last words: never a silent clean one.
@@ -16,11 +16,8 @@ declare rather than the tool's to be trusted on.
 
 from __future__ import annotations
 
-import contextlib
 import json
 import re
-import tempfile
-from collections.abc import Iterator
 from pathlib import Path
 
 import jq
@@ -29,6 +26,7 @@ from .broken_part import run_part
 from .chunking import chunked_commands
 from .diagnosis import keep_both_ends
 from .finding_paths import anchored
+from .inline_report import report_path, report_text
 from .model import InlineRecipe, Part, SensorError
 from .part_output import COMMAND_NOT_FOUND, part_failure
 from .spawn import Spawner
@@ -71,7 +69,7 @@ def _invocation_findings(
     sensor: Part, argv: list[str], spawner: Spawner
 ) -> list[dict]:
     recipe = sensor.inline or InlineRecipe()
-    with _report_file(recipe) as report:
+    with report_path(recipe) as report:
         runnable = (
             [a.replace("${report}", str(report)) for a in argv] if report else argv
         )
@@ -84,28 +82,8 @@ def _invocation_findings(
         )
         if result.returncode not in recipe.success_exit_codes:
             raise _tool_failure(sensor, result)
-        output = (
-            report.read_text(encoding="utf-8", errors="replace")
-            if report
-            else result.stdout
-        )
+        output = report_text(sensor, report) if report else result.stdout
         return _findings_in(sensor, recipe, output)
-
-
-@contextlib.contextmanager
-def _report_file(recipe: InlineRecipe) -> Iterator[Path | None]:
-    """A fresh report file for the invocation when the entry asked for one."""
-    if not recipe.report:
-        yield None
-        return
-    handle = tempfile.NamedTemporaryFile(
-        prefix="habit-hooks-report-", suffix=".json", delete=False
-    )
-    handle.close()
-    try:
-        yield Path(handle.name)
-    finally:
-        Path(handle.name).unlink(missing_ok=True)
 
 
 def _tool_failure(sensor: Part, result) -> SensorError:

@@ -142,20 +142,34 @@ def test_a_report_argument_without_a_report_is_refused(tmp_path: Path) -> None:
     assert "report" in message
 
 
-def test_project_args_override_replaces_the_inline_args(tmp_path: Path) -> None:
+def test_project_args_land_where_the_recipe_spells_args(tmp_path: Path) -> None:
+    """An inline entry's ``args`` are its recipe — spelled once, for every run
+    — so a project's ``[sensors.<name>]`` args override lands in the recipe's
+    ``${args}`` slot, exactly as a spec file's ``args`` default receives one,
+    rather than replacing the recipe wholesale."""
     write_project_config(
-        tmp_path, 'plugins = ["fixt"]\n[sensors.lint]\nargs = ["${dir}/tool.py"]'
+        tmp_path,
+        'plugins = ["fixt"]\n[sensors.lint]\nargs = ["--max", "300"]',
     )
     write_plugin(
         tmp_path,
         "fixt",
         {
-            "config.toml": 'sensors = [{ tool = "${python}", name = "lint", args = ["${dir}/other.py"] }]',
+            "config.toml": (
+                'sensors = [{ tool = "${python}", name = "lint", '
+                'args = ["${dir}/tool.py", "${args}", "${files}"] }]'
+            ),
             "tool.py": 'print("[]")\n',
         },
     )
 
     part = loader_for(tmp_path).load_plugin("fixt").sensors[0]
 
-    assert part.argv == ["${python}", "${dir}/tool.py"]
+    assert part.argv == ["${python}", "${dir}/tool.py", "${args}", "${files}"]
+    assert part.args == ["--max", "300"]
+
+
+def test_an_entry_without_args_keeps_an_empty_override_slot(tmp_path: Path) -> None:
+    part = inline_part(tmp_path, PYTHON_TOOL)
+
     assert part.args == []

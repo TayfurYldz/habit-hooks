@@ -1,5 +1,4 @@
-"""Resolves a plugin and its parts across the override chain, applying the config's
-per-sensor args and disable overrides — the loading half of the ETL."""
+"""Resolves a plugin and its parts across the override chain — loading half of the ETL."""
 
 from __future__ import annotations
 
@@ -52,7 +51,7 @@ class PluginLoader:
         self._refuse_a_shadowed_spec_file(plugin, part.name)
         part = replace(
             part,
-            argv=[part.argv[0], *(self._sensor_setting(part.name, entry, "args") or [])],
+            args=self._project_args(part.name),
             files=self._sensor_setting(part.name, entry, "files"),
         )
         inline_spec.refuse_unusable_report(part)
@@ -116,6 +115,11 @@ class PluginLoader:
         override = self.config.sensors.get(name)
         value = getattr(override, key) if override is not None else None
         return value if value is not None else spec.get(key)
+
+    def _project_args(self, name: str) -> list[str]:
+        """The project's args override, landing in the recipe's ``${args}`` slot
+        (``command_text`` refuses one with nowhere to land) — else nothing."""
+        return self._sensor_setting(name, {}, "args") or []
 
     def _disabled(self, sensor: str) -> bool:
         override = self.config.sensors.get(sensor)

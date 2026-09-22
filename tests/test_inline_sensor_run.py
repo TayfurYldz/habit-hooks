@@ -2,10 +2,11 @@
 
 Every case here is an inline ``{ tool = ..., args = [...] }`` entry whose tool is
 a fixture script the case wrote — a fake linter printing a made-up JSON shape,
-exiting a chosen code, or writing a report file. What is under test is the
-framework half: exit codes against ``success_exit_codes``, the jq transform, the
-findings contract, and the glob-escaped filenames (the rule the rubocop sensor
-taught, now the framework's).
+exiting a chosen code. What is under test is the framework half: exit codes
+against ``success_exit_codes``, the jq transform, the findings contract, and
+the glob-escaped filenames (the rule the rubocop sensor taught, now the
+framework's). The report half has its own module
+(``test_inline_sensor_report.py``).
 """
 
 from __future__ import annotations
@@ -177,22 +178,3 @@ def test_a_transform_that_answers_nothing_fails_the_run(tmp_path: Path) -> None:
     run = inline_run(tmp_path, entry, {**files, "map.jq": "empty"})
 
     assert "map.jq" in run.notices[0]
-
-
-def test_a_report_file_is_handed_to_the_tool_and_read_back(tmp_path: Path) -> None:
-    body = (
-        "import json, pathlib, sys\n"
-        f"pathlib.Path(sys.argv[1]).write_text({json.dumps(MADE_UP)!r})\n"
-    )
-    _, files = an_entry(body)
-
-    run = inline_run(
-        tmp_path,
-        '{ tool = "${python}", name = "lint", '
-        'args = ["${dir}/tool.py", "${report}"], '
-        'transform = "map.jq", report = true }',
-        {**files, "map.jq": GROUPING},
-    )
-
-    assert run.findings == [FINDING]
-    assert run.notices == []

@@ -105,7 +105,7 @@ def refuse_unusable_report(part: Part) -> None:
     argv = part.argv or []
     if part.inline.report and "${report}" not in argv:
         raise ConfigError(
-            f"sensor {part.name!r} asks for a report file but spells no "
+            f"sensor {part.name!r} asks for a report path but spells no "
             "'${report}' argument to receive it"
         )
     if not part.inline.report and "${report}" in argv:

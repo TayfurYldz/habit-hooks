@@ -55,10 +55,10 @@ One shape for every sensor — an entry in the plugin's `sensors` list:
 | Field | | Meaning |
 |-------|----------|---------|
 | `tool` | required | the tool's name (a declared detector, resolved to the file this project runs) or a shipped program: `"${dir}/helper.py"` |
-| `args` | | the argument list. `${files}` is the scoped files, each glob-escaped so a filename is a name, never a pattern; `${dir}`, `${python}`, `${detector:<name>}` and `${config}` substitute inside an element |
+| `args` | | the argument list. `${files}` is the scoped files, each glob-escaped so a filename is a name, never a pattern; `${dir}`, `${python}`, `${detector:<name>}` and `${config}` substitute inside an element; `${args}` is where a project's `[sensors.<name>]` args override lands — spell it and the override becomes arguments there (a shipped default for it lives in the program, not the recipe) |
 | `success_exit_codes` | optional | default `[0]`. Most linters exit `1` to say "I found things" — declare `[0, 1]` and the findings are trusted alongside it |
 | `transform` | optional | a jq program beside the config; absent → the tool's stdout is already findings JSON |
-| `report` | optional | the framework hands the tool a fresh file for `${report}` and reads it back — for tools that write reports instead of printing |
+| `report` | optional | the framework hands the tool a fresh path for `${report}` and reads it back — for tools that write reports instead of printing. The tool may write a file at the path, or make it a directory holding its one report file (jscpd's `--output`); a missing report is a failed run, never a clean one |
 | `files` | optional | narrows the run's scope for this sensor alone |
 | `name` | optional | the sensor's name; defaults to `tool`, required when the tool is a placeholder or path |
 

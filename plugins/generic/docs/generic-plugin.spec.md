@@ -24,8 +24,8 @@ $PWD/node_modules/.bin:$PATH
 ## line-count emits oversized-file over the threshold
 
 The `line-count` sensor flags a file longer than its `--max` threshold (default
-200, shipped as replace-on-override `args` in `sensors/line-count.toml`) as
-`oversized-file`.
+200, in the shipped program; a project's `[sensors.line-count]` args override
+lands in the recipe's `${args}` slot) as `oversized-file`.
 
 📄.habit-hooks/config.toml
 ```toml

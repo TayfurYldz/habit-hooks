@@ -1,0 +1,18 @@
+[
+  {
+    "smell": "oversized-file",
+    "details": {
+      "maxAllowed": 200
+    },
+    "issues": [
+      {
+        "key": "big.js",
+        "details": {
+          "file": "big.js",
+          "lines": 205,
+          "source": "line-count"
+        }
+      }
+    ]
+  }
+]

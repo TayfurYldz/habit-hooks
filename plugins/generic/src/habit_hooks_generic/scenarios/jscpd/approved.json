@@ -1,0 +1,29 @@
+[
+  {
+    "smell": "duplicated-code",
+    "details": {
+      "lines": 10,
+      "tokens": 141
+    },
+    "issues": [
+      {
+        "key": "src/alpha.ts",
+        "details": {
+          "file": "src/alpha.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "source": "jscpd:duplication"
+        }
+      },
+      {
+        "key": "src/beta.ts",
+        "details": {
+          "file": "src/beta.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "source": "jscpd:duplication"
+        }
+      }
+    ]
+  }
+]

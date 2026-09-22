@@ -1,6 +1,18 @@
-sensors = ["line-count", "jscpd"]
+sensors = [
+  # The line counter is a shipped program: it already prints the findings
+  # contract, and a project's `[sensors.line-count]` args override lands in the
+  # `${args}` slot (its `--max` default of 200 lives in the program itself).
+  { name = "line-count", tool = "${python}", args = ["${dir}/line-count.py", "${args}", "${files}"] },
+  # jscpd is also a shipped program, for one reason: whose config is in play.
+  # A project that configures jscpd itself (a `.jscpd.json`, or a `jscpd` key
+  # in `package.json`) is answered by jscpd's own discovery, and ours is named
+  # only when the project has none (#125). That choice cannot be spelled in
+  # static args, so it stays in the program until the framework owns the
+  # policy (issue #171) — the same stopgap eslint's sensor keeps.
+  { name = "jscpd", tool = "${python}", args = ["${dir}/jscpd.py", "${detector:jscpd}", "--fallback-config", "${dir}/.jscpd.json"] },
+]
 
-# The line counter is built in; jscpd is the only tool this plugin spawns.
+# jscpd is the only tool this plugin spawns.
 detectors = [
   { name = "jscpd", kind = "command", install = "npm install --save-dev jscpd" },
 ]
