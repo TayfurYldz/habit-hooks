@@ -25,13 +25,14 @@ graph LR
 
 The two stages pass only the findings array between them, so each runs — and can be replaced — on its own. See [habit-hooks.spec.md](habit-hooks.spec.md).
 
-## How `habit-sensors` is built: sensors and transformers
+## How `habit-sensors` are built
 
 `habit-sensors` detect code smells. They are - in most cases - deterministic scripts that rely on string operations and syntax tree analysis to identify potential issues.
 
 A common pattern for implementing a `habit-sensor` is wrapping an existing tool (like a linter or duplication detector), and transforming its output to match the habit-mapper's interface.
 
-When wrapping existing tools we either use the projects existing setup, or in the absence of that we provide our own as a transitive dependency. Since a project might be using rule sets not handled by Habit Hooks the wrapper must pass through every finding it does not handle.
+When wrapping existing tools we either use the project's existing setup, or — in the absence of that — offer to install the tool and set it up with our own default config. Since a project might be using rule sets not handled by Habit Hooks the wrapper must pass through every finding it does not handle.
+
 
 ## The finding
 
