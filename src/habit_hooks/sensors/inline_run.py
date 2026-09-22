@@ -2,7 +2,7 @@
 
 Spawn the tool the entry names (as a file, exactly as any other ``argv[0]``),
 judge its exit code against the codes the entry declared, read its output —
-stdout, or the framework-managed report path the entry asked for — turn it into
+stdout, or the framework-managed report file the entry asked for — turn it into
 findings through the entry's jq program, and hold the result to the findings
 contract. Every miss on the way is the sensor's own failed run, carrying the
 tool's last words: never a silent clean one.
