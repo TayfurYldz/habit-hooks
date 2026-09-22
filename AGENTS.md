@@ -205,32 +205,14 @@ shadowing it.
 
 ### An unmapped rule or code must never reach a bare lookup (issue #83)
 
-Both sensors map a tool-supplied string — an eslint rule ID, a ruff code —
-through a table of the smells this plugin knows about, and the tool is free to
-send a string neither table has an entry for. The hazard was first named
-against the sensors' old jq pipelines: `{"a": 1}[null]` **aborts** jq with
-`Cannot index object with null` (exit 5), so a trailing `// .fallback` never
-ran and the whole sensor died, taking every finding in the run with it. Neither
-sensor pipes through jq any more — both are native helpers now — but the
-underlying hazard (trust an external string as a lookup key, and something
-breaks on the miss) is still real in each language, and each guards it in its
-own way:
-
-- **ruff** (`sensors/ruff_sensor.py`) maps a code through
-  `CODE_SMELLS.get(entry["code"])`. A dict's `.get` answers `None` for a code
-  outside `--select`, and `findings` drops that entry rather than forwarding or
-  crashing on it — the same "drop what the plugin has no vocabulary for" rule
-  the knip sensor already follows (see "A sensor emits vocabulary smells only"
-  below).
-- **eslint** (`sensors/eslint.cjs`) maps a rule ID through `SMELL_BY_RULE`, a
-  `Map` rather than an object literal. A plain object answers
-  `SMELL_BY_RULE["constructor"]` with a function off `Object.prototype`, which
-  `JSON.stringify` then drops silently — the finding would keep its issue but
-  lose its `smell` key, with nothing in the run saying why. A `Map` has no
-  prototype chain, so `.get` answers `undefined` for anything absent, and
-  `smellOf` falls back to forwarding the rule ID itself (the deliberate
-  exception in "A sensor emits vocabulary smells only" — an eslint rule ID
-  comes from a config the project wrote, unlike knip's own vocabulary).
+A transform maps a tool-supplied string — an eslint rule ID, a ruff code —
+through a table of smells, and the tool is free to send a string no table has
+an entry for. In jq, `{"a": 1}[null]` answers null rather than aborting, but a
+lookup on a MISS must be spelled `// fallback` so the unmapped value passes
+through under its own name (#171) instead of dying or dropping silently. A
+program-side lookup uses `.get`/`Map.get` for the same reason: a plain object
+answers `map["constructor"]` off `Object.prototype`, and `JSON.stringify` then
+drops the finding's `smell` key with nothing in the run saying why.
 
 ### jscpd ignores a checkout that *lives* under a path its own `.gitignore` covers
 
@@ -317,88 +299,33 @@ The gate is `test_this_release_satisfies_the_floors_it_declares`, which asks
 `packaging`'s `SpecifierSet`/`Version` rather than reading the string — the same
 question pip asks, so it cannot answer differently.
 
-### A sensor names the tool it wraps, and is handed the file that runs it (agent decision)
+### A sensor names the tool it wraps, and is handed the file that runs it
 
-Windows' `CreateProcess` appends `.exe` to a bare command name and nothing else,
-while `shutil.which` applies the whole of `PATHEXT`. Every Node tool a plugin
-wraps (`knip`, `eslint`, `jscpd`) is installed as a `.cmd` shim and `pmd` as a
-`.bat`, so `missing_tools` clears each of them and anything spawning them by
-name then answers `jscpd: command not found` with the tool sitting right there.
-`project_paths.tool_executable` is the single lookup everything asks.
+Windows' `CreateProcess` appends `.exe` to a bare command name and nothing
+else, while `shutil.which` applies `PATHEXT` — Node tools are `.cmd` shims and
+`pmd` a `.bat`, so anything spawning a tool by name answers "command not
+found" with the tool present. `project_paths.tool_executable` is the single
+lookup: a bare inline `tool` that names a declared `command` detector resolves
+through it, and `${detector:<name>}` expands to the same file. A tool declared
+and absent is answered before the spawn, and every argument is asked whether
+`cmd.exe` would read it (`batch_shell`), named tool included. A name no active
+plugin declares — or one declared `node-module` — is refused at load;
+`tests/test_a_plugin_declares_the_tools_it_names.py` reads each plugin's specs
+against its own declarations.
 
-**A part's own `argv[0]` is only half of it, and the half no shipped sensor
-uses.** Every one is `argv = ["${python}", "${dir}/<helper>.py", ...]` or
-`["node", "...cjs", ...]`, and the helper spawns `jscpd`/`pmd`/`php`/`deptry`/
-`ruff` itself, one process further in — where the tools that actually go missing
-on Windows go missing. A **bare** `argv[0]` that names a declared `command`
-detector is resolved through that detector — the loader puts it in
-`Part.detectors` (`named_tools._bare_program`) and `command_text._program`
-substitutes the file — so the bare spelling and `${detector:<name>}` agree on
-the same search paths, and a binstub in the project's `bin` is found by either
-spelling or by neither. `Spawner._runnable` still resolves a bare `argv[0]`,
-but only as the fallback for names nobody declared: off Windows such a name
-is the very file the spawn's own search would have reached, and a path
-(`${python}`, `${dir}/helper.py`) is read against the directory the command
-runs in, while every argument after the first is an argument whatever it looks
-like. The typescript plugin's `argv = ["node", ...]` parts now resolve `node`
-through its own declaration — the same file the fallback found, and a machine
-without node fails by name rather than at the spawn.
+The TypeScript plugin's tools are `node-module` detectors and can never be
+spawned by name: `spawnSync` refuses `.cmd`/`.bat` outright (the CVE-2024-27980
+mitigation, still unconditional in Node 22), and `shell: true` hands the argv
+to `cmd.exe` — hostile for filenames straight off a branch.
+`sensors/project_tool.cjs` finds the package under the project's own
+`node_modules` and runs its `bin` with `process.execPath`.
 
-The other process gets there by **naming the tool in the recipe**:
-`${detector:<name>}` (`sensors/named_tools.py`) expands to the file
-`tool_executable` answers with, for a tool the plugin declared in its
-`config.toml` `detectors` — the same list `missing_tools` cleared, so a tool a
-project was told it has is a file its sensors can be handed. Every shipped
-Python-plugin sensor that wraps a tool spells it — `line-count` wraps none —
-and each helper reads that file from `sys.argv[1]`, always the first argument
-after the script, so the five stay symmetric. Three things follow from the core
-holding it, rather than a helper:
-
-- A tool that is declared and simply absent is answered **before** the spawn
-  (`broken_part.run_part`), as the notice + failed run a missing command has
-  always been. A helper never sees it, so a helper cannot get it wrong.
-- Every program the arguments reach is asked whether `cmd.exe` would read them
-  (`batch_shell`), the named tool included — the guard that matters for `pmd.bat`.
-- A name no active plugin declares, or one declared `node-module`, is refused
-  when the config loads. Run-wide rather than per-plugin, because a root
-  transformer has no plugin of its own;
-  `tests/test_a_plugin_declares_the_tools_it_names.py` reads each plugin's own
-  specs against its own declarations so that breadth cannot hide a missing
-  declaration.
-
-This replaced four byte-identical `sensors/tool_spawn.py` copies — one per Python
-plugin, because every plugin's `pyproject.toml` declares `dependencies = []` and
-none may import `habit-hooks` or a sibling. That constraint is unchanged and is
-why the answer is a placeholder the core expands rather than a shared module: a
-recipe is data, and data crosses a boundary an import cannot.
-
-**The TypeScript plugin keeps `sensors/project_tool.cjs`**, and cannot use any of
-this. Its wrapped tools are `node-module` detectors, never spawned by name at
-all (`node` itself is a `command`, and is every one of its sensors' `argv[0]`):
-it finds the package under the project's own `node_modules`, reads its `bin`
-entry, and runs that file with `process.execPath`. `shutil.which` finding a
-`.cmd` shim is no use to Node — `spawnSync` has refused to run a `.cmd` or
-`.bat` outright since its CVE-2024-27980 mitigation (`IsWindowsBatchFile` in
-`spawn_sync.cc`), still unconditional in Node 22, and the `--security-revert`
-flag that once bypassed it was removed in Node 22.0.0. `shell: true` is not the
-way round it either: it hands the argv to `cmd.exe` to reparse, and a sensor's
-arguments are filenames straight out of a checked-out branch, which this repo
-treats as hostile.
-
-**What was given up.** A helper guards the whole command at the real spawn; the
-core can only guard what it can see, which is the part's own arguments. What a
-helper synthesises out of them is not covered — and some of that *is*
-branch-controlled: phpmd's `",".join(files)`, pmd's `-d <file>` per file, ruff's
-spliced `*files`. They are safe because the core checked each of those paths
-individually, against the named tool, before the helper reshaped them
-(`model.Part.tools_that_read_its_arguments`, `batch_shell`), and neither joining
-with a comma nor prefixing a flag can introduce a `cmd.exe` syntax character that
-was not already there. So a helper argument built from branch data still needs
-that question asked of it — do not read this as "helpers never touch branch
-data". What is genuinely unchecked is what never came from the branch at all:
-install paths, temp dirs, and a `path` read out of the config in force — jscpd's
-`--output <tempdir>`, pmd's ruleset path, phpmd's phar. That is why the trade is
-worth taking, but it is a trade and not a free win.
+Why core placeholders rather than a shared module: plugins declare
+`dependencies = []` and may not import habit-hooks or a sibling — a recipe is
+data, and data crosses a boundary an import cannot. The trade: the core guards
+what it can see (the part's own arguments); an argument a program synthesises
+from them (a comma join, a per-file flag) is safe only because each path was
+checked against the named tool first.
 
 ### `TimeoutExpired` carries no partial output at all on Windows
 
