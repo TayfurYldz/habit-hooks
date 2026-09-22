@@ -6,8 +6,9 @@ assert the canonical finding comes out mapped to the smell keys in
 [smell-vocabulary.md](smell-vocabulary.md).
 
 `habit-sensors` is the installed CLI and `rubocop` is on the system `PATH`. The
-plugin declares `rubocop` as the one tool it needs, and the run resolves it to a
-file before the sensor starts.
+plugin declares `rubocop` as the one tool it needs, the sensor is spelled
+inline in the plugin's config, and the cop-to-smell mapping lives in
+`rubocop.jq` beside it.
 
 **The project decides which cops run.** The sensor passes no `--only` and no
 `--config`, so RuboCop finds `.rubocop.yml` by its own upward walk, and a
@@ -33,10 +34,10 @@ plugins = ["ruby"]
 
 ## rubocop sensor maps cop names to canonical smells
 
-The sensor shapes each offence into one finding per smell and stamps
-`source: "rubocop:<cop>"` on every issue. A seven-parameter method trips
-`Metrics/ParameterLists`, which maps to `too-many-parameters`. Its dead local
-trips `Lint/UselessAssignment`, which maps to `unused-variable`.
+The sensor (`rubocop.jq`) shapes each offence into one finding per smell and
+stamps `source: "rubocop:<cop>"` on every issue. A seven-parameter method
+trips `Metrics/ParameterLists`, which maps to `too-many-parameters`. Its dead
+local trips `Lint/UselessAssignment`, which maps to `unused-variable`.
 
 📄.rubocop.yml
 ```yaml
@@ -85,7 +86,8 @@ This is the deliberate exception to "a sensor emits vocabulary smells only". The
 knip sensor drops a key it cannot map, because knip's key set belongs to knip. A
 RuboCop cop that fired is one the project's own `.rubocop.yml` switched on, so
 it belongs to the project, and forwarding it saves running RuboCop separately.
-The smell key is the cop name verbatim.
+The smell key is the cop name verbatim — the transform passes any unmapped cop
+through under its own name.
 
 An uncatalogued smell coaches without failing the run, so the second command
 exits 0. The root `uncoached` key decides that, and it defaults to `suggest`.
@@ -225,7 +227,7 @@ habit-sensors --all 2>&1 >/dev/null | sed -n 1p
 
 🖥️ ❌ 1
 ```text
-habit-sensors: sensor 'rubocop' failed: '${python}' '${dir}/rubocop_sensor.py' '${detector:rubocop}' '${files}'
+habit-sensors: sensor 'rubocop' failed: rubocop --format json --force-exclusion --raise-cop-error -- '${files}'
 ```
 
 ## An empty scope runs no sensor, so rubocop never scans the whole tree

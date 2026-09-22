@@ -1,0 +1,98 @@
+[
+  {
+    "smell": "Style/FrozenStringLiteralComment",
+    "details": {},
+    "issues": [
+      {
+        "key": "frozen.rb",
+        "details": {
+          "file": "frozen.rb",
+          "line": 1,
+          "column": 1,
+          "message": "Missing frozen string literal comment.",
+          "source": "rubocop:Style/FrozenStringLiteralComment"
+        }
+      }
+    ]
+  },
+  {
+    "smell": "high-complexity",
+    "details": {},
+    "issues": [
+      {
+        "key": "report.rb",
+        "details": {
+          "file": "report.rb",
+          "line": 3,
+          "column": 1,
+          "message": "Cyclomatic complexity for `classify` is too high. [8/7]",
+          "source": "rubocop:Metrics/CyclomaticComplexity"
+        }
+      }
+    ]
+  },
+  {
+    "smell": "oversized-block",
+    "details": {},
+    "issues": [
+      {
+        "key": "block.rb",
+        "details": {
+          "file": "block.rb",
+          "line": 11,
+          "column": 1,
+          "message": "Block has too many lines. [26/25]",
+          "source": "rubocop:Metrics/BlockLength"
+        }
+      }
+    ]
+  },
+  {
+    "smell": "parse-error",
+    "details": {},
+    "issues": [
+      {
+        "key": "broken.rb",
+        "details": {
+          "file": "broken.rb",
+          "line": 1,
+          "column": 12,
+          "message": "unexpected token $end\n(Using Ruby 3.1 parser; configure using `TargetRubyVersion` parameter, under `AllCops`)",
+          "source": "rubocop:Lint/Syntax"
+        }
+      }
+    ]
+  },
+  {
+    "smell": "too-many-parameters",
+    "details": {},
+    "issues": [
+      {
+        "key": "billing.rb",
+        "details": {
+          "file": "billing.rb",
+          "line": 3,
+          "column": 11,
+          "message": "Avoid parameter lists longer than 5 parameters. [7/5]",
+          "source": "rubocop:Metrics/ParameterLists"
+        }
+      }
+    ]
+  },
+  {
+    "smell": "unused-variable",
+    "details": {},
+    "issues": [
+      {
+        "key": "billing.rb",
+        "details": {
+          "file": "billing.rb",
+          "line": 4,
+          "column": 3,
+          "message": "Useless assignment to variable - `unused`.",
+          "source": "rubocop:Lint/UselessAssignment"
+        }
+      }
+    ]
+  }
+]

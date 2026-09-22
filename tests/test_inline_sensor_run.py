@@ -97,6 +97,15 @@ def test_a_linter_exit_is_success_when_the_codes_say_so(tmp_path: Path) -> None:
     assert run.notices == []
 
 
+def test_an_exit_1_with_no_output_is_a_failed_run_not_findings(tmp_path: Path) -> None:
+    entry, files = an_entry("import sys; sys.exit(1)\n", ', success_exit_codes = [0, 1]')
+
+    run = inline_run(tmp_path, entry, files)
+
+    assert run.findings == []
+    assert "is not JSON" in run.notices[0]
+
+
 def test_an_exit_code_outside_the_success_codes_fails_the_run(tmp_path: Path) -> None:
     entry, files = an_entry(
         'import sys; sys.stderr.write("boom: bad config\\n"); sys.exit(3)\n',

@@ -1,0 +1,13 @@
+AllCops:
+  DisabledByDefault: true
+  TargetRubyVersion: 3.1
+Metrics/ParameterLists:
+  Enabled: true
+Metrics/CyclomaticComplexity:
+  Enabled: true
+Metrics/BlockLength:
+  Enabled: true
+Lint/UselessAssignment:
+  Enabled: true
+Style/FrozenStringLiteralComment:
+  Enabled: true

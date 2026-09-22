@@ -33,10 +33,15 @@ files = [
   "!**/tmp/**/*.gemspec",
   "!**/db/schema.rb",
 ]
-sensors = ["rubocop"]
+# Exit 1 is "offences found"; a binstub that never reached RuboCop also
+# exits 1 but prints no JSON, which the framework reads as a failed run.
+# Unmapped cops pass through under their own name (`uncoached` catches them).
+sensors = [
+  { tool = "rubocop", args = ["--format", "json", "--force-exclusion", "--raise-cop-error", "--", "${files}"], success_exit_codes = [0, 1], transform = "rubocop.jq" },
+]
 transformers = []
 
-# The rubocop sensor spawns the rubocop binary directly. `bundle binstubs
+# The rubocop sensor runs the rubocop binary directly. `bundle binstubs
 # rubocop` puts the project's own copy at `bin/rubocop`, and for a
 # `.rubocop.yml` naming extension gems, the project's copy is the only one that
 # can read it (see this plugin's README). `bin` is not on the default search

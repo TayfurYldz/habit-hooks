@@ -189,23 +189,14 @@ small. If the cop represents a smell that should be useful beyond your project,
 consider contributing the mapping, guide, and any needed vocabulary changes in
 a pull request to the [Habit Hooks project](https://github.com/habit-hooks/habit-hooks).
 
-The built-in cop mappings live in `sensors/rubocop_report.py`, in the
-`COP_SMELLS` table.
+The built-in cop mappings live in `rubocop.jq`, in the `smell_of` table.
 
 To add a mapping for a project, copy that file to
-`.habit-hooks/ruby/sensors/rubocop_report.py` and add an entry, for example:
+`.habit-hooks/ruby/rubocop.jq` and add an entry, for example:
 
-```python
-COP_SMELLS = {
-    # existing mappings ...
-    "Style/StringLiterals": "project-style",
-}
+```jq
+"Style/StringLiterals": "project-style",
 ```
-
-Because the sensor helper imports this file from its own directory, also copy
-`rubocop_sensor.py` and `rubocop.toml` to the same override directory (.habit-hooks/ruby/sensors).
-Keep the recipe in the TOML file the same; its `${dir}` then points at the override and
-loads your customized report module.
 
 If the new mapping uses an existing smell, its existing guide and severity are
 used. For a new smell, add a guide and configure its severity as needed:
@@ -219,14 +210,15 @@ Then add `.habit-hooks/ruby/guides/project-style.md`.
 
 ## Add or replace a sensor
 
-A sensor is a TOML recipe under `sensors/`. To replace the RuboCop sensor,
-override `.habit-hooks/ruby/sensors/rubocop.toml`; to add a separate sensor,
-create a new recipe such as `.habit-hooks/ruby/sensors/custom-check.toml` and
-add its name to the Ruby plugin's `sensors` list in
-`.habit-hooks/ruby/config.toml`:
+A sensor is an entry in the plugin's `sensors` list. To replace the RuboCop
+sensor, edit its inline entry in `.habit-hooks/ruby/config.toml`; to add a
+separate sensor, add another entry:
 
 ```toml
-sensors = ["rubocop", "custom-check"]
+sensors = [
+  { tool = "rubocop", args = ["--format", "json", "--force-exclusion", "--raise-cop-error", "--", "${files}"], success_exit_codes = [0, 1], transform = "rubocop.jq" },
+  { name = "custom-check", tool = "custom-check", args = ["${files}"] },
+]
 ```
 
 The plugin config override is a complete replacement, so copy the shipped

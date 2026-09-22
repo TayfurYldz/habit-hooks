@@ -111,18 +111,7 @@ in it.
 
 ## Testing
 
-`tests/conftest.py` puts `src/habit_hooks_ruby/sensors` on `sys.path` so the
-helper loads as a loose top-level module, which is how
-`${python} ${dir}/rubocop_sensor.py` loads it. Reaching it as
-`habit_hooks_ruby.sensors.rubocop_sensor` is a path no run ever takes.
-
-A missing rubocop is a `pytest.fail`, not a skip, matching every other plugin: a
-machine without it is a suite that has quietly stopped gating, not a machine
-this plugin does not apply to.
-
-The split between `test_the_rubocop_pipeline_maps_cops_to_smells.py` and
-`test_the_rubocop_sensor_runs_the_real_tool.py` is worth keeping. The first says
-what RuboCop's output *becomes* and runs no subprocess; the second proves
-RuboCop still produces output of the shape the first assumes. A RuboCop upgrade
-that renames `cop_name` or restructures `location` fails the second alone, which
-is the signal you want.
+RuboCop behaviour is gated by `scenarios/rubocop/` — the approved-output
+scenario runs the real tool, so a RuboCop upgrade that changes its output shape
+fails there. A machine without rubocop skips the scenario visibly instead of
+failing: the scenario, not the suite, is what needs the tool.
