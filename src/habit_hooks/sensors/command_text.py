@@ -25,11 +25,13 @@ project runs for one of its plugins' declared tools (``named_tools``) — are
 strings: they are substituted inside an element, so ``"${dir}/line-count.py"``
 stays one argument, and a tool's own path stays the one value it is. ``${files}``,
 ``${args}`` and ``${config}`` are lists: an element that is exactly one of them
-becomes zero or more arguments in its place. An element that merely contains
-one — ``"--paths=${files}"`` — is refused rather than joined, because joining a
-file list into a single argument is the bug the argv form exists to make
-impossible. The ``command`` form needs no such distinction: a shell splits the
-text on its own spaces.
+becomes zero or more arguments in its place, and one that merely contains one
+is refused rather than joined — joining is the mistake the argv form exists to
+make impossible — save ``${files:comma}``, the one sanctioned join: the files
+as a single comma-separated argument, for a tool whose own format takes them
+that way (phpmd's phar; a comma in a filename cannot survive that format — the
+tool's limitation to document, not work around). The ``command`` form needs no
+such distinction: a shell splits the text on its own spaces.
 
 Building the argv is its own question, separate from spawning it (``spawn.py``)
 and from reading back what it printed (``part_output.py``): it is also what the
@@ -47,6 +49,7 @@ from .model import Part
 from .named_tools import spelled_for_a_shell, spelled_plainly
 
 LIST_PLACEHOLDERS = ("${files}", "${args}", "${config}")
+COMMA_FILES = "${files:comma}"
 
 
 def spelled_files(part: Part, files: list[str]) -> list[str]:
@@ -64,23 +67,17 @@ def spelled_files(part: Part, files: list[str]) -> list[str]:
 
 
 def spells(part: Part, placeholder: str) -> bool:
-    """Whether ``part``'s recipe has anywhere to put ``placeholder``.
-
-    An argv spells a list placeholder as a whole element of its own — anything
-    else is refused below — so membership answers it; a command spells it
-    somewhere inside its text.
-    """
+    """Whether the recipe has anywhere to put ``placeholder``: an argv spells a
+    list placeholder as a whole element of its own, a command inside its text."""
     if part.argv is not None:
         return placeholder in part.argv
     return placeholder in (part.command or "")
 
 
 def expanded(part: Part, files: list[str], config_path: Path | None) -> list[str]:
-    """The argv that runs ``part`` over ``files``, its own shell included.
-
-    ``files`` arrive spelled for this part's form (:func:`spelled_files`), as
-    the chunking that measured them had to spell them first.
-    """
+    """The argv that runs ``part`` over ``files`` — already spelled for this
+    part's form (:func:`spelled_files`), as the chunking that measured them had
+    to — its own shell included."""
     _refuse_unusable_arguments(part)
     if part.argv is not None:
         return _argv_form(part, files, config_path)
@@ -123,6 +120,7 @@ def _element_arguments(
         spelled_plainly(part, element)
         .replace("${python}", sys.executable)
         .replace("${dir}", str(part.directory))
+        .replace(COMMA_FILES, ",".join(lists["${files}"]))
     ]
 
 
@@ -133,6 +131,7 @@ def _shell_form(part: Part, files: list[str], config_path: Path | None) -> str:
         .replace("${python}", shlex.quote(sys.executable))
         .replace("${dir}", shlex.quote(str(part.directory)))
         .replace("${args}", shlex.join(part.args))
+        .replace(COMMA_FILES, shlex.quote(",".join(files)))
         .replace("${files}", " ".join(files))
         .replace("${config}", shlex.join(_config_arguments(config_path)))
     )

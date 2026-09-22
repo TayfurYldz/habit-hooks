@@ -5,9 +5,8 @@ that list is spawned as it stands — the only form that runs where there is no
 POSIX shell, and where ``bash`` is as likely to be the WSL launcher as a shell.
 Nothing is quoted, because nothing reads the arguments as syntax; the
 placeholders divide into the two kinds ``command_text`` documents, substituted
-inside an element or expanded into arguments of their own.
-
-The shell form is ``tests/test_execution.py``.
+inside an element or expanded into arguments of their own. The shell form is
+``tests/test_execution.py``.
 """
 
 from __future__ import annotations
@@ -38,22 +37,16 @@ def test_an_argv_part_is_spawned_with_no_shell_around_it(tmp_path: Path) -> None
 
 def test_no_files_expand_to_no_arguments_at_all(tmp_path: Path) -> None:
     """``${files}`` is a whole element, so an empty scope leaves no empty
-    argument behind — a tool handed ``""`` reads it as a path it cannot open."""
+    argument behind."""
     part = Part(name="probe", directory=tmp_path, argv=["ruff", "${files}"])
 
     assert _argv(part, []) == ["ruff"]
-
-
-def test_one_file_is_one_argument(tmp_path: Path) -> None:
-    part = Part(name="probe", directory=tmp_path, argv=["ruff", "${files}"])
-
-    assert _argv(part, ["src/a.py"]) == ["ruff", "src/a.py"]
-
 
 def test_many_files_expand_where_the_placeholder_stands(tmp_path: Path) -> None:
     """In place, not appended: a tool's own flags may follow its paths."""
     part = Part(name="probe", directory=tmp_path, argv=["ruff", "${files}", "--json"])
 
+    assert _argv(part, ["src/a.php"]) == ["ruff", "src/a.php", "--json"]
     assert _argv(part, ["src/a.py", "src/b.py"]) == [
         "ruff",
         "src/a.py",
@@ -74,17 +67,15 @@ def test_the_sensor_args_expand_in_place_too(tmp_path: Path) -> None:
 
 
 def test_an_emptied_args_override_expands_to_nothing(tmp_path: Path) -> None:
-    """``[sensors.<name>] args = []`` clears a default the project cannot use,
-    and an argv with nowhere to put nothing still runs."""
+    """``[sensors.<name>] args = []`` clears a default the project cannot use."""
     part = Part(name="line-count", directory=tmp_path, argv=["count", "${args}"])
 
     assert _argv(part, []) == ["count"]
 
 
 def test_the_named_config_expands_to_both_of_its_arguments(tmp_path: Path) -> None:
-    """``${config}`` carries the whole flag, which is two arguments here — a
-    transformer is its own process, so this is how the run's ``--config``
-    reaches it."""
+    """``${config}`` carries the whole flag — this is how the run's
+    ``--config`` reaches a transformer, its own process."""
     part = Part(name="snooze", directory=tmp_path, argv=["run", "${config}"])
     execution = Execution(
         project_dir=tmp_path, scope=Scope(files=[]), config_path=tmp_path / "other.toml"
@@ -102,8 +93,8 @@ def test_no_named_config_expands_to_nothing(tmp_path: Path) -> None:
 
 def test_a_string_placeholder_fills_in_inside_its_own_element(tmp_path: Path) -> None:
     """``${dir}`` and ``${python}`` are substituted, not expanded: a bundled
-    script's path stays one argument even when the plugin directory — a
-    ``site-packages`` path on somebody else's machine — has a space in it."""
+    script's path stays one argument even when the plugin directory has a
+    space in it."""
     directory = tmp_path / "my plugin"
     part = Part(
         name="line-count", directory=directory, argv=["${python}", "${dir}/count.py"]
@@ -115,13 +106,10 @@ def test_a_string_placeholder_fills_in_inside_its_own_element(tmp_path: Path) ->
 def test_a_filename_that_is_shell_syntax_reaches_the_tool_intact(
     tmp_path: Path,
 ) -> None:
-    """The argv form's whole safety story, and it is stronger than quoting.
-
-    A scoped path is data that came out of the work tree — from a fork's pull
-    request, on a reviewer's machine. The shell form survives it by quoting;
-    here there is no shell to read it at all, so the name arrives as the one
-    argument it always was, punctuation and all, and nothing in it can run.
-    """
+    """The argv form's whole safety story, and it is stronger than quoting:
+    there is no shell to read the arguments at all, so a scoped path — data
+    from the work tree, a fork's pull request on a reviewer's machine —
+    arrives as the one argument it always was, and nothing in it can run."""
     marker = tmp_path / "PWNED"
     name = f"src/it's \"a $(touch {marker}) file\".py"
     (tmp_path / "echo_argv.py").write_text(
@@ -146,10 +134,9 @@ def test_a_filename_that_is_shell_syntax_reaches_the_tool_intact(
 def test_a_list_placeholder_buried_in_a_larger_element_is_refused(
     tmp_path: Path,
 ) -> None:
-    """There is no honest expansion for ``"--paths=${files}"``: the files are
-    separate arguments, and joining them into one is the mistake this form
-    exists to make impossible. So the author is told, rather than the tool
-    being handed one very long filename."""
+    """There is no honest expansion for ``"--paths=${files}"``: joining the
+    files into one argument is the mistake this form exists to make impossible,
+    so the author is told rather than the tool handed one long filename."""
     part = Part(name="probe", directory=tmp_path, argv=["ruff", "--paths=${files}"])
 
     with pytest.raises(ConfigError) as refusal:

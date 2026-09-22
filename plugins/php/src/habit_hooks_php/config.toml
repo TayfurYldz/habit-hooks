@@ -5,7 +5,15 @@ language = "php"
 # Composer puts every installed package: code the project did not write and
 # cannot change.
 files = ["**/*.php", "!**/vendor/**"]
-sensors = ["phpmd"]
+# phpmd inline: the same invocation the old helper made — PHP's own error
+# reporting is silenced so its deprecation notices cannot leak onto the JSON
+# the phar prints, exit 2 is phpmd saying "violations found", and the phar
+# takes its files as one comma-joined argument. The mapping lives in phpmd.jq:
+# a rule it has no smell for passes through under the rule's own name, where
+# `uncoached` catches it.
+sensors = [
+  { name = "phpmd", tool = "php", args = ["-d", "error_reporting=0", "-d", "display_errors=0", "${dir}/phpmd.phar", "${files:comma}", "json", "codesize,unusedcode"], transform = "phpmd.jq", success_exit_codes = [0, 2] },
+]
 transformers = []
 
 # phpmd ships bundled as a phar, so a PHP runtime is the whole requirement.

@@ -1,15 +1,15 @@
 # The php plugin — acceptance
 
 The php plugin runs its sensor through the real `habit-sensors` pipeline. These
-cases run the **actual** tool (PHPMD, bundled as a `.phar` next to the sensor)
-against a fixture with a known smell and assert the canonical finding comes out,
-mapped to the smell keys in [smell-vocabulary.md](smell-vocabulary.md).
+cases run the **actual** tool (PHPMD, bundled as a `.phar` beside the plugin's
+config) against a fixture with a known smell and assert the canonical finding
+comes out, mapped to the smell keys in [smell-vocabulary.md](smell-vocabulary.md).
 
 `habit-sensors` is the installed CLI; `php` is on the system `PATH`. The plugin
-declares `php` as the one tool it needs, and the sensor is handed the file this
-project runs for it, so it runs `<php> phpmd.phar` with PHP error reporting
-silenced (PHP's deprecation notices would otherwise leak onto the JSON stdout)
-and normalises PHPMD's exit-2-on-violations into a clean run.
+declares `php` as the one tool it needs, and the sensor is spelled inline: it
+runs `php phpmd.phar` with PHP error reporting silenced (PHP's deprecation
+notices would otherwise leak onto the JSON stdout) and declares phpmd's
+exit-2-on-violations as a success code.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -18,9 +18,10 @@ plugins = ["php"]
 
 ## phpmd sensor maps rule names to canonical smells
 
-The `phpmd` sensor runs PHPMD with the `codesize,unusedcode` rulesets and shapes
-each violation into one finding per smell, stamping `source: "phpmd:<rule>"` on
-each issue. An eleven-parameter function trips `ExcessiveParameterList` →
+The `phpmd` sensor runs PHPMD with the `codesize,unusedcode` rulesets and a jq
+transform beside the config (`phpmd.jq`) shapes each violation into one finding
+per smell, stamping `source: "phpmd:<rule>"` on each issue. An
+eleven-parameter function trips `ExcessiveParameterList` →
 `too-many-parameters`, and its dead local trips `UnusedLocalVariable` →
 `unused-variable`.
 
@@ -59,8 +60,9 @@ habit-sensors --all | jq 'sort_by(.smell)[] | {smell, language, key: (.issues[0]
 
 A function with a dozen independent branches exceeds PHPMD's cyclomatic
 complexity threshold, tripping `CyclomaticComplexity` → `high-complexity`.
-PHPMD's overlapping `NPathComplexity` is intentionally not mapped, so the same
-function reports a single smell.
+PHPMD's overlapping `NPathComplexity` has no smell of its own, so the transform
+forwards it under the rule's own name for `uncoached` to catch rather than
+dropping it — a dropped rule would be a clean run nobody ran.
 
 📄report.php
 ```php
@@ -87,6 +89,11 @@ habit-sensors --all | jq '.[] | {smell, language, source: .issues[0].details.sou
 
 🖥️ ✅
 ```json
+{
+  "smell": "NPathComplexity",
+  "language": "php",
+  "source": "phpmd:NPathComplexity"
+}
 {
   "smell": "high-complexity",
   "language": "php",
@@ -127,5 +134,5 @@ habit-sensors --all 2>&1 >/dev/null | sed -n 1p
 
 🖥️ ❌ 1
 ```text
-habit-sensors: sensor 'phpmd' failed: '${python}' '${dir}/phpmd_sensor.py' '${detector:php}' '${files}'
+habit-sensors: sensor 'phpmd' failed: php -d error_reporting=0 -d display_errors=0 '${dir}/phpmd.phar' '${files:comma}' json codesize,unusedcode
 ```

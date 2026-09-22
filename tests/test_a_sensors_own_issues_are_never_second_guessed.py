@@ -61,7 +61,7 @@ def test_two_java_variables_declared_on_one_line_are_two_issues() -> None:
 
 
 def test_two_php_variables_assigned_on_one_line_are_two_issues() -> None:
-    """``$a = 1; $b = 2;`` likewise. ``phpmd_sensor.issue`` keys by file and
+    """``$a = 1; $b = 2;`` likewise. ``phpmd.jq`` keys by file and
     carries ``beginLine``, no column."""
     issues = [
         {
