@@ -393,3 +393,54 @@ habit-sensors --all 2>&1 >/dev/null | sed -n 1p
 ```text
 habit-sensors: sensor 'ruff' failed: ruff check --output-format=json --select=C901,PLR0913,PLR0915,F841,F401,BLE001 '${files}'
 ```
+
+## The comment sensor flags comments and docstrings as non-essential-comment
+
+The `comment` sensor reads each scoped Python file's comments and docstrings
+directly: anything a name could say is a `non-essential-comment` finding, one
+issue per occurrence, so a project's coaching points at the exact line. A
+docstring that carries real information for a consumer is the exception to
+coach by, not a rule — the guide says what to do with the rest.
+
+📄.habit-hooks/config.toml
+```toml
+plugins = ["python"]
+
+[sensors.ruff]
+disabled = true
+
+[sensors.deptry]
+disabled = true
+```
+
+📄notes.py
+```python
+def flagged(name):
+    """This docstring only restates the name."""
+    return name
+```
+
+```bash
+habit-sensors --all | jq .
+```
+
+🖥️ ✅
+```json
+[
+  {
+    "smell": "non-essential-comment",
+    "details": {},
+    "issues": [
+      {
+        "key": "notes.py",
+        "details": {
+          "file": "notes.py",
+          "line": 2,
+          "message": "This docstring only restates the name.",
+          "source": "comment"
+        }
+      }
+    ]
+  }
+]
+```

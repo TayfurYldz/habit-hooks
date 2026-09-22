@@ -11,6 +11,7 @@ sensors = [
   # A program: no dependencies at all is a clean run (#88), a judgement the
   # inline form cannot spell (#171).
   "deptry",
+  { name = "comment", tool = "${python}", args = ["${dir}/comment.py", "${files}"] },
 ]
 transformers = []
 

@@ -1,0 +1,17 @@
+[
+  {
+    "smell": "non-essential-comment",
+    "details": {},
+    "issues": [
+      {
+        "key": "billing.py",
+        "details": {
+          "file": "billing.py",
+          "line": 2,
+          "message": "This docstring only restates the name.",
+          "source": "comment"
+        }
+      }
+    ]
+  }
+]

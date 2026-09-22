@@ -2,6 +2,7 @@
 
 ## Rules
 - The core shouldn't know about the plugins in any way. This also applies to documentation. 
+- Comments and docstrings state a non-obvious why in one or two lines; the story lives in issues and commits. The `comment` sensor enforces this on our own source — the pre-existing stock is snoozed in `.habit-hooks/snooze.json`, so any new comment shows up in every dogfooding run until it is fixed or consciously re-snoozed.
 
 ## Contributing
 - PR descriptions should be short, and designed to be readable by a human in under 30 seconds.
