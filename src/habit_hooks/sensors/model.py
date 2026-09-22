@@ -12,6 +12,23 @@ class SensorError(Exception):
     """A sensor that spawn-failed, exited unexpectedly, or emitted bad JSON."""
 
 
+@dataclass(frozen=True)
+class InlineRecipe:
+    """The half of a declarative sensor that is not an argument.
+
+    An inline sensor's ``argv`` — the tool and its arguments, placeholders and
+    all — is built by ``inline_spec`` and runs through the same machinery any
+    other part does. These are the settings with no place in an argument list:
+    which exit codes mean the tool succeeded, the jq program that maps its
+    output into findings, and whether the framework hands it a report file to
+    write instead of stdout (``inline_run``).
+    """
+
+    success_exit_codes: tuple[int, ...] = (0,)
+    transform: Path | None = None
+    report: bool = False
+
+
 @dataclass
 class Part:
     """One sensor or transformer: what it runs, where from, and over what.
@@ -37,6 +54,10 @@ class Part:
     # ``None`` where that tool is not installed (``named_tools``). Only the
     # tools it names, never its plugin's others.
     detectors: dict[str, str | None] = field(default_factory=dict)
+    # The declarative half of a sensor spelled inline in its plugin's
+    # config.toml (``inline_spec``); ``None`` for a part spelled as a spec
+    # file, whose recipe already says everything about how it runs.
+    inline: InlineRecipe | None = None
 
     @property
     def missing_detector(self) -> str | None:

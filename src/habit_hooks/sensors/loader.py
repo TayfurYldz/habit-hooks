@@ -9,6 +9,7 @@ from ..cli import ConfigError, ToolError
 from ..config import Config
 from ..config_schema import read_toml
 from ..resolve import Resolver
+from . import inline_spec
 from .model import Part, Plugin
 from .named_tools import DeclaredTools, files_for
 
@@ -29,15 +30,43 @@ class PluginLoader:
         path = self.resolver.in_plugin(name, "config.toml")
         spec = read_toml(path) if path else {}
         sensors = [
-            self.resolve_part([name], "sensors", sensor)
-            for sensor in spec.get("sensors", [])
-            if not self._disabled(sensor)
+            self._sensor(name, entry)
+            for entry in inline_spec.unique_sensors(name, spec.get("sensors", []))
+            if not self._disabled(
+                entry if isinstance(entry, str) else inline_spec.name_of(entry)
+            )
         ]
         transformers = [
             self.resolve_part([name], "transformers", transformer)
             for transformer in spec.get("transformers", [])
         ]
         return Plugin(name, spec.get("language"), sensors, transformers)
+
+    def _sensor(self, plugin: str, entry: object) -> Part:
+        """One enabled sensor: an inline table, or a spec file by that name."""
+        if not isinstance(entry, dict):
+            return self.resolve_part([plugin], "sensors", entry)
+        part = inline_spec.part_from(
+            plugin, self.resolver.in_plugin(plugin, "config.toml"), entry
+        )
+        self._refuse_a_shadowed_spec_file(plugin, part.name)
+        part = replace(
+            part,
+            argv=[part.argv[0], *(self._sensor_setting(part.name, entry, "args") or [])],
+            files=self._sensor_setting(part.name, entry, "files"),
+        )
+        inline_spec.refuse_unusable_report(part)
+        return self._with_its_tools("sensors", part)
+
+    def _refuse_a_shadowed_spec_file(self, plugin: str, name: str) -> None:
+        """An inline entry and a spec file of one name cannot both be the
+        sensor: whichever the loader happened to look at first would win."""
+        if self.resolver.in_plugin(plugin, f"sensors/{name}.toml") is not None:
+            raise ConfigError(
+                f"the {plugin!r} plugin defines sensor {name!r} inline in its "
+                f"config.toml and also ships sensors/{name}.toml — spell the "
+                "sensor one way"
+            )
 
     def resolve_part(self, plugins: list[str], kind: str, name: str) -> Part:
         path = self.resolver.part(plugins, f"{kind}/{name}.toml")

@@ -8,11 +8,12 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..argv_budget import argument_budget, argument_cost, within_argument_limits
 from ..path_globs import matching
 from ..scope import Scope
+from . import inline_run
 from .broken_part import run_part
-from .command_text import expanded, spelled_files, spells
+from .chunking import chunked_commands
+from .command_text import expanded, spelled_files
 from .deadline import DEFAULT_SENSOR_TIMEOUT_SECONDS
 from .finding_paths import aliasing_notices, anchored
 from .live_commands import LIVE_COMMANDS
@@ -39,12 +40,9 @@ class Execution:
         # A sensor whose scope is empty measured nothing, so it does not run: a
         # tool handed no paths falls back to its own default (ruff's is "scan
         # cwd"), reporting the whole repo's debt over a scope that named none
-        # (#93). The scope is empty either because the run's was — the scope
-        # layer already emits the "measured nothing" notice — or because the
-        # sensor's own ``files`` narrowed it away, which is why the question is
-        # asked per sensor. Absorbed here, every sensor — including a
-        # third-party one that never heard of the convention — is covered
-        # without a per-sensor guard.
+        # (#93) — asked per sensor, because the sensor's own ``files`` can narrow
+        # the scope away too. Absorbed here, every sensor is covered without a
+        # per-sensor guard.
         scoped = [sensor for sensor in sensors if self._scoped_files(sensor)]
         if not scoped:
             return Run()
@@ -113,12 +111,14 @@ class Execution:
     def run_sensor(self, sensor: Part) -> list[dict]:
         """The sensor's findings, anchored to the project, gathered chunk by chunk.
 
-        Chunked so a work-tree-sized ``${files}`` never overflows one spawn.
-        Anchoring the whole concatenation once (``finding_paths.py``) keeps a
-        key that aliases across chunks a single key, and — where a sensor's
-        output enters the run, for every sensor there is — the snooze index
-        portable without any sensor having to know it.
+        A sensor spelled inline in its plugin's config runs the declarative
+        pipeline instead (``inline_run``). Chunked so a work-tree-sized
+        ``${files}`` never overflows one spawn, and anchored once over the whole
+        concatenation rather than per chunk, so a key aliased across chunks
+        stays one key and the snooze index stays portable.
         """
+        if sensor.inline is not None:
+            return inline_run.findings_for(sensor, self)
         findings: list[dict] = []
         for argv in self._sensor_commands(sensor):
             findings.extend(self._sensor_findings(sensor, argv))
@@ -137,24 +137,12 @@ class Execution:
             raise failure from None
 
     def _sensor_commands(self, sensor: Part) -> list[list[str]]:
-        """One invocation's argv per file chunk the sensor's scope splits into.
+        return chunked_commands(
+            sensor, self._spelled_files(sensor), self._expander(sensor)
+        )
 
-        A recipe that splices ``${files}`` is split so a huge list never fails
-        the spawn (a raw ``OSError`` ``_safe_sensor`` never caught, escaping an
-        ordinary CI-sized run as a traceback); one that reads its own paths
-        (``knip``, ``deptry``, ``jscpd``) runs once, not once per chunk.
-
-        Each form spends the budget on what it actually carries. A ``command``
-        part's paths are quoted into one ``bash -c`` argument; an ``argv``
-        part's are arguments of their own, quoted not at all. Either way the
-        rest of the argv is paid for first, so the batch is measured against
-        what is left rather than against the whole.
-        """
-        files = self._spelled_files(sensor)
-        split = spells(sensor, "${files}") and files
-        budget = argument_budget() - argument_cost(self._expand_files(sensor, []))
-        chunks = within_argument_limits(files, budget) if split else [files]
-        return [self._expand_files(sensor, chunk) for chunk in chunks]
+    def _expander(self, part: Part):
+        return lambda files: self._expand_files(part, files)
 
     def _safe_sensor(self, sensor: Part) -> tuple[list[dict], list[str]]:
         """Its findings and whatever the run must be told about them.
@@ -174,7 +162,7 @@ class Execution:
         ]
 
     def _expand(self, part: Part) -> list[str]:
-        """The argv over the whole scope — its transformer form and one chunk."""
+        """The argv over the whole scope — a transformer's, or one chunk."""
         return self._expand_files(part, self._spelled_files(part))
 
     def _spelled_files(self, part: Part) -> list[str]:
@@ -186,9 +174,9 @@ class Execution:
     def _scoped_files(self, part: Part) -> list[str]:
         """The run's scope, narrowed to this sensor's own ``files`` if it has any.
 
-        The scope is still derived once (``scope.resolve_scope``); a sensor's
-        ``files`` only selects a subset of what that scope already picked, never a
-        second, competing scope derivation. A sensor stating none sees all of it.
+        The scope is derived once (``scope.resolve_scope``); a sensor's ``files``
+        selects a subset of what that scope already picked. A sensor stating
+        none sees all of it.
         """
         if part.files is None:
             return self.scope.files

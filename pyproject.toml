@@ -46,6 +46,7 @@ dependencies = [
     "jinja2>=3",
     "pathspec>=0.12",
     "attrs>=23",
+    "jq>=1.8",
     "habit-hooks-generic>=1.5.dev0,<2",
 ]
 
