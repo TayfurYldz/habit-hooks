@@ -2,7 +2,7 @@
 
 ## Rules
 - The core shouldn't know about the plugins in any way. This also applies to documentation. 
-- Comments almost never exist: what and why live in names and structure, per plugins/generic/src/habit_hooks_generic/guides/non-essential-comment.md. A comment survives only for a non-obvious why code cannot carry — a worked-around tool bug, a spec. The `non-essential-comment` sensor enforces this. Snooze is one-time, at rule introduction: a finding on a file you touch is fixed, never re-approved.
+- Comments almost never exist: what and why live in names and structure, per plugins/generic/src/habit_hooks_generic/guides/non-essential-comment.md. Docstrings are comments — the comment sensor flags them and the ratchet strips them on touch; never restore or request them in review. A comment survives only for a non-obvious why code cannot carry — a worked-around tool bug, a spec. The `non-essential-comment` sensor enforces this. Snooze is one-time, at rule introduction: a finding on a file you touch is fixed, never re-approved.
 
 ## Contributing
 - PR descriptions should be short, and designed to be readable by a human in under 30 seconds.
