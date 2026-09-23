@@ -1,6 +1,3 @@
-"""A project with files, an index and findings on stdin, shared by the snooze
-tests: the same small situation — a file on disk, a finding anchored to it, and
-the real CLI — without copies drifting apart."""
 
 from __future__ import annotations
 
@@ -11,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from finding import a_finding, an_issue
 from habit_hooks.snooze import parse_args, run
 
 
@@ -26,17 +24,12 @@ def feed_stdin(monkeypatch: pytest.MonkeyPatch, findings: object) -> None:
 
 
 def finding(key: str, file: str | None = None) -> dict:
-    """One issue, anchored to ``file`` — or to its key, as a sensor may leave it."""
-    details = {"file": file} if file is not None else {}
-    return {
-        "smell": "oversized-file",
-        "details": {"maxAllowed": 200},
-        "issues": [{"key": key, "details": details}],
-    }
+    return a_finding(
+        details={"maxAllowed": 200}, issues=[an_issue(key, file=file)]
+    )
 
 
 def aliased(*files: str) -> list[dict]:
-    """One key over several files — see ``anchor_file`` for when a sensor reports that."""
     return [
         {
             "smell": "unused-dependency",

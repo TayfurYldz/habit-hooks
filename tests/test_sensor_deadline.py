@@ -14,29 +14,20 @@ from platform_probe import A_SHELL_TO_RUN_IT_WITH, off_windows
 from habit_hooks.scope import Scope
 from habit_hooks.sensors.execution import Execution
 from habit_hooks.sensors.model import Part
+from sensor_run import python_sensor, run_sensor_until
 
 
 def _timed_out_notice(tmp_path: Path, script: str) -> str:
-    (tmp_path / "wedge.py").write_text(script, encoding="utf-8")
-    part = Part(name="probe", directory=tmp_path, argv=["${python}", "${dir}/wedge.py"])
-    execution = Execution(
-        project_dir=tmp_path, scope=Scope(files=["src/a.py"]), timeout=0.3
-    )
-
-    run = execution.run_sensors([part])
+    part = python_sensor(tmp_path, script)
+    run = run_sensor_until(part, 0.3)
 
     assert run.failed
     return "\n".join(run.notices)
 
 
 def test_a_wedged_sensor_times_out_into_a_failed_run(tmp_path: Path) -> None:
-    (tmp_path / "wedge.py").write_text("import time\ntime.sleep(5)\n", encoding="utf-8")
-    part = Part(name="probe", directory=tmp_path, argv=["${python}", "${dir}/wedge.py"])
-    execution = Execution(
-        project_dir=tmp_path, scope=Scope(files=["src/a.py"]), timeout=0.2
-    )
-
-    run = execution.run_sensors([part])
+    part = python_sensor(tmp_path, "import time\ntime.sleep(5)\n")
+    run = run_sensor_until(part, 0.2)
 
     assert run.findings == []
     assert run.failed

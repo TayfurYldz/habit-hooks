@@ -5,19 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from git_repo import committed, git, repository, stop_the_upward_walk_at, written
+from git_repo import committed, git, repository, written
 from habit_hooks import git_listing, project_scan
 from habit_hooks.config import Config
 from scope_probe import scoped_files as _scoped_files
 
 _PY_SOURCE = ["**/*.py"]
-
-
-@pytest.fixture(autouse=True)
-def _only_the_repository_the_case_built(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    stop_the_upward_walk_at(tmp_path, monkeypatch)
+pytestmark = pytest.mark.usefixtures("git_ceiling")
 
 
 def test_a_project_in_somebody_elses_ignored_tree_scans_everything(

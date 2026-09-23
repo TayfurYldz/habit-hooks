@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from habit_hooks.config import load_config
+from refusal import refusal_from
 from plugin_fixture import write_plugin, write_project_config
 
 
@@ -19,9 +20,7 @@ def _load(project_dir: Path) -> None:
 
 
 def _refusal(project_dir: Path) -> str:
-    with pytest.raises(SystemExit) as failure:
-        _load(project_dir)
-    return str(failure.value)
+    return refusal_from(lambda: _load(project_dir))
 
 
 def _config_path(project_dir: Path) -> Path:

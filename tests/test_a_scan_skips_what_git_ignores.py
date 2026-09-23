@@ -5,18 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from git_repo import committed, repository, stop_the_upward_walk_at, written
+from git_repo import committed, repository, written
 from habit_hooks.config import Config, ScopeDefaults
 from scope_probe import scoped_files as _scoped_files
 
 _PY_SOURCE = ["**/*.py"]
-
-
-@pytest.fixture(autouse=True)
-def _only_the_repository_the_case_built(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    stop_the_upward_walk_at(tmp_path, monkeypatch)
+pytestmark = pytest.mark.usefixtures("git_ceiling")
 
 
 def test_an_ignored_file_is_out_of_a_whole_project_scan(tmp_path: Path) -> None:

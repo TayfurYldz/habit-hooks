@@ -5,20 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from git_repo import committed, repository, stop_the_upward_walk_at, submodule
+from git_repo import committed, repository, submodule
 from habit_hooks import project_scan
 from habit_hooks.config import Config
 from scope_probe import scope as _scope
 from scope_probe import scoped_files as _scoped_files
 
 _PY_SOURCE = ["**/*.py"]
-
-
-@pytest.fixture(autouse=True)
-def _only_the_repository_the_case_built(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    stop_the_upward_walk_at(tmp_path, monkeypatch)
+pytestmark = pytest.mark.usefixtures("git_ceiling")
 
 
 def _vendoring_a_submodule(tmp_path: Path) -> Path:

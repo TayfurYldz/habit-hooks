@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from habit_hooks import mapper
+from finding import a_finding, an_issue
 from plugin_fixture import write_plugin, write_project_config
 
 OVERSIZED_FILE_GUIDE = "Split the file along its seams."
@@ -39,23 +40,15 @@ def _project(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def _finding(smell: str, issues: list[dict], **rest: object) -> dict:
-    return {"smell": smell, "details": {}, "issues": issues, **rest}
-
-
-def _at(file: str, **details: object) -> dict:
-    return {"key": file, "details": {"file": file, **details}}
-
-
 def test_two_sensors_reporting_one_smell_print_its_guide_once(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from_eslint = _finding(
+    from_eslint = a_finding(
         "oversized-file",
-        [_at("src/big.ts", message="File has too many lines", source="eslint:max-lines")],
+        [an_issue("src/big.ts", message="File has too many lines", source="eslint:max-lines")],
     )
-    from_line_count = _finding(
-        "oversized-file", [_at("src/big.ts", lines=260, source="line-count")]
+    from_line_count = a_finding(
+        "oversized-file", [an_issue("src/big.ts", lines=260, source="line-count")]
     )
 
     mapper.run([from_eslint, from_line_count], _project(tmp_path))
@@ -66,8 +59,8 @@ def test_two_sensors_reporting_one_smell_print_its_guide_once(
 def test_one_file_two_sensors_saw_is_one_issue_to_fix(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from_eslint = _finding("oversized-file", [_at("src/big.ts", line=None)])
-    from_line_count = _finding("oversized-file", [_at("src/big.ts", lines=260)])
+    from_eslint = a_finding("oversized-file", [an_issue("src/big.ts", line=None)])
+    from_line_count = a_finding("oversized-file", [an_issue("src/big.ts", lines=260)])
 
     mapper.run([from_eslint, from_line_count], _project(tmp_path))
 
@@ -79,9 +72,9 @@ def test_one_file_two_sensors_saw_is_one_issue_to_fix(
 def test_every_oversized_function_in_one_file_is_still_its_own_issue(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    issues = [_at("src/big.ts", line=line) for line in (3, 40, 80, 120, 160, 200, 240)]
+    issues = [an_issue("src/big.ts", line=line) for line in (3, 40, 80, 120, 160, 200, 240)]
 
-    mapper.run([_finding("oversized-function", issues)], _project(tmp_path))
+    mapper.run([a_finding("oversized-function", issues)], _project(tmp_path))
 
     assert "── oversized-function (7 issues) ──" in capsys.readouterr().out
 
@@ -90,8 +83,8 @@ def test_different_smells_keep_their_own_blocks_in_arrival_order(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     findings = [
-        _finding("oversized-function", [_at("src/a.ts", line=3)]),
-        _finding("oversized-file", [_at("src/b.ts")]),
+        a_finding("oversized-function", [an_issue("src/a.ts", line=3)]),
+        a_finding("oversized-file", [an_issue("src/b.ts")]),
     ]
 
     mapper.run(findings, _project(tmp_path))
@@ -104,8 +97,8 @@ def test_one_smell_two_plugins_coach_differently_stays_two_blocks(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     findings = [
-        _finding("high-complexity", [_at("src/a.py", line=12)], language="python"),
-        _finding("high-complexity", [_at("src/b.ts", line=40)], language="typescript"),
+        a_finding("high-complexity", [an_issue("src/a.py", line=12)], language="python"),
+        a_finding("high-complexity", [an_issue("src/b.ts", line=40)], language="typescript"),
     ]
 
     mapper.run(findings, _project(tmp_path))
@@ -120,8 +113,8 @@ def test_each_file_is_listed_under_the_guide_that_coaches_it(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     findings = [
-        _finding("high-complexity", [_at("src/a.py", line=12)], language="python"),
-        _finding("high-complexity", [_at("src/b.ts", line=40)], language="typescript"),
+        a_finding("high-complexity", [an_issue("src/a.py", line=12)], language="python"),
+        a_finding("high-complexity", [an_issue("src/b.ts", line=40)], language="typescript"),
     ]
 
     mapper.run(findings, _project(tmp_path))
