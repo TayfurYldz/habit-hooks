@@ -3,14 +3,13 @@
 A key the plugin cannot translate used to be forwarded under knip's own name,
 where it had no guide and no catalogue severity — so `binaries` turned an
 untouched repository red with boilerplate that named neither the tool nor the
-rule (#111). Translating the tool's vocabulary is the sensor's job: the four
+rule. Translating the tool's vocabulary is the sensor's job: the four
 dead-code keys knip's `--production` pass already coached gained a smell, and
 anything still untranslated is dropped here.
 
 knip itself is stubbed. These cases are about the mapping, and a stub report
 states the exact issue shape knip 5 emits (including the `enumMembers` object
-map) without a fixture tree that coaxes the real tool into producing it — the
-real tool is exercised by `plugins/typescript/docs/typescript-plugin.spec.md`.
+map) without a fixture tree that coaxes the real tool into producing it.
 """
 
 from __future__ import annotations
@@ -54,8 +53,8 @@ def _occurrence(name: str) -> list[dict]:
 
 
 # The keys knip reports that this plugin has no smell for. `unlisted` and
-# `unresolved` name real defects and get smells of their own in #124; until then
-# they are dropped with the rest.
+# `unresolved` name real defects and get a smell of their own once one exists;
+# until then they are dropped with the rest.
 UNTRANSLATED_KEYS = ["binaries", "duplicates", "catalog", "unlisted", "unresolved"]
 
 TRANSLATED_KEYS = [

@@ -10,10 +10,9 @@ everything before it goes to PMD verbatim, everything after becomes a file. A
 ``--rulesets``/``-R`` on the PMD-flag half is still pulled out for `-R`,
 exactly as it was before this split existed.
 
-The cases below hand the tool over themselves, so it is ``java-plugin.spec.md``'s
-``[sensors.pmd] args`` case — the one that runs the real pipeline — that holds
-the *spec's* own ordering in place: spell ``${detector:pmd}`` after ``${args}``
-there and ``--minimum-priority`` is what gets spawned.
+These cases are the only holder of the shipped ordering: spell
+``${detector:pmd}`` after ``${args}`` the other way round and
+``--minimum-priority`` is what gets spawned.
 """
 
 from __future__ import annotations

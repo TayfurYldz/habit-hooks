@@ -2,8 +2,7 @@
 
 The stub (``node_tool_stub``) prints an empty run and records the argv it was
 spawned with, so a suite can ask what the sensor *did* — which config it named,
-how many passes it ran — rather than what knip made of it. The real tool is
-exercised by ``plugins/typescript/docs/typescript-plugin.spec.md``.
+how many passes it ran — rather than what knip made of it.
 """
 
 from __future__ import annotations

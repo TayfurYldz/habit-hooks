@@ -7,12 +7,11 @@ knip 5 looks for eight file names plus a ``knip`` key in ``package.json``, all i
 the project directory, and never walks up (``util/fs.js`` ``findFile``). The same
 answer has to reach the gate on the second ``--production`` pass, which reads the
 trailing ``!`` markers — read them off a config that is not the one running and
-the pass stays off in exactly the case it exists for (#120).
+the pass stays off in exactly the case it exists for.
 
 knip is stubbed by a script that records the argv it was spawned with
 (``knip_project.py``): what is under test is which config the sensor names and
-how many passes it runs, not what knip makes of either. The real tool is
-exercised by ``plugins/typescript/docs/typescript-plugin.spec.md``.
+how many passes it runs, not what knip makes of either.
 """
 
 from __future__ import annotations

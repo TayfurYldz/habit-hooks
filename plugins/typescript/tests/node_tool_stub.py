@@ -3,7 +3,6 @@
 The stub prints a canned report and appends the argv it was spawned with to a
 log, so a suite can ask what the sensor *did* — which config it named, how many
 passes it ran, what it spawned the tool as — rather than what the real tool made
-of it. The real tools are exercised by ``docs/typescript-plugin.spec.md``.
 
 It is installed as a **package** rather than dropped on ``PATH`` because that is
 where the sensors now look: a CLI is spawned as the JavaScript file its
