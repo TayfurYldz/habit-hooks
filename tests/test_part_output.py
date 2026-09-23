@@ -56,7 +56,7 @@ def test_an_argv_sensor_names_its_missing_tool_in_the_very_same_words(
         name="probe", directory=tmp_path, argv=["no-such-tool-here", "--json"]
     )
 
-    assert only_notice(part, tmp_path) == (
+    assert only_notice(part) == (
         "habit-sensors: sensor 'probe' needs the 'no-such-tool-here' command, "
         "which is not installed — install it, or disable the sensor with "
         "[sensors.probe] disabled = true"
