@@ -7,8 +7,26 @@
         "key": "billing.py",
         "details": {
           "file": "billing.py",
+          "line": 8,
+          "message": "# fixme before launch",
+          "source": "comment"
+        }
+      },
+      {
+        "key": "billing.py",
+        "details": {
+          "file": "billing.py",
           "line": 2,
           "message": "This docstring only restates the name.",
+          "source": "comment"
+        }
+      },
+      {
+        "key": "billing.py",
+        "details": {
+          "file": "billing.py",
+          "line": 7,
+          "message": "ok",
           "source": "comment"
         }
       }

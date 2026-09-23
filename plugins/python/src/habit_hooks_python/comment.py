@@ -5,8 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-COMMENT_MINIMUM = 10
-DOCSTRING_MINIMUM = 15
 EXEMPT_PREFIXES = ("#!", "# type:", "# noqa", "# pylint:", "# -*-")
 
 
@@ -16,8 +14,7 @@ def comment_issues(source: str, file: str) -> list[dict]:
         text = line.strip()
         if not text.startswith("#") or text.startswith(EXEMPT_PREFIXES):
             continue
-        if len(text) >= COMMENT_MINIMUM:
-            issues.append(occurrence(file, number, text))
+        issues.append(occurrence(file, number, text))
     return issues
 
 
@@ -34,7 +31,7 @@ def docstring_issues(source: str, file: str) -> list[dict]:
         if not isinstance(node, DOCSTRING_NODES):
             continue
         docstring = ast.get_docstring(node)
-        if docstring and len(docstring.strip()) >= DOCSTRING_MINIMUM:
+        if docstring and docstring.strip():
             issues.append(occurrence(file, node.body[0].lineno, docstring))
     return issues
 
