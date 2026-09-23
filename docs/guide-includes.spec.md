@@ -1,10 +1,6 @@
 # Guide template includes
 
-A guide is a Jinja2 template rendered against its finding. The old wrapper
-auto-appended the offending files and lines, so the prose-only prompts never had
-to render them; that is no longer true, so each guide must now list **where** the
-smell occurs. To avoid repeating the same listing in every guide, a guide pulls
-in a shared partial with Jinja2 `{% include %}`.
+A guide is a Jinja2 template rendered against its finding. The old wrapper auto-appended the offending files and lines, so the prose-only prompts never had to render them; that is no longer true, so each guide must now list **where** the smell occurs. To avoid repeating the same listing in every guide, a guide pulls in a shared partial with Jinja2 `{% include %}`.
 
 ## The issue-display contract
 
@@ -16,37 +12,23 @@ Each issue carries, in its `details`, the fields a shared listing renders:
 | `line` | the row, for a point-located smell |
 | `content` | **optional** — a snippet that may reveal a pattern across the listing, e.g. the function signature for `too-many-parameters`. Shown after the location when present, omitted when absent. |
 
-`content` is deliberately not the linter's message: `Too many arguments (4 > 3)`
-repeated down every line says little, whereas the real signatures lined up next
-to each other often expose the shared shape that wants extracting.
+`content` is deliberately not the linter's message: `Too many arguments (4 > 3)` repeated down every line says little, whereas the real signatures lined up next to each other often expose the shared shape that wants extracting.
 
-Not every smell is point-located, so there are **two shared listings**, each a
-partial under `guides/includes/`:
+Not every smell is point-located, so there are **two shared listings**, each a partial under `guides/includes/`:
 
 | Partial | Format per issue | Smells |
 |---------|------------------|--------|
 | `includes/line_level_issues.md` | `{{ file }}:{{ line }}` then `  {{ content }}` if present | too-many-parameters, oversized-function, high-complexity, deep-nesting, unused-variable, unused-import, swallowed-exception, loose-equality, var-declaration, non-const-binding, duplicate-import, explicit-any, non-null-assertion, redundant-type-annotation, warning-comment, non-essential-comment |
 | `includes/file_level_issues.md` | `{{ file }}` then `  {{ content }}` if present | oversized-file, unused-file, unused-export, parse-error |
 
-A handful of smells do not fit either shape and so do **not** use a shared
-include; their guides list the occurrences inline:
+A handful of smells do not fit either shape and so do **not** use a shared include; their guides list the occurrences inline:
 
 - `duplicated-code`, whose issues come in matched pairs.
-- `unused-dependency` and `unused-class-member`, which are keyed by a **name**
-  (a package, a member) rather than a location — the useful line is that name,
-  which neither shared listing renders (`file` would only repeat the manifest or
-  the class file). Their guides loop over `{{ issue.key }}` / the member name
-  directly.
+- `unused-dependency` and `unused-class-member`, which are keyed by a **name** (a package, a member) rather than a location — the useful line is that name, which neither shared listing renders (`file` would only repeat the manifest or the class file). Their guides loop over `{{ issue.key }}` / the member name directly.
 
 The shared includes exist only for the two typical shapes.
 
-Partials live in an `includes/` subdirectory so they never collide with a
-smell-named guide (`guides/<smell>.md`). They resolve through the **same override
-chain as guides** — project `.habit-hooks/<plugin>/guides/includes/…` before the
-plugin's package default, walking the ordered `plugins` list, then the core's
-built-in partials as the final fallback — so a project can re-format a listing
-once and every guide that includes it follows, and any plugin can rely on the two
-shared partials whether or not `generic` is configured.
+Partials live in an `includes/` subdirectory so they never collide with a smell-named guide (`guides/<smell>.md`). They resolve through the **same override chain as guides** — project `.habit-hooks/<plugin>/guides/includes/…` before the plugin's package default, walking the ordered `plugins` list, then the core's built-in partials as the final fallback — so a project can re-format a listing once and every guide that includes it follows, and any plugin can rely on the two shared partials whether or not `generic` is configured.
 
 ## The line-level listing
 
@@ -64,8 +46,7 @@ plugins = ["generic"]
 
 ### A point-located guide includes the line listing, with content
 
-`too-many-parameters` is point-located (enforced). Each issue carries the
-signature as `content`, so the listing lines the signatures up under each other.
+`too-many-parameters` is point-located (enforced). Each issue carries the signature as `content`, so the listing lines the signatures up under each other.
 
 📄.habit-hooks/generic/guides/too-many-parameters.md
 ```markdown
@@ -163,8 +144,7 @@ plugins = ["generic"]
 
 ### A whole-file guide includes the file listing
 
-`oversized-file` is whole-file (enforced); its issues carry no `line`, and here
-no `content`, so the listing is just the files.
+`oversized-file` is whole-file (enforced); its issues carry no `line`, and here no `content`, so the listing is just the files.
 
 📄.habit-hooks/generic/guides/oversized-file.md
 ```markdown
@@ -206,8 +186,7 @@ Split each file along a real seam.
 
 ## Includes resolve through the plugin chain
 
-A guide in one plugin may include a partial that only a later plugin ships; the
-include resolves by walking `plugins` in order, exactly like a guide.
+A guide in one plugin may include a partial that only a later plugin ships; the include resolves by walking `plugins` in order, exactly like a guide.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -216,8 +195,7 @@ plugins = ["typescript", "generic"]
 
 ### A guide includes a partial shipped by a later plugin
 
-The `typescript` guide ships no `includes/` of its own; its `{% include %}`
-falls through to the listing `generic` provides.
+The `typescript` guide ships no `includes/` of its own; its `{% include %}` falls through to the listing `generic` provides.
 
 📄.habit-hooks/generic/guides/includes/line_level_issues.md
 ```markdown

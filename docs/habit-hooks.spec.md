@@ -1,19 +1,8 @@
 # habit-hooks
 
-`habit-hooks` is the whole tool: the two stages composed over a Unix pipe,
-`habit-sensors $ARGS | habit-mapper`. The arguments scope the sensors stage, the
-findings flow through the pipe, and the pipeline fails when **either** stage
-fails — the mapper's code when it is non-zero, the sensors' otherwise. This
-document specs only that composition — argument forwarding and
-exit-code propagation; the stages' own behaviour lives in
-[habit-sensors.spec.md](habit-sensors.spec.md) and
-[habit-mapper.spec.md](habit-mapper.spec.md), and the big picture in
-[architecture.md](architecture.md).
+`habit-hooks` is the whole tool: the two stages composed over a Unix pipe, `habit-sensors $ARGS | habit-mapper`. The arguments scope the sensors stage, the findings flow through the pipe, and the pipeline fails when **either** stage fails — the mapper's code when it is non-zero, the sensors' otherwise. This document specs only that composition — argument forwarding and exit-code propagation; the stages' own behaviour lives in [habit-sensors.spec.md](habit-sensors.spec.md) and [habit-mapper.spec.md](habit-mapper.spec.md), and the big picture in [architecture.md](architecture.md).
 
-A minimal plugin backs every case below: one sensor that emits a single
-`too-many-parameters` finding scoped from `${files}`, and a guide for that smell.
-Discovery is opt-in (#97), so the config names what to scan; `["**"]` is every
-file this fixture writes.
+A minimal plugin backs every case below: one sensor that emits a single `too-many-parameters` finding scoped from `${files}`, and a guide for that smell. Discovery is opt-in, so the config names what to scan; `["**"]` is every file this fixture writes.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -59,8 +48,7 @@ report
 
 ## Scope arguments forward to the sensors stage
 
-`habit-hooks --file <path>` forwards `--file` to `habit-sensors`, so the run is
-scoped to that one file and the coached output names only it.
+`habit-hooks --file <path>` forwards `--file` to `habit-sensors`, so the run is scoped to that one file and the coached output names only it.
 
 ```bash
 habit-hooks --file src/billing.py
@@ -80,11 +68,7 @@ Bundle related arguments into an object.
 
 ## `--config` forwards to the mapper stage, not just the sensors
 
-`--config <path>` has to reach the mapper too, or the run scopes from one config
-and sets its exit code from another. `too-many-parameters` is enforced by the
-default `.habit-hooks/config.toml`, so the pipeline would fail; `ci.toml` demotes
-it to `suggested`. `habit-hooks --config ci.toml` threads that file into both
-stages, so the smell is coached but the pipeline exits 0.
+`--config <path>` has to reach the mapper too, or the run scopes from one config and sets its exit code from another. `too-many-parameters` is enforced by the default `.habit-hooks/config.toml`, so the pipeline would fail; `ci.toml` demotes it to `suggested`. `habit-hooks --config ci.toml` threads that file into both stages, so the smell is coached but the pipeline exits 0.
 
 📄ci.toml
 ```toml
@@ -113,10 +97,7 @@ Bundle related arguments into an object.
 
 ## The installed command composes without its bin dir on PATH
 
-The installed `habit-hooks` console script shells out to its siblings
-`habit-sensors` and `habit-mapper`. Invoked by absolute path with its own bin
-directory stripped from `PATH`, it resolves those siblings relative to itself
-rather than by bare name, so the pipeline still composes.
+The installed `habit-hooks` console script shells out to its siblings `habit-sensors` and `habit-mapper`. Invoked by absolute path with its own bin directory stripped from `PATH`, it resolves those siblings relative to itself rather than by bare name, so the pipeline still composes.
 
 ```bash
 PATH=/usr/bin:/bin "$VIRTUAL_ENV/bin/habit-hooks" --file src/billing.py
@@ -138,8 +119,7 @@ Bundle related arguments into an object.
 
 ### An enforced smell fails the whole pipeline
 
-`too-many-parameters` is `enforced`; the mapper exits 1, and that is the
-pipeline's exit code.
+`too-many-parameters` is `enforced`; the mapper exits 1, and that is the pipeline's exit code.
 
 ```bash
 habit-hooks --all | head -1
@@ -152,8 +132,7 @@ habit-hooks --all | head -1
 
 ### A clean run exits 0 and prints the pass reminder
 
-When the sensors find nothing, the mapper renders the clean guide and the
-pipeline exits 0. This leaf overrides the sensor to emit an empty array.
+When the sensors find nothing, the mapper renders the clean guide and the pipeline exits 0. This leaf overrides the sensor to emit an empty array.
 
 📄.habit-hooks/generic/sensors/params.toml
 ```toml
@@ -171,13 +150,7 @@ habit-hooks --all
 
 ### A failed sensor fails the pipeline and is coached, never rendered clean
 
-Broken tooling can never report a clean run. A sensor that dies contributes no
-findings of its own, but `habit-sensors` appends the reserved `incomplete-run`
-finding so the mapper coaches the break instead of rendering the clean guide over
-it (#88). The pipeline both exits non-zero and prints the failure on stdout — the
-`✅` pass reminder never appears. This leaf overrides the sensor to crash without
-printing findings; the failure notice still reaches stderr
-([habit-sensors.spec.md](habit-sensors.spec.md)).
+Broken tooling can never report a clean run. A sensor that dies contributes no findings of its own, but `habit-sensors` appends the reserved `incomplete-run` finding so the mapper coaches the break instead of rendering the clean guide over it. The pipeline both exits non-zero and prints the failure on stdout — the `✅` pass reminder never appears. This leaf overrides the sensor to crash without printing findings; the failure notice still reaches stderr ([habit-sensors.spec.md](habit-sensors.spec.md)).
 
 📄.habit-hooks/generic/sensors/params.toml
 ```toml
@@ -201,12 +174,7 @@ Fix the broken tool and re-run; do not treat this change as checked.
 
 ### A sensors stage that dies before writing is coached too, and exits 2
 
-The case above needs `habit-sensors` to survive long enough to append the
-reserved finding. A failure that kills the stage itself — here a configured
-plugin nobody installed — leaves the pipe empty instead, and the mapper used to
-read that as no findings and print the `✅`. It coaches the incomplete run from
-its own side now. Both stages agree on exit 2: the tool broke, the code did not
-([habit-mapper.spec.md](habit-mapper.spec.md), #103).
+The case above needs `habit-sensors` to survive long enough to append the reserved finding. A failure that kills the stage itself — here a configured plugin nobody installed — leaves the pipe empty instead, and the mapper used to read that as no findings and print the `✅`. It coaches the incomplete run from its own side now. Both stages agree on exit 2: the tool broke, the code did not ([habit-mapper.spec.md](habit-mapper.spec.md), ).
 
 📄.habit-hooks/config.toml
 ```toml
@@ -229,10 +197,7 @@ Fix the broken tool and re-run; do not treat this change as checked.
 
 ### A failed sensor and a working one both report, and the run stays incomplete
 
-A break in one sensor does not hide what the others found: the working sensor's
-findings are coached as usual, and the reserved `incomplete-run` finding is
-appended after them so the same run is never mistaken for clean (#88). Here
-`params` reports a real `too-many-parameters` finding while `broken` crashes.
+A break in one sensor does not hide what the others found: the working sensor's findings are coached as usual, and the reserved `incomplete-run` finding is appended after them so the same run is never mistaken for clean. Here `params` reports a real `too-many-parameters` finding while `broken` crashes.
 
 📄.habit-hooks/generic/config.toml
 ```toml

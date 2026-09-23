@@ -1,18 +1,10 @@
 # Authoring plugins
 
-A plugin is a small installable package: a `config.toml` saying what it
-contributes, each sensor spelled inline in that config, one jq file per wrapped
-tool, and — optionally — guides and scenarios. This page is the whole manual;
-the moving parts are in [architecture.md](architecture.md), the finding shape in
-[sensor-interface.spec.md](sensor-interface.spec.md), the config keys in
-[config.md](config.md).
+A plugin is a small installable package: a `config.toml` saying what it contributes, each sensor spelled inline in that config, one jq file per wrapped tool, and — optionally — guides and scenarios. This page is the whole manual; the moving parts are in [architecture.md](architecture.md), the finding shape in [sensor-interface.spec.md](sensor-interface.spec.md), the config keys in [config.md](config.md).
 
 ## A plugin is an installable package
 
-- Distribution `habit-hooks-<name>` (what you `pip install`), import package
-  `habit_hooks_<name>`, everything shipped as package data. A plugin does not
-  need to live in this repo — the core finds it through the
-  `habit_hooks.plugins` entry-point group.
+- Distribution `habit-hooks-<name>` (what you `pip install`), import package `habit_hooks_<name>`, everything shipped as package data. A plugin does not need to live in this repo — the core finds it through the `habit_hooks.plugins` entry-point group.
 
 ```
 habit-hooks-<name>/
@@ -30,8 +22,7 @@ habit-hooks-<name>/
 lua = "habit_hooks_lua"
 ```
 
-`config.toml` declares the language the plugin speaks and the tools it reaches
-for; every key is in [config.md](config.md).
+`config.toml` declares the language the plugin speaks and the tools it reaches for; every key is in [config.md](config.md).
 
 ```toml
 # src/habit_hooks_lua/config.toml
@@ -41,11 +32,8 @@ sensors = [{ tool = "some-linter", args = ["--json", "${files}"], transform = "s
 detectors = [{ name = "some-linter", kind = "command", install = "brew install some-linter" }]
 ```
 
-- `detectors` names each external tool, how to find it (`command` on PATH,
-  `node-module` read by node), and the install command a consumer is handed when
-  it is missing. Declaring is a statement, not a dependency.
-- A sensor naming a tool no plugin declares is refused as the config loads; a
-  declared tool that is not installed is the ordinary missing-tool notice.
+- `detectors` names each external tool, how to find it (`command` on PATH, `node-module` read by node), and the install command a consumer is handed when it is missing. Declaring is a statement, not a dependency.
+- A sensor naming a tool no plugin declares is refused as the config loads; a declared tool that is not installed is the ordinary missing-tool notice.
 - `search_paths` adds project directories ahead of PATH (a language's own `bin`).
 
 ## A sensor is one inline table
@@ -62,15 +50,11 @@ One shape for every sensor — an entry in the plugin's `sensors` list:
 | `files` | optional | narrows the run's scope for this sensor alone |
 | `name` | optional | the sensor's name; defaults to `tool`, required when the tool is a placeholder or path |
 
-The framework owns everything around the tool: resolving it, judging the exit
-code, timeouts, Windows shims. Output that is not JSON, a transform that does
-not answer one findings array, or a finding outside the contract — each is the
-sensor's own failed run, carrying the tool's last words. Never a silent clean.
+The framework owns everything around the tool: resolving it, judging the exit code, timeouts, Windows shims. Output that is not JSON, a transform that does not answer one findings array, or a finding outside the contract — each is the sensor's own failed run, carrying the tool's last words. Never a silent clean.
 
 ### A sensor end to end
 
-A stub linter (any executable printing JSON will do — here a shell script)
-mapped to findings by a jq program, run exactly as a consumer's project runs it.
+A stub linter (any executable printing JSON will do — here a shell script) mapped to findings by a jq program, run exactly as a consumer's project runs it.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -122,29 +106,18 @@ chmod +x tools/stub-lint && habit-sensors --all
 `transform` names a jq program shipped beside the config. Its contract:
 
 - **stdin** (as jq input): the tool's stdout, parsed as JSON.
-- **stdout**: exactly one findings array — `[{smell, details, issues: [{key,
-  details}]}]`, one finding per smell, one `issues` entry per occurrence, `key`
-  being what snoozing acts on (usually the file path).
-- The result is validated against the findings contract; any miss — a program
-  that errors, answers nothing, or answers a non-array — is the sensor's failed
-  run, never a silent clean one.
+- **stdout**: exactly one findings array — `[{smell, details, issues: [{key, details}]}]`, one finding per smell, one `issues` entry per occurrence, `key` being what snoozing acts on (usually the file path).
+- The result is validated against the findings contract; any miss — a program that errors, answers nothing, or answers a non-array — is the sensor's failed run, never a silent clean one.
 
-jq is the whole mapping language: what a tool's output means is the plugin's to
-say, and it is said in one small file a tool's format change edits.
+jq is the whole mapping language: what a tool's output means is the plugin's to say, and it is said in one small file a tool's format change edits.
 
 ## Smells are an open vocabulary
 
-Map the codes you know to catalogue smells
-([smell-vocabulary.md](smell-vocabulary.md)) and pass the rest through under
-their own name — `smell: .rule` above, not a lookup table with a default of
-"drop". An unmapped code becoming a finding of its own name is caught by
-`uncoached`, which the project tunes ([config.md](config.md)); a dropped code is
-a clean run nobody ran.
+Map the codes you know to catalogue smells ([smell-vocabulary.md](smell-vocabulary.md)) and pass the rest through under their own name — `smell: .rule` above, not a lookup table with a default of "drop". An unmapped code becoming a finding of its own name is caught by `uncoached`, which the project tunes ([config.md](config.md)); a dropped code is a clean run nobody ran.
 
 ## Scenarios: approve what your sensor finds
 
-Each sensor may ship an approved-output scenario — the drift gate for everything
-above:
+Each sensor may ship an approved-output scenario — the drift gate for everything above:
 
 ```
 scenarios/<sensor>/
@@ -155,26 +128,15 @@ scenarios/<sensor>/
                    the scenario (visibly, in pytest -rs); a machine with it never does
 ```
 
-- The scenario runs the sensor through the plugin's own config, exactly as a
-  run does. The gate is `tests/test_approved_scenarios.py`; ship `scenarios/`
-  as package data so it reaches the installed plugin.
-- To regenerate after a deliberate change: put `[]` in `approved.json`, run the
-  gate, and copy the "this run" side of the diff it prints.
+- The scenario runs the sensor through the plugin's own config, exactly as a run does. The gate is `tests/test_approved_scenarios.py`; ship `scenarios/` as package data so it reaches the installed plugin.
+- To regenerate after a deliberate change: put `[]` in `approved.json`, run the gate, and copy the "this run" side of the diff it prints.
 
 ## Guides and transformers
 
-- `guides/<smell>.md` is a Jinja2 template rendered against the whole finding;
-  write one only where the language needs its own wording, else the generic or
-  `uncoached` guide serves. Keep prompts short and outcome-focused.
-- Script guides run through `[runners]` (extension → command,
-  [config.md](config.md)).
-- A transformer receives the whole findings array on stdin and prints a new
-  one; it must pass through every finding it does not handle
-  ([architecture.md](architecture.md)).
+- `guides/<smell>.md` is a Jinja2 template rendered against the whole finding; write one only where the language needs its own wording, else the generic or `uncoached` guide serves. Keep prompts short and outcome-focused.
+- Script guides run through `[runners]` (extension → command, [config.md](config.md)).
+- A transformer receives the whole findings array on stdin and prints a new one; it must pass through every finding it does not handle ([architecture.md](architecture.md)).
 
 ## The legacy sensor form is going away
 
-`sensors/<name>.toml` spec files with `command`/`argv` are the pre-inline form
-and pending removal — do not start a new one. A migration is mechanical: the
-argv becomes `tool` + `args`, the jq pipeline beside the script becomes the
-`transform`.
+`sensors/<name>.toml` spec files with `command`/`argv` are the pre-inline form and pending removal — do not start a new one. A migration is mechanical: the argv becomes `tool` + `args`, the jq pipeline beside the script becomes the `transform`.

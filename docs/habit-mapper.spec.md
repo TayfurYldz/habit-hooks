@@ -1,20 +1,10 @@
 # Habit Mapper Interface
 
-`habit-mapper` reads a findings array as JSON on stdin, groups the findings by
-smell, renders each smell's guide, and sets the exit code from each smell's
-severity — `enforced` fails the run (exit 1), `suggested` coaches but exits 0.
-An **empty** stdin is not a findings array: it is a stage that died before
-writing one, so it is coached as an incomplete run and exits 2, the code
-reserved for a failure of the tool itself (#103).
-The finding shape it consumes is the contract in
-[sensor-interface.spec.md](sensor-interface.spec.md); how guides resolve through
-the ordered plugins is in [architecture.md](architecture.md).
+`habit-mapper` reads a findings array as JSON on stdin, groups the findings by smell, renders each smell's guide, and sets the exit code from each smell's severity — `enforced` fails the run (exit 1), `suggested` coaches but exits 0. An **empty** stdin is not a findings array: it is a stage that died before writing one, so it is coached as an incomplete run and exits 2, the code reserved for a failure of the tool itself. The finding shape it consumes is the contract in [sensor-interface.spec.md](sensor-interface.spec.md); how guides resolve through the ordered plugins is in [architecture.md](architecture.md).
 
 ## Rendering Jinja2 guides
 
-A `guides/<smell>.md` template renders (Jinja2) against the whole finding. It
-reads smell-level facts straight off `details`, and loops over `issues` for the
-per-occurrence ones — each issue carries its own `details` bag:
+A `guides/<smell>.md` template renders (Jinja2) against the whole finding. It reads smell-level facts straight off `details`, and loops over `issues` for the per-occurrence ones — each issue carries its own `details` bag:
 
 📄.habit-hooks/generic/guides/too-many-parameters.md
 ```markdown
@@ -122,10 +112,7 @@ Bundle related arguments into an object.
 
 ### Multiple smells each render their own guide
 
-Every finding is framed by a banner — `── <smell> (<n> issue[s]) ──` — so the
-findings read as distinct blocks instead of one wall of prose. The banner is
-always present, one finding or many, for a consistent shape. The exit code is the
-most severe (here `too-many-parameters` is `enforced`).
+Every finding is framed by a banner — `── <smell> (<n> issue[s]) ──` — so the findings read as distinct blocks instead of one wall of prose. The banner is always present, one finding or many, for a consistent shape. The exit code is the most severe (here `too-many-parameters` is `enforced`).
 
 📄.habit-hooks/generic/guides/warning-comment.md
 ```markdown
@@ -244,8 +231,7 @@ Resolve or remove these markers before merging.
 
 ### A clean run prints the pass reminder
 
-An empty findings array is a stage that ran and found nothing, so there is
-nothing to coach; the run renders the no-findings guide.
+An empty findings array is a stage that ran and found nothing, so there is nothing to coach; the run renders the no-findings guide.
 
 📄.habit-hooks/generic/guides/clean.md
 ```markdown
@@ -272,11 +258,7 @@ Habit Hooks catches structural smells, not correctness or design. If no reviewer
 
 ### An incomplete run is coached, never rendered clean
 
-`incomplete-run` is the reserved smell the sensors stage raises against itself
-when a tool broke ([habit-sensors.spec.md](habit-sensors.spec.md)). It is
-`enforced` and ships a core guide, so the mapper coaches it and fails the run
-rather than rendering the clean guide over broken tooling — even when no plugin
-supplies a guide for it (#88). Its issues carry each failure notice as `content`.
+`incomplete-run` is the reserved smell the sensors stage raises against itself when a tool broke ([habit-sensors.spec.md](habit-sensors.spec.md)). It is `enforced` and ships a core guide, so the mapper coaches it and fails the run rather than rendering the clean guide over broken tooling — even when no plugin supplies a guide for it. Its issues carry each failure notice as `content`.
 
 ⌨️
 ```json
@@ -310,14 +292,7 @@ Fix the broken tool and re-run; do not treat this change as checked.
 
 ### Nothing on stdin is an incomplete run, and a tool error
 
-The reserved finding above can only travel when the sensors stage lives long
-enough to write it. A stage that dies first — a missing plugin, a rejected
-config, an unresolvable ref — writes nothing at all, and a completed run always
-writes at least `[]`, so zero bytes is unambiguous. The mapper raises the same
-reserved finding against itself and coaches it, because the ✅ line is what an
-agent reads as permission to stop. The exit code is **2**, not 1: the run failed
-because the tool broke, not because the code has a smell
-([cli.py's contract](../src/habit_hooks/cli.py), #103).
+The reserved finding above can only travel when the sensors stage lives long enough to write it. A stage that dies first — a missing plugin, a rejected config, an unresolvable ref — writes nothing at all, and a completed run always writes at least `[]`, so zero bytes is unambiguous. The mapper raises the same reserved finding against itself and coaches it, because the ✅ line is what an agent reads as permission to stop. The exit code is **2**, not 1: the run failed because the tool broke, not because the code has a smell ([cli.py's contract](../src/habit_hooks/cli.py), ).
 
 ```bash
 habit-mapper < /dev/null
@@ -335,9 +310,7 @@ Fix the broken tool and re-run; do not treat this change as checked.
 
 ### A disabled `incomplete-run` still cannot report a clean scan
 
-`[smells.<smell>] disabled` speaks about code smells. It is not a licence to
-render the pass reminder over a scan that never happened, so the empty-stream
-path renders and fails regardless of it.
+`[smells.<smell>] disabled` speaks about code smells. It is not a licence to render the pass reminder over a scan that never happened, so the empty-stream path renders and fails regardless of it.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -410,9 +383,7 @@ habit-mapper
 
 ### A custom smell renders its paired guide
 
-A smell outside the catalogue, declared under `[smells.<name>]` and paired with a
-`guides/<name>.md`, renders that guide instead of escalating with the generic
-`uncoached.md` prompt.
+A smell outside the catalogue, declared under `[smells.<name>]` and paired with a `guides/<name>.md`, renders that guide instead of escalating with the generic `uncoached.md` prompt.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -451,12 +422,7 @@ Remove the custom marker before shipping.
 
 ### A finding's language selects a plugin's guide
 
-To coach a `(smell, language)`, the mapper takes the first plugin whose declared
-language matches the finding, in `plugins` order, then falls back to the
-languageless `generic` last (see [architecture.md](architecture.md)). Here
-`generic` is listed **first**, yet the finding carries `language = "typescript"`,
-so the `typescript` plugin's guide still wins — a matching language beats list
-order.
+To coach a `(smell, language)`, the mapper takes the first plugin whose declared language matches the finding, in `plugins` order, then falls back to the languageless `generic` last (see [architecture.md](architecture.md)). Here `generic` is listed **first**, yet the finding carries `language = "typescript"`, so the `typescript` plugin's guide still wins — a matching language beats list order.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -500,9 +466,7 @@ Use `===`/`!==`; TypeScript will not coerce types for you.
 
 ### An earlier plugin's guide wins over a later one
 
-When two plugins both have a guide for the same `(smell, language)`, the one
-listed earlier in `plugins` wins. Both `biome` and `eslint` speak `typescript`
-and ship a `loose-equality` guide; `biome` is listed first, so its guide renders.
+When two plugins both have a guide for the same `(smell, language)`, the one listed earlier in `plugins` wins. Both `biome` and `eslint` speak `typescript` and ship a `loose-equality` guide; `biome` is listed first, so its guide renders.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -546,13 +510,7 @@ biome: prefer `===`/`!==` over loose equality.
 
 ### An unknown smell is coached with the default guidance, and stays green
 
-A smell with no catalogue entry has no tuned guide, so it renders the generic
-`uncoached.md` guidance. It does not fail the run: the catalogue is the record of
-what this product has decided is worth failing a build over, and a name absent
-from it has had no such decision made about it. Surfacing it keeps the finding
-visible without turning someone else's vocabulary into a gate — and the root
-`uncoached` key ([config.md](config.md)) moves that answer for a project that
-wants `ignore` or `enforce` instead.
+A smell with no catalogue entry has no tuned guide, so it renders the generic `uncoached.md` guidance. It does not fail the run: the catalogue is the record of what this product has decided is worth failing a build over, and a name absent from it has had no such decision made about it. Surfacing it keeps the finding visible without turning someone else's vocabulary into a gate — and the root `uncoached` key ([config.md](config.md)) moves that answer for a project that wants `ignore` or `enforce` instead.
 
 ⌨️
 ```json
@@ -585,15 +543,7 @@ src/x.ts
 
 ### A catalogued smell whose plugin isn't configured falls back to uncoached
 
-Every catalogued smell ships a guide, but in the plugin that owns it — so a
-project that doesn't run that plugin has no guide to resolve. Here
-`var-declaration` is `enforced` and ships in the `typescript` plugin, which this
-project (`biome`, `eslint`, `generic`) does not run, so no configured plugin
-supplies `var-declaration.md`. Rather than crash, the mapper falls back to the
-generic `uncoached.md` guidance, so the run still coaches and fails on the
-enforced smell. Because `uncoached.md` serves any smell shape, its listing is
-adaptive: it renders `file:line` for a point-located issue and a bare `file` for
-a whole-file one, appending `content` only when present.
+Every catalogued smell ships a guide, but in the plugin that owns it — so a project that doesn't run that plugin has no guide to resolve. Here `var-declaration` is `enforced` and ships in the `typescript` plugin, which this project (`biome`, `eslint`, `generic`) does not run, so no configured plugin supplies `var-declaration.md`. Rather than crash, the mapper falls back to the generic `uncoached.md` guidance, so the run still coaches and fails on the enforced smell. Because `uncoached.md` serves any smell shape, its listing is adaptive: it renders `file:line` for a point-located issue and a bare `file` for a whole-file one, appending `content` only when present.
 
 ⌨️
 ```json
@@ -632,8 +582,7 @@ src/c.ts
 
 ### Demoting a smell to suggested keeps the run green
 
-`severity` in config overrides the catalogue default, so an otherwise blocking
-smell stops failing the run.
+`severity` in config overrides the catalogue default, so an otherwise blocking smell stops failing the run.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -670,9 +619,7 @@ habit-mapper
 
 ### A disabled smell is neither coached nor counted
 
-`disabled` drops the smell before routing: no guide renders for it, and it cannot
-fail the run. Here the enforced `too-many-parameters` is disabled, so only the
-suggested `warning-comment` coaches and the run stays green.
+`disabled` drops the smell before routing: no guide renders for it, and it cannot fail the run. Here the enforced `too-many-parameters` is disabled, so only the suggested `warning-comment` coaches and the run stays green.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -734,8 +681,7 @@ Resolve or remove these markers before merging.
 
 ### Disabling every reported smell leaves a clean run
 
-With its only smell disabled there is nothing left to coach, so the run renders
-the no-findings guide, exactly as if the sensor had never reported it.
+With its only smell disabled there is nothing left to coach, so the run renders the no-findings guide, exactly as if the sensor had never reported it.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -777,10 +723,7 @@ Habit Hooks catches structural smells, not correctness or design. If no reviewer
 
 ### `uncoached = "ignore"` drops a smell nobody catalogued
 
-`ignore` takes the other answer to the same question: a smell the catalogue does
-not name is dropped through the same seam as `[smells.<name>] disabled` — neither
-coached nor counted. The catalogued `warning-comment` beside it still coaches, so
-this is the unknown name being dropped, not the run going quiet.
+`ignore` takes the other answer to the same question: a smell the catalogue does not name is dropped through the same seam as `[smells.<name>] disabled` — neither coached nor counted. The catalogued `warning-comment` beside it still coaches, so this is the unknown name being dropped, not the run going quiet.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -833,8 +776,7 @@ Resolve or remove these markers before merging.
 
 ### `uncoached = "enforce"` fails the run on a smell nobody catalogued
 
-`enforce` holds the line that anything a sensor reports must be either fixed or
-given a home in config. The same finding that stays green by default now blocks.
+`enforce` holds the line that anything a sensor reports must be either fixed or given a home in config. The same finding that stays green by default now blocks.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -862,10 +804,7 @@ habit-mapper
 
 ### A declared severity outranks the `uncoached` policy
 
-Declaring `[smells.<name>] severity` is the project deciding about that one
-smell, which takes it out of the policy's reach. Here everything unknown is
-dropped, yet `mystery-rule` — declared `enforced` and paired with its own guide —
-still coaches and still fails the run.
+Declaring `[smells.<name>] severity` is the project deciding about that one smell, which takes it out of the policy's reach. Here everything unknown is dropped, yet `mystery-rule` — declared `enforced` and paired with its own guide — still coaches and still fails the run.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -906,10 +845,7 @@ This project has decided about this one.
 
 ### A misspelled `uncoached` value is rejected, not read as a default
 
-A value nothing consumes is a typo the same way a key is, and reading `supress`
-as the default would silently mean the opposite of what was intended. The run
-stops with the tool-error exit 2, naming the key, what was written, and the three
-values it accepts.
+A value nothing consumes is a typo the same way a key is, and reading `supress` as the default would silently mean the opposite of what was intended. The run stops with the tool-error exit 2, naming the key, what was written, and the three values it accepts.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -934,11 +870,7 @@ habit-mapper: unknown 'uncoached' value 'supress' in the project config; known v
 
 ### An explicit `--config` is read instead of the default file
 
-`habit-mapper --config <path>` loads the whole config — `[smells.*]`, `[runners]`
-and the `plugins` order — from that file, not `.habit-hooks/config.toml`. So a CI
-config that demotes a smell is honoured even though the checked-in default would
-enforce it. Here the default file leaves `too-many-parameters` enforced and only
-`ci.toml` demotes it; the run exits 0, proving the named file won.
+`habit-mapper --config <path>` loads the whole config — `[smells.*]`, `[runners]` and the `plugins` order — from that file, not `.habit-hooks/config.toml`. So a CI config that demotes a smell is honoured even though the checked-in default would enforce it. Here the default file leaves `too-many-parameters` enforced and only `ci.toml` demotes it; the run exits 0, proving the named file won.
 
 📄.habit-hooks/config.toml
 ```toml
@@ -982,11 +914,7 @@ habit-mapper --config ci.toml
 
 ### A misspelled key in that config names the mapper, not the sensors
 
-The config loader is shared with `habit-sensors`, but the message must name the
-binary the user actually ran: `severty` reaches the mapper through its own
-`--config`, so a prefix hardcoded to the other stage sends the reader hunting in
-the wrong tool. The run stops before rendering anything, with the tool-error
-exit 2 a bad config key always uses.
+The config loader is shared with `habit-sensors`, but the message must name the binary the user actually ran: `severty` reaches the mapper through its own `--config`, so a prefix hardcoded to the other stage sends the reader hunting in the wrong tool. The run stops before rendering anything, with the tool-error exit 2 a bad config key always uses.
 
 📄ci.toml
 ```toml
@@ -1014,10 +942,7 @@ habit-mapper: unknown config key 'severty' in [smells.duplicated-code]; known ke
 
 ## Executable guides
 
-A guide with a non-`.md` extension is run by the **fix runner** registered for
-that extension ([config.md](config.md)): the mapper runs `<runner> <guide>` with
-the finding on stdin, shows its stdout/stderr, and uses its exit code for
-pass/fail. No runner ships by default — register one in config.
+A guide with a non-`.md` extension is run by the **fix runner** registered for that extension ([config.md](config.md)): the mapper runs `<runner> <guide>` with the finding on stdin, shows its stdout/stderr, and uses its exit code for pass/fail. No runner ships by default — register one in config.
 
 ### A guide script runs via its fix runner
 
@@ -1100,15 +1025,11 @@ Could not auto-split; manual extraction needed.
 
 ## Core baseline fallback (works without generic)
 
-The baseline `clean.md` and `uncoached.md` guides ship in the core, so the mapper
-coaches and never crashes even when no plugin supplies them, e.g. a project that
-runs the `python` plugin without `generic`.
+The baseline `clean.md` and `uncoached.md` guides ship in the core, so the mapper coaches and never crashes even when no plugin supplies them, e.g. a project that runs the `python` plugin without `generic`.
 
 ### A python-only config coaches an unguided smell via the core uncoached guide
 
-`warning-comment` has no guide in the `python` plugin and `generic` is not
-configured, so the mapper falls back to the core `uncoached.md` rather than
-crashing. The smell is `suggested`, so the run still passes.
+`warning-comment` has no guide in the `python` plugin and `generic` is not configured, so the mapper falls back to the core `uncoached.md` rather than crashing. The smell is `suggested`, so the run still passes.
 
 📄.habit-hooks/config.toml
 ```toml
