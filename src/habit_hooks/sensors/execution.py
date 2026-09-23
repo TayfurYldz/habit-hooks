@@ -5,6 +5,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 from ..path_globs import matching
 from ..scope import Scope
@@ -20,6 +21,19 @@ from .part_output import parse_findings, part_failure, sensor_crashed
 from .spawn import Spawner
 
 
+def _run_and_parse(
+    part: Part, judged: tuple[str, Callable, Callable]
+) -> list[dict]:
+    kind, run, judge = judged
+    result = run_part(kind, part, run)
+    failure = part_failure(kind, part, result)
+    if judge(result):
+        raise failure
+    try:
+        return parse_findings(result.stdout)
+    except (ValueError, json.JSONDecodeError):
+        raise failure from None
+
 @dataclass(frozen=True)
 class Execution:
     project_dir: Path
@@ -28,7 +42,7 @@ class Execution:
     timeout: float = DEFAULT_SENSOR_TIMEOUT_SECONDS
 
     def run_sensors(self, sensors: list[Part]) -> Run:
-        scoped = [sensor for sensor in sensors if self._scoped_files(sensor)]
+        scoped = [sensor for sensor in sensors if self.scoped_files(sensor)]
         if not scoped:
             return Run()
         run = Run()
@@ -60,16 +74,14 @@ class Execution:
         argv = self._expand(transformer)
         payload = json.dumps(findings)
         tools = transformer.tools_that_read_its_arguments
-        result = run_part(
-            "transformer", transformer, lambda: self._spawner.run(argv, payload, tools=tools)
+        return _run_and_parse(
+            transformer,
+            (
+                "transformer",
+                lambda: self.spawner.run(argv, payload, tools=tools),
+                lambda result: result.returncode != 0 or not result.stdout.strip(),
+            ),
         )
-        failure = part_failure("transformer", transformer, result)
-        if result.returncode != 0 or not result.stdout.strip():
-            raise failure
-        try:
-            return parse_findings(result.stdout)
-        except (ValueError, json.JSONDecodeError):
-            raise failure from None
 
     def run_sensor(self, sensor: Part) -> list[dict]:
         if sensor.inline is not None:
@@ -81,21 +93,17 @@ class Execution:
 
     def _sensor_findings(self, sensor: Part, argv: list[str]) -> list[dict]:
         tools = sensor.tools_that_read_its_arguments
-        result = run_part("sensor", sensor, lambda: self._spawner.run(argv, tools=tools))
-        failure = part_failure("sensor", sensor, result)
-        if sensor_crashed(result):
-            raise failure
-        try:
-            return parse_findings(result.stdout)
-        except (ValueError, json.JSONDecodeError):
-            raise failure from None
+        return _run_and_parse(
+            sensor,
+            ("sensor", lambda: self.spawner.run(argv, tools=tools), sensor_crashed),
+        )
 
     def _sensor_commands(self, sensor: Part) -> list[list[str]]:
         return chunked_commands(
-            sensor, self._spelled_files(sensor), self._expander(sensor)
+            sensor, self._spelled_files(sensor), self.expander(sensor)
         )
 
-    def _expander(self, part: Part):
+    def expander(self, part: Part):
         return lambda files: self._expand_files(part, files)
 
     def _safe_sensor(self, sensor: Part) -> tuple[list[dict], list[str]]:
@@ -112,16 +120,16 @@ class Execution:
         return self._expand_files(part, self._spelled_files(part))
 
     def _spelled_files(self, part: Part) -> list[str]:
-        return spelled_files(part, self._scoped_files(part))
+        return spelled_files(part, self.scoped_files(part))
 
     def _expand_files(self, part: Part, files: list[str]) -> list[str]:
         return expanded(part, files, self.config_path)
 
-    def _scoped_files(self, part: Part) -> list[str]:
+    def scoped_files(self, part: Part) -> list[str]:
         if part.files is None:
             return self.scope.files
         return matching(self.scope.files, part.files)
 
     @property
-    def _spawner(self) -> Spawner:
+    def spawner(self) -> Spawner:
         return Spawner(self.project_dir, self.timeout)

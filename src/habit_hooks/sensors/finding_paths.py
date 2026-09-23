@@ -8,6 +8,12 @@ from pathlib import Path
 from ..project_paths import project_relative
 from .model import SensorError
 
+def malformed(sensor: str, described: str, *, contract: bool = False) -> SensorError:
+    message = f"sensor {sensor!r} emitted {described}"
+    if contract:
+        message += ", which the findings contract has no shape for"
+    return SensorError(message)
+
 
 def anchored(findings: list[dict], project_dir: Path, sensor: str) -> list[dict]:
     return [_anchored_finding(finding, project_dir, sensor) for finding in findings]
@@ -38,7 +44,7 @@ def _anchored_finding(finding: dict, project_dir: Path, sensor: str) -> dict:
     if not issues:
         return finding
     if not isinstance(issues, list):
-        raise _malformed(sensor, "a finding whose 'issues' is not a list")
+        raise malformed(sensor, "a finding whose 'issues' is not a list", contract=False)
     return {
         **finding,
         "issues": [_anchored_issue(issue, project_dir, sensor) for issue in issues],
@@ -47,7 +53,7 @@ def _anchored_finding(finding: dict, project_dir: Path, sensor: str) -> dict:
 
 def _anchored_issue(issue: dict, project_dir: Path, sensor: str) -> dict:
     if not isinstance(issue, dict):
-        raise _malformed(sensor, "an issue that is not an object")
+        raise malformed(sensor, "an issue that is not an object", contract=False)
     reported = _reported_file(issue, sensor)
     if reported is None:
         return issue
@@ -63,9 +69,6 @@ def _anchored_issue(issue: dict, project_dir: Path, sensor: str) -> dict:
     return anchored_issue
 
 
-def _malformed(sensor: str, described: str) -> SensorError:
-    return SensorError(f"sensor {sensor!r} emitted {described}")
-
 
 def _issues(findings: list[dict]) -> Iterator[dict]:
     return (issue for finding in findings for issue in finding.get("issues", []))
@@ -74,6 +77,6 @@ def _issues(findings: list[dict]) -> Iterator[dict]:
 def _reported_file(issue: dict, sensor: str) -> str | None:
     details = issue.get("details", {})
     if not isinstance(details, dict):
-        raise _malformed(sensor, "an issue whose 'details' is not an object")
+        raise malformed(sensor, "an issue whose 'details' is not an object", contract=False)
     file = details.get("file")
     return file if isinstance(file, str) and file else None

@@ -12,6 +12,11 @@ COMMAND_KIND = "command"
 NODE_MODULE_KIND = "node-module"
 DETECTOR_KINDS = frozenset({COMMAND_KIND, NODE_MODULE_KIND})
 
+def search_paths_for(name: str, detectors: list[Detector]) -> tuple[str, ...]:
+    return tuple(
+        path for detector in detectors if detector.name == name for path in detector.search_paths
+    )
+
 
 @frozen
 class Detector:

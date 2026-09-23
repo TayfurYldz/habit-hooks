@@ -1,17 +1,3 @@
-"""Which of the tools a project's plugins declare it cannot reach.
-
-A plugin declares the external tools its sensors reach for
-(:mod:`habit_hooks.detectors`); this is the asking. Each kind is asked the way a
-run will ask it — a command through ``project_paths.tool_executable``, the very
-call ``habit-sensors`` resolves one with before it spawns it, and a module of
-node itself, because a package read as a library is not answered by a binary of
-that name. A tool cleared here that a run cannot find is the support question
-setting a project up exists to end.
-
-Separate from :mod:`habit_hooks.initialise`, which decides what setting a
-project up comes to: what a project is planned to run and what stands in the way
-of it are two questions, and only this one spawns anything.
-"""
 
 from __future__ import annotations
 
@@ -21,24 +7,20 @@ from pathlib import Path
 
 from attrs import frozen
 
-from .detectors import COMMAND_KIND, NODE_MODULE_KIND, Detector
+from .detectors import COMMAND_KIND, NODE_MODULE_KIND, Detector, search_paths_for
 from .project_paths import tool_executable
 
 NODE = "node"
 
-# Seconds node gets to say whether it resolves a module. The node asked is the
-# project's own ``node_modules/.bin`` — a shim the project wrote — and a wedged
-# one must not block the hook this stands in front of, for the reason
-# ``sensors.deadline`` gives every command a run spawns a ceiling.
+
+
+
+
 NODE_RESOLVE_TIMEOUT_SECONDS = 30.0
 
 
 @frozen
 class _Tools:
-    """What every detector is asked about: the project whose tools are in
-    question, the node that answers for its modules, and whether the plugins
-    declared that node themselves — asked once, because every detector asks the
-    same."""
 
     project_dir: Path
     node: str | None
@@ -54,16 +36,7 @@ class _Tools:
 
 
 def _node_search_paths(declared: list[Detector]) -> tuple[str, ...]:
-    """Every directory the declared ``node`` detectors name for node, so the
-    node that answers for the modules is found the way a run finds it — and a
-    project whose node lives in a directory the default path does not know is
-    not told its modules are missing behind a node it has."""
-    return tuple(
-        path
-        for detector in declared
-        if _is_node(detector)
-        for path in detector.search_paths
-    )
+    return search_paths_for(NODE, [detector for detector in declared if _is_node(detector)])
 
 
 def _is_node(detector: Detector) -> bool:
@@ -73,23 +46,11 @@ def _is_node(detector: Detector) -> bool:
 def missing_tools(
     declared: list[Detector], project_dir: Path
 ) -> tuple[Detector, ...]:
-    """The declared tools this project cannot reach, in declaration order.
-
-    Declaration order because a plugin declares what everything else needs
-    first, so a list read from the top is one that can be worked through from
-    the top.
-    """
     tools = _Tools.under(project_dir, declared)
     return tuple(detector for detector in declared if _is_missing(detector, tools))
 
 
 def _is_missing(detector: Detector, tools: _Tools) -> bool:
-    """Whether the project can reach this tool, asked the way its kind is found.
-
-    The module kind is named rather than fallen into, so a kind added later is
-    looked for on the ``PATH`` — wrong, and visibly so — instead of quietly
-    being asked of node.
-    """
     if detector.kind == NODE_MODULE_KIND:
         return _module_is_missing(detector.name, tools)
     return (
@@ -98,33 +59,12 @@ def _is_missing(detector: Detector, tools: _Tools) -> bool:
 
 
 def _module_is_missing(module: str, tools: _Tools) -> bool:
-    """Whether the project cannot reach this module, as far as node can say.
-
-    Nothing can be asked of a machine without node, and where the plugins
-    declared ``node`` themselves that one absence is already being reported:
-    naming every module behind it hands the reader a list of installs where one
-    of them is the whole answer, so they wait for the re-run that can answer.
-    A plugin that declares a module and no node has no such absence to point at,
-    and a silence there is a setup called clean and a first run that dies on the
-    module.
-    """
     if tools.node is None:
         return not tools.node_declared
     return not _node_resolves(tools.node, module, tools.project_dir)
 
 
 def _node_resolves(node: str, module: str, project_dir: Path) -> bool:
-    """Whether node can require ``module`` from the project, as a sensor would.
-
-    Asked from the project because that is where node resolves a dependency
-    from, and asked as ``require.resolve`` because a package read as a library
-    is not answered by a binary of that name. The module is placed in the script
-    as JSON, which is a JavaScript string literal for any name a package may have.
-
-    A node that never answers is the answer ``no``: one that cannot be run at
-    all resolves nothing, and one still thinking about it past its deadline
-    cannot be waited on by a hook.
-    """
     script = f"require.resolve({json.dumps(module)})"
     try:
         asked = subprocess.run(
@@ -132,7 +72,7 @@ def _node_resolves(node: str, module: str, project_dir: Path) -> bool:
             cwd=project_dir,
             capture_output=True,
             encoding="utf-8",
-            errors="replace",  # sensors.spawn's policy
+            errors="replace",
             input="",
             timeout=NODE_RESOLVE_TIMEOUT_SECONDS,
         )
