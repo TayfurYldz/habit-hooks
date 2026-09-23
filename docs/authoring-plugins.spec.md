@@ -136,7 +136,3 @@ scenarios/<sensor>/
 - `guides/<smell>.md` is a Jinja2 template rendered against the whole finding; write one only where the language needs its own wording, else the generic or `uncoached` guide serves. Keep prompts short and outcome-focused.
 - Script guides run through `[runners]` (extension → command, [config.md](config.md)).
 - A transformer receives the whole findings array on stdin and prints a new one; it must pass through every finding it does not handle ([architecture.md](architecture.md)).
-
-## The legacy sensor form is going away
-
-`sensors/<name>.toml` spec files with `command`/`argv` are the pre-inline form and pending removal — do not start a new one. A migration is mechanical: the argv becomes `tool` + `args`, the jq pipeline beside the script becomes the `transform`.

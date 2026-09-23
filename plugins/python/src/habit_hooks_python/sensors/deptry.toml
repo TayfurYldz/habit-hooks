@@ -1,1 +1,0 @@
-argv = ["${python}", "${dir}/deptry_sensor.py", "${detector:deptry}"]

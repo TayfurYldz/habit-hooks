@@ -93,7 +93,7 @@ A sensor may emit a smell the catalogue does not name; declared under `[smells.<
 severity = "enforced"
 ```
 
-The declaration lifts the smell out of `uncoached`'s reach, so it keeps blocking however `uncoached` is set. Pair it with a sensor that emits the smell (`sensors/<name>.toml`) and a matching `guides/custom-marker.md`.
+The declaration lifts the smell out of `uncoached`'s reach, so it keeps blocking however `uncoached` is set. Pair it with a sensor that emits the smell (an inline entry in the plugin's `config.toml`) and a matching `guides/custom-marker.md`.
 
 ## Run a fixer script from a guide
 

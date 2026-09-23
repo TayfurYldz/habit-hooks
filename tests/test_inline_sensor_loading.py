@@ -1,5 +1,3 @@
-"""Loading an inline sensor entry: every misspelling answered at load."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -49,23 +47,9 @@ def test_the_sensor_name_defaults_to_the_tool(tmp_path: Path) -> None:
 
 
 def test_a_placeholder_tool_has_to_name_its_sensor(tmp_path: Path) -> None:
-    """The name cannot default to a tool spelled as a placeholder — the notice
-    that would quote ``sensor '${{python}}'`` names nothing the reader wrote."""
     writing(tmp_path, '{ tool = "${python}", args = ["x"] }')
 
     assert "name" in refusal_for(tmp_path)
-
-
-def test_an_inline_sensor_whose_spec_file_also_exists_is_refused(
-    tmp_path: Path,
-) -> None:
-    writing(
-        tmp_path,
-        '{ name = "both", tool = "${python}" }',
-        files={"sensors/both.toml": 'command = "echo []"'},
-    )
-
-    assert "also ships sensors/both.toml" in refusal_for(tmp_path)
 
 
 def test_a_sensor_enabled_twice_is_refused(tmp_path: Path) -> None:
@@ -74,24 +58,6 @@ def test_a_sensor_enabled_twice_is_refused(tmp_path: Path) -> None:
     )
 
     assert "enables sensor 'lint' twice" in refusal_for(tmp_path)
-
-
-def test_a_spec_file_string_listed_twice_still_loads(tmp_path: Path) -> None:
-    """Two plain spec-file strings of one name loaded before inline sensors
-    existed, duplicating findings — and keep loading exactly as they did."""
-    write_project_config(tmp_path, 'plugins = ["fixt"]')
-    write_plugin(
-        tmp_path,
-        "fixt",
-        {
-            "config.toml": 'sensors = ["lint", "lint"]',
-            "sensors/lint.toml": 'argv = ["true"]',
-        },
-    )
-
-    sensors = loader_for(tmp_path).load_plugin("fixt").sensors
-
-    assert [sensor.name for sensor in sensors] == ["lint", "lint"]
 
 
 def test_an_unknown_key_in_an_inline_sensor_is_refused(tmp_path: Path) -> None:
@@ -123,8 +89,6 @@ def test_a_report_no_argument_asks_for_is_refused(tmp_path: Path) -> None:
 
 
 def test_a_report_argument_without_a_report_is_refused(tmp_path: Path) -> None:
-    """Spelling ``${{report}}`` in the args without ``report = true`` would hand
-    the tool the placeholder as a literal argument — refused at load instead."""
     writing(
         tmp_path,
         '{ tool = "${python}", name = "lint", '
@@ -137,10 +101,6 @@ def test_a_report_argument_without_a_report_is_refused(tmp_path: Path) -> None:
 
 
 def test_project_args_land_where_the_recipe_spells_args(tmp_path: Path) -> None:
-    """An inline entry's ``args`` are its recipe — spelled once, for every run
-    — so a project's ``[sensors.<name>]`` args override lands in the recipe's
-    ``${args}`` slot, exactly as a spec file's ``args`` default receives one,
-    rather than replacing the recipe wholesale."""
     write_project_config(
         tmp_path,
         'plugins = ["fixt"]\n[sensors.lint]\nargs = ["--max", "300"]',

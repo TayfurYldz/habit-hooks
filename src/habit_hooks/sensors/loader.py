@@ -41,7 +41,6 @@ class PluginLoader:
         part = inline_spec.part_from(
             plugin, self.resolver.in_plugin(plugin, "config.toml"), entry
         )
-        self._refuse_a_shadowed_spec_file(plugin, part.name)
         part = replace(
             part,
             args=self._project_args(part.name),
@@ -49,14 +48,6 @@ class PluginLoader:
         )
         inline_spec.refuse_unusable_report(part)
         return self._with_its_tools("sensors", part)
-
-    def _refuse_a_shadowed_spec_file(self, plugin: str, name: str) -> None:
-        if self.resolver.in_plugin(plugin, f"sensors/{name}.toml") is not None:
-            raise ConfigError(
-                f"the {plugin!r} plugin defines sensor {name!r} inline in its "
-                f"config.toml and also ships sensors/{name}.toml — spell the "
-                "sensor one way"
-            )
 
     def resolve_part(self, plugins: list[str], kind: str, name: str) -> Part:
         path = self.resolver.part(plugins, f"{kind}/{name}.toml")
