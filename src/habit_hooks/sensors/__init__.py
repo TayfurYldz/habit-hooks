@@ -40,7 +40,7 @@ __all__ = [
 def _positive_int(value: str) -> int:
     """A ``--last`` count: a positive number of commits, rejected by name here so
     ``--last 0`` (an empty scope) and ``--last -1`` (``HEAD~-1``, the empty tree)
-    fail loudly instead of silently scanning everything (#103)."""
+    fail loudly instead of silently scanning everything."""
     number = int(value)
     if number <= 0:
         raise argparse.ArgumentTypeError(f"must be a positive integer, not {value!r}")
@@ -51,14 +51,14 @@ def build_parser(prog: str) -> argparse.ArgumentParser:
     """The flags a run is spelled with, under whichever binary owns them.
 
     ``habit-hooks`` forwards every one of these to this stage, so it builds the
-    same parser under its own name to answer ``--help`` (#114) — one definition,
+    same parser under its own name to answer ``--help`` — one definition,
     so the pipeline's usage can never drift from what it actually forwards.
     """
     parser = argparse.ArgumentParser(prog=prog)
     add_version_flag(parser)
     parser.add_argument("--config", type=Path)
     # Emit findings before the snooze transformers filter them, so `--prune` sees
-    # a snooze-free view of the run instead of one snooze already emptied (#94).
+    # a snooze-free view of the run instead of one snooze already emptied.
     parser.add_argument("--no-snooze", action="store_true")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--all", action="store_true")
@@ -111,9 +111,9 @@ def _bypasses_snooze(args: argparse.Namespace) -> bool:
     """Whether this run strips the snooze transformers before it filters findings.
 
     Two runs do: ``--no-snooze`` emits the run before snooze so ``--prune`` can
-    compare its index against a snooze-free view (#94); and ``--file`` asks after
+    compare its index against a snooze-free view; and ``--file`` asks after
     one file by name, wanting its whole picture — a standing snooze is a statement
-    about the backlog, not about the file you named, so it is set aside (#55).
+    about the backlog, not about the file you named, so it is set aside.
     Only the snooze transformers are dropped, never a project's own unrelated one.
     """
     return args.no_snooze or args.file is not None
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
 def _with_incomplete_run(run: Run) -> list[dict]:
     """The run's findings, plus its own ``incomplete-run`` when it failed.
 
-    Appended after every transformer has run, so a snooze can never mute it (#88).
+    Appended after every transformer has run, so a snooze can never mute it.
     """
     if run.failed:
         return [*run.findings, incomplete_run_finding(run.notices)]

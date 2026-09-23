@@ -1,7 +1,7 @@
 """Run jscpd against a temp report and print ``duplicated-code`` findings.
 
-Whose config is in play is a judgement, not data (#125), so this stays a
-program until the framework owns the policy (#171).
+Whose config is in play is a judgement, not data, so this stays a
+program until the framework owns the policy.
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ def scan_paths(config: str) -> list[str]:
 
 
 def config_arguments(fallback: str, project: Path) -> list[str]:
-    """Ours is named only when the project has none (#125); its ``path``
+    """Ours is named only when the project has none; its ``path``
     then travels as positionals, because jscpd resolves a config's relative
     ``path`` against the config file's directory, where ``src`` names
     nothing the project owns.

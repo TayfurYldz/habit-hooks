@@ -3,7 +3,7 @@
 The product's value is the coaching. A smell in ``catalogue.DEFAULT_SEVERITY``
 with no ``guides/<smell>.md`` falls through to the one-size ``uncoached.md``,
 silently degrading the product. This test turns that gap into a build failure so
-it cannot reopen (#101).
+it cannot reopen.
 
 It routes each smell through the real ``rendering.resolve_guide`` against the
 full installed plugin set, exactly as a live run would, and asserts the resolved
@@ -66,7 +66,7 @@ def test_unused_variable_resolves_for_python_and_typescript_not_just_php(
 ) -> None:
     """``unused-variable`` is language-agnostic — it fires from ruff F841 and
     eslint no-unused-vars, not just PHPMD — so its guide must live in ``generic``
-    where every language's routing reaches it (#101)."""
+    where every language's routing reaches it."""
     routing = Routing.full_plugin_set(tmp_path)
     for language in ("python", "typescript"):
         assert (

@@ -1,6 +1,6 @@
 sensors = [
   { name = "line-count", tool = "${python}", args = ["${dir}/line-count.py", "${args}", "${files}"] },
-  # A program, not data: whose config is in play is a judgement (#125, #171).
+  # A program, not data: whose config is in play is a judgement.
   { name = "jscpd", tool = "${python}", args = ["${dir}/jscpd.py", "${detector:jscpd}", "--fallback-config", "${dir}/.jscpd.json"] },
 ]
 

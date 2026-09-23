@@ -5,7 +5,7 @@ for the generic plugin, and the two packages its shipped eslint config resolves
 — the ``--save-dev`` packages the README asks for. The project's own source
 imports none of them, because habit-hooks is what uses them, so knip called
 every one an unused dependency and told the project to delete the tools it had
-just been told to install (#143). The shipped ``knip.json`` overlooks them in
+just been told to install. The shipped ``knip.json`` overlooks them in
 ``ignoreDependencies``. ``knip`` is the exception: it is asked for like the
 rest, and knip leaves itself out of its own answer, so the list does not name
 it.

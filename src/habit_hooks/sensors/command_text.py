@@ -162,7 +162,7 @@ def _refuse_unusable_arguments(part: Part) -> None:
 
     This is the only place that knows both the args and whether the recipe can
     take them, and args a recipe cannot expand are args the tool never sees —
-    the same silent nothing #102 refuses a config key nothing consumes for, and
+    the same silent nothing a config key nothing consumes earns a refusal for, and
     exactly how ``[sensors.<name>] args`` stayed dead for seven of eight shipped
     sensors while the docs promised it worked.
 

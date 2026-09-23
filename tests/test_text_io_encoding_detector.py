@@ -63,7 +63,7 @@ def test_a_call_named_open_that_is_not_open_is_still_checked() -> None:
     try to prove the receiver is a ``Path``, matching how rare and deliberate
     every other ``.open()`` call in this project already is (see the docstring
     above): a false positive here costs one ``encoding=``, a false negative
-    lets #133 back in."""
+    lets the bug back in."""
     assert _violations_in_source('socket.open("r")') == [1]
 
 
@@ -71,9 +71,8 @@ def test_an_unrelated_call_is_not_flagged() -> None:
     assert _violations_in_source("subprocess.run(cmd)") == []
 
 
-# -- subprocess text mode (issue #133 covers 33 call sites like this one; a
-# kind that only recognised read_text/write_text/open left every one of them
-# unguarded) --------------------------------------------------------------
+# -- subprocess text mode (a kind that only recognised read_text/write_text/open left
+# every call site of it unguarded) ---------------------------------------------
 
 
 def test_subprocess_run_with_no_text_mode_is_not_flagged() -> None:

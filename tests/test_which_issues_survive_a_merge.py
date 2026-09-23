@@ -1,4 +1,4 @@
-"""Which issues survive a merge: what makes two of them one observation (#140).
+"""Which issues survive a merge: what makes two of them one observation.
 
 An issue is identified by its ``key`` and **the place it names**, and by nothing
 either tool said in its own voice — ``source`` and ``message`` disagree between

@@ -7,9 +7,9 @@ const projectTool = require("./project_tool.cjs");
 // A sensor emits smells from OUR vocabulary, so translating knip's key set is
 // this file's job: a key absent from this map is dropped here rather than
 // forwarded under knip's own name, where it would have no guide, no catalogue
-// severity and nothing a reader could act on (#111). Dropped today:
+// severity and nothing a reader could act on. Dropped today:
 // `binaries`, `duplicates`, `catalog` — plus `unlisted` and `unresolved`, which
-// name real defects and are waiting on smells of their own (#124).
+// name real defects and are waiting on smells of their own.
 const SMELL_BY_KEY = {
   files: "unused-file",
   exports: "unused-export",
@@ -67,7 +67,7 @@ const MANIFEST = "package.json";
 // Its `ignoreDependencies` overlooks the packages habit-hooks asked the project
 // to install: unimported, because habit-hooks is what uses them, knip called
 // every one dead weight and told the project to delete the tools it had just
-// been told to install (#143). The note lives here because JSON carries no
+// been told to install. The note lives here because JSON carries no
 // comment — `configMarksProduction` reads that file with `JSON.parse`.
 //
 // *Which* packages is deliberately not restated here.
@@ -276,7 +276,7 @@ function configMarksProduction(file) {
 // One knip pass: what it reported, or the sentence saying why there is nothing
 // to report. Exactly one of the two is set, and both answers come from the seam
 // so this sensor and `eslint.cjs` cannot drift into saying different things
-// about the same failure — which is what #142 was.
+// about the same failure.
 function knipPass(args) {
   const result = runKnip(args);
   if (projectTool.broke(result)) {

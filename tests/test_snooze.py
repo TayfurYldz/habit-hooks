@@ -68,7 +68,7 @@ def test_a_finding_without_issues_passes_through(tmp_path: Path) -> None:
 
 def test_file_run_bypasses_the_snooze_transformer(tmp_path: Path) -> None:
     """`--file` asks for one file's full picture, so its snooze exemption — a
-    statement about the backlog, not that file — is stripped from the run (#55)."""
+    statement about the backlog, not that file — is stripped from the run."""
     config = sensors._configure(sensors.parse_args(["--file", "src/x.ts"]), tmp_path)
     assert "snooze" not in config.transformers
 
@@ -81,7 +81,7 @@ def test_all_run_keeps_the_snooze_transformer(tmp_path: Path) -> None:
 
 def test_file_run_keeps_a_projects_non_snooze_transformer(tmp_path: Path) -> None:
     """Only snoozing is bypassed — a project's unrelated transformer still runs,
-    so `--file` does not silently drop a step it never asked about (#55)."""
+    so `--file` does not silently drop a step it never asked about."""
     config_dir = tmp_path / ".habit-hooks"
     config_dir.mkdir()
     (config_dir / "config.toml").write_text('transformers = ["snooze", "squash"]\n', encoding="utf-8")

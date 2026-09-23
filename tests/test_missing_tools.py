@@ -178,7 +178,7 @@ def test_node_is_asked_to_resolve_the_module_from_the_project_itself(
 def test_eslint_and_knip_resolve_as_node_modules_not_commands(
     toolless_project: Path,
 ) -> None:
-    """#133: both spawn through ``project_tool.cjs``, which finds the package in
+    """Both spawn through ``project_tool.cjs``, which finds the package in
     ``node_modules`` — a global install on the system ``PATH`` no longer clears them."""
     _needing(toolless_project, NODE, ESLINT, KNIP)
     write_stub(toolless_project / "node_modules" / ".bin", "node")

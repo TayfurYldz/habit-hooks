@@ -2,9 +2,9 @@
 
 Split from ``snooze.py`` so the index file I/O — parsing a JSON file a human
 edits, and replacing it without tearing under concurrent hook runs — lives apart
-from the transform and its CLI (#94).
+from the transform and its CLI.
 
-An entry is a key and the content approved for each file it covers (#163). An
+An entry is a key and the content approved for each file it covers. An
 entry that records nothing stays a bare key, so an index written before that
 keeps loading and a project migrates one ``--snooze`` at a time.
 """
@@ -18,7 +18,7 @@ from pathlib import Path
 INDEX_PATH = Path(".habit-hooks") / "snooze.json"
 
 # The files an entry was approved against, each mapped to the content it held
-# then. Empty for an entry written before #163, and for one whose anchor is no
+# then. Empty for an entry written before that field existed, and for one whose anchor is no
 # file to read.
 Anchors = dict[str, str]
 
@@ -29,7 +29,7 @@ Index = dict[str, Anchors]
 
 class SnoozeError(Exception):
     """A malformed snooze index — a checked-in file a human edits, so it fails by
-    name rather than as a traceback or, worse, a silent misread (#94)."""
+    name rather than as a traceback or, worse, a silent misread."""
 
 
 def load_index(project_dir: Path) -> Index:

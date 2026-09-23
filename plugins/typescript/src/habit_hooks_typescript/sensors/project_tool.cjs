@@ -34,7 +34,7 @@ const MANIFEST = "package.json";
 // phrase below it is what the runner recognises
 // (`part_output.COMMAND_NOT_FOUND`), so a tool nobody installed — the one
 // failure with an obvious fix — is told how to fix it rather than arriving as a
-// module-resolution error the runner has never heard of (#114).
+// module-resolution error the runner has never heard of.
 const COMMAND_NOT_FOUND_EXIT = 127;
 
 // Where the package manager put the tool: the same `node_modules/<tool>` the
@@ -79,7 +79,7 @@ function notInstalled(tool) {
 // 1 MB unless told otherwise, and answers a tool that prints more with ENOBUFS:
 // a truncated stdout, a `null` status, and an error the caller has to notice.
 // Forty files of ordinary lint findings cross that, and the sensor that ran the
-// tool is then left with nothing it can parse (#142).
+// tool is then left with nothing it can parse.
 //
 // The 1 MB was never a decision, only the default nobody overrode. Every other
 // place habit-hooks reads a tool's output is unbounded — the plugins' five
@@ -122,7 +122,7 @@ function howItEnded(result) {
 }
 
 // Why the run is unusable, in words a reader can act on — never an empty
-// string, which is the bug this whole seam exists to make impossible (#142),
+// string, which is the bug this whole seam exists to make impossible,
 // and never more than a sentence unless the tool itself wrote one.
 //
 // Only two things can be the complaint. The tool's own words, wherever it got
@@ -157,7 +157,7 @@ function said(tool, result, ours) {
 // signals: `process.kill` there is `TerminateProcess`, so a tool cut down
 // mid-report leaves an ordinary exit 1 — the same code eslint and knip use for
 // "I found something to report" — and its half-written array then reaches
-// `JSON.parse` as an unhandled `SyntaxError`. That is #142's own class one
+// `JSON.parse` as an unhandled `SyntaxError` — the same failure one
 // branch further along, and the reason it is answered here rather than in
 // either caller.
 //

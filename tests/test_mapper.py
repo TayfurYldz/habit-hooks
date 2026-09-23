@@ -50,7 +50,7 @@ def test_a_custom_smell_renders_its_paired_guide(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """A smell outside the catalogue, declared in config and paired with a
-    ``guides/<smell>.md``, renders that guide — not the uncoached fallback (#98)."""
+    ``guides/<smell>.md``, renders that guide — not the uncoached fallback."""
     write_plugin(
         tmp_path,
         "fixt",
@@ -82,7 +82,7 @@ def test_a_language_matching_plugin_wins_over_an_earlier_generic(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """With ``generic`` listed first, a finding whose language a later plugin
-    declares still renders that plugin's guide, not generic's (#98)."""
+    declares still renders that plugin's guide, not generic's."""
     write_plugin(
         tmp_path,
         "gen",
@@ -118,7 +118,7 @@ def test_an_unconfigured_runner_extension_is_refused_by_name(
     tmp_path: Path,
 ) -> None:
     """A ``guide`` override with a non-``.md`` extension and no matching runner
-    refuses by name instead of crashing with a ``KeyError`` (#98)."""
+    refuses by name instead of crashing with a ``KeyError``."""
     write_plugin(
         tmp_path,
         "fixt",

@@ -4,7 +4,7 @@
 and an absent tool has to say so in the phrase the runner looks for
 (``part_output.COMMAND_NOT_FOUND``) — otherwise the one failure with an obvious
 fix is the one that does not get told how to fix it, while `jscpd`, `deptry` and
-`php` all do (#114). Reported raw it used to reach the runner as
+`php` all do. Reported raw it used to reach the runner as
 ``Error: spawnSync knip ENOENT``, which that phrase cannot match; now knip is
 looked for as the project's own package, so absence is a package that is not
 there rather than a name PATH could not resolve — and it is

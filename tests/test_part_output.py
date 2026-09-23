@@ -4,7 +4,7 @@ Running a part is ``test_sensor_deadline.py`` and ``test_sensor_environment.py``
 this is the reading back — which failure is being described, once the command
 has exited. How much of the tool's own words come with it is
 ``test_how_much_a_failure_says.py``. A command nobody installed is the one failure the tool has no words of
-its own for, because it never ran, so habit-hooks supplies them (#114).
+its own for, because it never ran, so habit-hooks supplies them.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ def test_a_sensor_whose_tool_is_not_installed_names_the_tool(
     """The commonest failure on a machine that has just met habit-hooks answered
     as whatever the shell or the sensor's own helper happened to print — for
     jscpd, twenty lines of Python internals whose punchline named the binary only
-    as a filename that could not be found (#114). It is still the same notice +
+    as a filename that could not be found. It is still the same notice +
     failed run any broken sensor produces; the notice now says what to install,
     and what to do instead of installing it.
 
@@ -82,7 +82,7 @@ def test_an_argv_sensor_names_its_missing_tool_in_the_very_same_words(
 ) -> None:
     """An argv part has no shell to say ``command not found`` for it — the
     spawn just fails — and a generic "could not run" would leave the commonest
-    first-contact failure (#114) undiagnosed on exactly the platform that has
+    first-contact failure undiagnosed on exactly the platform that has
     no shell to fall back on. So the answer is the shell's own, word for word:
     which form a sensor is spelled in must not change what a newcomer reads."""
     part = Part(

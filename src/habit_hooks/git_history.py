@@ -105,8 +105,8 @@ def uncommitted_changes(project_dir: Path) -> list[str]:
 
     A bare ``git diff`` shows only unstaged changes and never an untracked path,
     so in a pre-commit hook (where the work is staged) or on a branch with a new
-    module, the file under review is the file no git-derived scope would measure
-    (#92). Each such mode unites its history with this set; ``dict.fromkeys``
+    module, the file under review is the file no git-derived scope would measure.
+    Each such mode unites its history with this set; ``dict.fromkeys``
     keeps it deduplicated with first-seen order.
     """
     staged = changed_paths(project_dir, ["--cached"])

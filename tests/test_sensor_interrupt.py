@@ -2,7 +2,7 @@
 
 ``Ctrl-C`` is delivered to the main thread alone, but sensors spawn from worker
 threads and their tools live in their own process groups — so ending them is
-nobody's job unless somebody arranges it (issue #96)."""
+nobody's job unless somebody arranges it."""
 
 from __future__ import annotations
 

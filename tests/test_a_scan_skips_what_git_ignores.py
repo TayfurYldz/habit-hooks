@@ -1,5 +1,5 @@
 """What a whole-project scan measures: the files the project keeps, not every
-file on disk (#142).
+file on disk.
 
 ``--all`` walked the directory tree, so it measured build output, caches and
 ``.next/`` — while ``--last 1`` and every other git-derived mode, which ask git,
@@ -25,7 +25,7 @@ from git_repo import committed, repository, stop_the_upward_walk_at, written
 from habit_hooks.config import Config, ScopeDefaults
 from scope_probe import scoped_files as _scoped_files
 
-# Discovery is opt-in since #97: a case must name its source before any mode
+# Discovery is opt-in: a case must name its source before any mode
 # enumerates anything.
 _PY_SOURCE = ["**/*.py"]
 

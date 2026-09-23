@@ -114,7 +114,7 @@ def test_a_shell_sensor_on_windows_fails_the_run_instead_of_spawning(
 ) -> None:
     """Refused *before* the spawn, which is what the marker file proves: run,
     the recipe would leave one behind. A silent skip would report clean, which
-    is the false-clean class #88 exists for, so the run fails and says why."""
+    is the false-clean failure this tool exists to prevent, so the run fails and says why."""
     on_windows(monkeypatch)
     marker = tmp_path / "it-ran"
     part = _shell_sensor(tmp_path, f"touch {marker}; printf '[]'")

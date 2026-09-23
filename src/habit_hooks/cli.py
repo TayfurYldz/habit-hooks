@@ -1,4 +1,4 @@
-"""CLI plumbing shared by every console script (#103).
+"""CLI plumbing shared by every console script.
 
 Two contracts live here so the four entry points state them the same way:
 
@@ -43,11 +43,11 @@ def ensure_utf8_streams() -> None:
     habit-mapper prints guide text with box-drawing characters
     (``── smell (n issues) ──``); on a non-UTF-8 console (cp1252 is Windows'
     default) writing one raises ``UnicodeEncodeError`` — the write-side twin of
-    the read-side decode bug #133 was filed for, and the reason a console that
+    the read-side decode bug, and the reason a console that
     got past the decode could still die on the very first line it prints.
     ``habit-mapper``/``habit-snooze`` read the findings pipe off ``sys.stdin``,
     which decodes in the same locale unless reconfigured the same way — the
-    identical bug on the one stream #133's fix skipped. ``reconfigure`` exists
+    identical bug on the one stream the fix skipped. ``reconfigure`` exists
     on every stream CPython hands a console script by default; called more
     than once, as it is by both ``run_console`` and ``habit_hooks.hooks.main``,
     it is a no-op the second time. Stdin alone is wrapped in

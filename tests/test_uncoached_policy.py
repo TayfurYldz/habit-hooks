@@ -1,6 +1,6 @@
 """The root ``uncoached`` key decides what a smell the catalogue never named does.
 
-Before #111 an uncatalogued smell fell through to ``enforced``, so a name nobody
+An uncatalogued smell used to fall through to ``enforced``, so a name nobody
 had written a guide for could fail a build and then decline to explain why. The
 catalogue is the record of what this product has decided is worth failing a
 build over, so a name absent from it now coaches without blocking — and a
@@ -100,7 +100,8 @@ def test_a_catalogued_smell_is_out_of_the_policys_reach(
 ) -> None:
     """Both stay `enforced` at every value: the key answers for the smells nobody
     decided about, never for the ones we did. `incomplete-run` is the one that
-    must not move — `ignore` turning a broken run into a clean one would undo #88
+    must not move — `ignore` turning a broken run into a clean one would reopen
+    the false-clean failure
     through a key that speaks about code smells."""
     policy, smell = case
 

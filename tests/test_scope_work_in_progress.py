@@ -1,4 +1,4 @@
-"""Unit tests for which uncommitted work a git-derived scope measures (#92).
+"""Unit tests for which uncommitted work a git-derived scope measures.
 
 Every git mode is built on ``git diff``, which never names an untracked file and,
 with no revision, never a staged one — so the file just written is the one a
@@ -25,7 +25,7 @@ def _feature_branch_with_an_untracked_file(tmp_path: Path) -> None:
     (tmp_path / "new.py").write_text("VALUES = [1, 2, 3]\n", encoding="utf-8")
 
 
-# Discovery is opt-in since #97, so every mode must name its source before it can
+# Discovery is opt-in, so every mode must name its source before it can
 # measure what changed; these branches carry only `.py` files.
 _PY = Config(files=["**/*.py"])
 

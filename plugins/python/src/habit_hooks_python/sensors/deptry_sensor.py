@@ -22,7 +22,7 @@ def run_deptry(deptry: str, report: Path) -> subprocess.CompletedProcess[str]:
     argument — a console script the project's own venv installed, which
     habit-hooks' venv may not hold at all and Windows spells ``deptry.exe``. A
     deptry nobody installed never reaches here: the run answers for it as the
-    missing command it is, in one line rather than a traceback (#114).
+    missing command it is, in one line rather than a traceback.
     """
     return subprocess.run(
         [deptry, ".", "--json-output", str(report)],
@@ -44,7 +44,7 @@ def deptry_found_no_declaration(result: subprocess.CompletedProcess[str]) -> boo
     reimplementing its PEP 621/poetry/pdm search, keeps the answer from
     drifting off deptry's own. A project with none declared genuinely has
     zero declared-but-unused dependencies — a clean result, not a swallowed
-    failure (#88). Matching on the exception's class name, only inside the
+    failure. Matching on the exception's class name, only inside the
     already-crashed branch, keeps every other crash failing loud.
     """
     return "DependencySpecificationNotFoundError" in result.stderr

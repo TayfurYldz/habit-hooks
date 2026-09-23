@@ -1,4 +1,4 @@
-"""What a snooze holds against, and what approving records (#163).
+"""What a snooze holds against, and what approving records.
 
 A snooze holds while each file it covers still holds the content that was
 approved with it. Git is never asked: the index is checked in, so whoever

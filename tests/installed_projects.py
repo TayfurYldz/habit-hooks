@@ -22,7 +22,7 @@ OVERSIZED_LINES = 205
 MAX_ALLOWED_LINES = 200
 
 # The manifest a TypeScript project is scaffolded with today. A CommonJS helper
-# that lands in this scope dies on its first line (#112), so the gate asks about
+# that lands in this scope dies on its first line, so the gate asks about
 # packaging from inside the declaration that answered it wrong.
 ESM_MANIFEST = '{ "name": "demo", "version": "0.0.0", "type": "module" }\n'
 

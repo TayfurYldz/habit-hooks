@@ -38,7 +38,7 @@ def sibling(name: str) -> str:
 def mapper_args(args: list[str]) -> list[str]:
     """The pipeline flags the mapper also needs — just ``--config``, so one
     ``--config`` answers every stage instead of the mapper silently falling back
-    to ``.habit-hooks/config.toml`` (#86). The sensors stage still gets them all.
+    to ``.habit-hooks/config.toml``. The sensors stage still gets them all.
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--config")
@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     # All three are answered here, before anything is spawned: forwarded to
     # habit-sensors they print onto the pipe where habit-mapper expects findings
     # JSON, so the version arrived as an unparseable line and the usage text as a
-    # JSONDecodeError the user read instead of the help they asked for (#114).
+    # JSONDecodeError the user read instead of the help they asked for.
     # `init` goes first so `habit-hooks init --help` answers for init rather than
     # for the pipeline; the sensors parser has no positionals, so nothing else
     # can mean it.

@@ -106,9 +106,8 @@ A_MACHINE_THAT_CAN_MAKE_A_SYMLINK = pytest.mark.skipif(
     not _symlinks_are_permitted_here(),
     reason=(
         "creating a symlink needs SeCreateSymbolicLinkPrivilege on Windows, so "
-        "a symlinked node_modules — pnpm's ordinary layout, and the shape issue "
-        "#142 came from — is unmeasured on a machine without it (see #137 for "
-        "why a platform gap is skipped out loud rather than passed over)"
+        "a symlinked node_modules — pnpm's ordinary layout — is unmeasured on a "
+        "machine without it; platform gaps skip out loud rather than pass over"
     ),
 )
 

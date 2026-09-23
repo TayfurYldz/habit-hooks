@@ -1,4 +1,4 @@
-"""The CLI contract restored in #103.
+"""The CLI contract.
 
 Every console script answers ``--version`` with the installed distribution's
 version, and the exit code tells the tool's *own* failure (2 — a bad config, an
@@ -83,7 +83,7 @@ def test_a_malformed_config_fails_the_tool_not_the_code(
 ) -> None:
     """A config that is not TOML at all exited 1 — the code reserved for an
     enforced finding — so CI reading the exit code concluded the code had a
-    smell. The tool never ran: that is a 2, on one named line (#114)."""
+    smell. The tool never ran: that is a 2, on one named line."""
     config = tmp_path / ".habit-hooks" / "config.toml"
     config.parent.mkdir(parents=True)
     config.write_text('files = ["src/**"\n', encoding="utf-8")

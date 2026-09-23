@@ -2,7 +2,7 @@
 
 Two ways a break reaches the mapper, and both must coach rather than print the
 ✅. The sensors stage appends the reserved ``incomplete-run`` finding when it
-survives its own failure (#88); when it dies before writing, nothing arrives at
+survives its own failure; when it dies before writing, nothing arrives at
 all and the empty stream is itself the signal — a completed stage always writes
 at least ``[]``. ``tests/test_incomplete_run.py`` covers the shared builder.
 """
@@ -42,7 +42,7 @@ def test_an_incomplete_run_finding_is_coached_not_rendered_clean(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """A run carrying the reserved ``incomplete-run`` finding never renders the
-    clean guide, and its enforced severity fails the run (#88)."""
+    clean guide, and its enforced severity fails the run."""
     write_project_config(tmp_path, 'plugins = ["fixt"]')
 
     code = mapper.run([_INCOMPLETE_RUN_FINDING], tmp_path)
@@ -60,7 +60,7 @@ def test_a_clean_run_still_renders_the_clean_guide(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """With no findings the mapper renders the core clean guide and exits 0 —
-    the reserved smell must not disturb a genuinely clean run (#88)."""
+    the reserved smell must not disturb a genuinely clean run."""
     write_project_config(tmp_path, 'plugins = ["fixt"]')
 
     code = mapper.run([], tmp_path)
@@ -73,7 +73,7 @@ def test_nothing_on_stdin_is_coached_as_an_incomplete_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """A sensors stage that dies before writing leaves stdout empty, so the
-    ``incomplete-run`` finding #88 relies on never reaches the pipe. Zero bytes
+    ``incomplete-run`` finding never reaches the pipe. Zero bytes
     is itself the signal: a stage that completes always writes at least ``[]``.
     """
     write_project_config(tmp_path, 'plugins = ["fixt"]')

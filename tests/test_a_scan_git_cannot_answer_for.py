@@ -1,6 +1,6 @@
 """When a whole-project scan must not believe git, and walks the disk instead.
 
-Since #142 a whole-project scan measures the files git says the project keeps,
+A whole-project scan measures the files git says the project keeps,
 rather than every file on disk. That is the right answer only where git is the
 right thing to ask, and there are three places it is not: a project the
 surrounding repository ignores outright, a project in no repository at all, and
@@ -24,7 +24,7 @@ from habit_hooks import git_listing, project_scan
 from habit_hooks.config import Config
 from scope_probe import scoped_files as _scoped_files
 
-# Discovery is opt-in since #97: a case must name its source before any mode
+# Discovery is opt-in: a case must name its source before any mode
 # enumerates anything.
 _PY_SOURCE = ["**/*.py"]
 
@@ -128,7 +128,7 @@ def test_a_machine_with_no_git_scans_everything(
 def test_a_project_with_no_files_setting_asks_git_nothing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Discovery stays opt-in (#97), and opting out is answered before any git
+    """Discovery stays opt-in, and opting out is answered before any git
     call: a default install spawns no process only to discard every path it
     named.
 

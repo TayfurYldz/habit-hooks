@@ -1,4 +1,4 @@
-"""One smell is coached once, however many sensors reported it (#140).
+"""One smell is coached once, however many sensors reported it.
 
 eslint's ``max-lines`` and the generic ``line-count`` sensor both report
 ``oversized-file``, so a project running both plugins read the same ~200-word

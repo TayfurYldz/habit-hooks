@@ -1,6 +1,6 @@
 """A sensor's own issue list survives the merge exactly as it arrived.
 
-#140 is about two *sensors* reporting one observation, so deduplication happens
+Merging is about two *sensors* reporting one observation, so deduplication happens
 only when a later finding is folded into an earlier one. Within a single
 finding nothing is dropped: the sensor meant what it emitted, and three shipped
 sensors (``pmd``, ``phpmd``, ``comment``) key an issue by its file, give a line,

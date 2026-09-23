@@ -58,7 +58,7 @@ def test_prune_drops_a_key_that_no_longer_appears(
 def test_prune_refuses_to_empty_a_populated_index_on_no_findings(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Empty findings mean "nothing measured", not "everything obsolete" (#94).
+    """Empty findings mean "nothing measured", not "everything obsolete".
 
     The refusal is a judgement about the run, so it keeps the enforced-finding
     exit 1 — apart from the tool's own failures, which exit 2.
@@ -104,7 +104,7 @@ def test_a_corrupt_index_fails_as_a_tool_error(
     index_op: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A checked-in index a human broke is a failure of the tool itself, not a
-    finding about the code: exit 2, like an unresolvable base ref (#103)."""
+    finding about the code: exit 2, like an unresolvable base ref."""
     _write_index(tmp_path, "not json")
     _feed_stdin(monkeypatch, [])
     monkeypatch.chdir(tmp_path)
@@ -132,7 +132,7 @@ def test_an_index_mixing_both_shapes_loads(tmp_path: Path) -> None:
 
 def test_an_entry_with_a_field_the_index_cannot_mean_fails_by_name(tmp_path: Path) -> None:
     """A reason pasted beside the key used to survive a load only to be dropped
-    on the next write — a silent way to mean nothing (#94)."""
+    on the next write — a silent way to mean nothing."""
     _write_index(tmp_path, json.dumps([{"key": "src/a.py", "reason": "we discussed it"}]))
     with pytest.raises(SnoozeError) as excinfo:
         load_index(tmp_path)

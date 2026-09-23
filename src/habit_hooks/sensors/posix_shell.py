@@ -14,7 +14,7 @@ Refusing it is one part failing, not the run dying — a ``SensorError``, so the
 notice, the failed run and that part's dropped findings are the ones every
 broken part already earns. A plugin that ships one shell sensor must not cost a
 project the findings of all its others, and a run that silently skipped the part
-instead would report clean, which is the whole class #88 exists for.
+instead would report clean, which is the failure this tool exists to prevent.
 
 The person who reads it cannot fix that plugin, so it names the action they do
 have: switch the part off, spelled in the config key that part answers to.

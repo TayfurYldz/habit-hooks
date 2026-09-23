@@ -66,7 +66,7 @@ def test_a_flat_config_above_the_project_is_still_the_project_s_own(
 
 
 def test_a_project_that_wrote_no_config_gets_the_shipped_one(tmp_path: Path) -> None:
-    """The fallback #113 exists for. Nothing in the fixture's ancestry is an
+    """The case the fallback exists for. Nothing in the fixture's ancestry is an
     eslint config, so eslint finds none and the shipped one runs — recognisable
     because pairing the base rule off against the TypeScript one is a decision no
     other config here has taken."""

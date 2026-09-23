@@ -9,7 +9,7 @@ re-implementing the search (see "A wrapped tool's own config wins" in
 CLAUDE.md). A project with nothing declared has, honestly, zero declared but
 unused dependencies, and that must read as a clean run, not a broken one —
 kept distinct here from every other way deptry can fail, which still has to
-fail loud (#88).
+fail loud.
 """
 
 from __future__ import annotations

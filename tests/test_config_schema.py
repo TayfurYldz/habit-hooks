@@ -1,9 +1,9 @@
 """Unit tests for every refusal a config can earn, at every level.
 
 A key or value nothing consumes is a typo or a documented-but-dead setting, so it
-is rejected by name rather than ignored (#102, #111); a file that is not TOML at
+is rejected by name rather than ignored; a file that is not TOML at
 all is refused the same way rather than escaping as a ``tomllib`` traceback at
-the exit code an enforced finding uses (#114). The rejection names no binary
+the exit code an enforced finding uses. The rejection names no binary
 here: all three console scripts share this one loader, so the name is added where
 the failure is printed (``test_cli.py``). Loading and merging a config the
 schema accepts is ``test_config.py``; what a plugin's ``detectors`` may say —
@@ -101,7 +101,7 @@ def test_an_unknown_smell_key_is_rejected_by_name(tmp_path: Path) -> None:
 def test_an_unknown_uncoached_value_is_rejected_with_the_valid_ones(
     tmp_path: Path,
 ) -> None:
-    """A value nothing consumes is a typo the same way a key is (#111). Reading
+    """A value nothing consumes is a typo the same way a key is. Reading
     ``"supress"`` as the default would silently mean ``enforce``, which is the
     behaviour the project was trying to turn off."""
     project = _project(tmp_path, 'uncoached = "supress"')
@@ -122,7 +122,7 @@ def test_an_unknown_plugin_config_key_is_rejected_by_name(tmp_path: Path) -> Non
 
 def test_a_rejection_names_no_binary(tmp_path: Path) -> None:
     """The loader is also imported by a project's own transformer, which is a
-    separate process and no binary of ours (#109), so it takes no argument for a
+    separate process and no binary of ours, so it takes no argument for a
     name — and cannot invent one for the message either."""
     project = _project(tmp_path, '[smells.duplicated-code]\nseverty = "suggested"')
     with pytest.raises(SystemExit) as failure:

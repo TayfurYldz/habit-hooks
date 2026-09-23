@@ -74,7 +74,7 @@ def read_findings() -> list[dict] | None:
     """The findings array, or ``None`` when the stream is wholly empty.
 
     A stage that completes always writes at least ``[]``, so zero bytes can only
-    mean it died before writing — the one failure #88's reserved finding cannot
+    mean it died before writing — the one failure the reserved incomplete-run finding cannot
     travel through, because nothing travels at all.
     """
     raw = sys.stdin.read().strip()

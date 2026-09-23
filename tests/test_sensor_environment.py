@@ -6,7 +6,7 @@ A sensor must never inherit the parent's stdin — a ``pre-push`` hook carries
 refs on stdin, and a tool that reads input would consume them or block on a
 prompt — and it must reach the tools a project pins under ``.venv/bin`` and
 ``node_modules/.bin``. The deadline half — a wedged sensor's timeout, and
-killing its whole pipeline (issue #96) — is ``test_sensor_deadline.py``.
+killing its whole pipeline — is ``test_sensor_deadline.py``.
 """
 
 from __future__ import annotations

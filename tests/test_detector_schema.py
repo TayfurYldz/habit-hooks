@@ -31,7 +31,7 @@ def test_a_detectors_key_that_is_not_a_list_names_the_plugin_config(
 ) -> None:
     """``detectors = 42`` reached the loader's own ``for`` and escaped as a
     ``TypeError`` at exit 1 — the code reserved for an enforced finding, so CI
-    read a mistyped config as a smell in the code (#114)."""
+    read a mistyped config as a smell in the code."""
     message = refusal_for(declaring(tmp_path, "detectors = 42"))
 
     assert "'detectors'" in message

@@ -1,4 +1,4 @@
-"""Which findings become one finding, and what the merged one says (#140).
+"""Which findings become one finding, and what the merged one says.
 
 Which of their *issues* survive is ``test_which_issues_survive_a_merge.py``'s
 subject; what a reader sees is ``test_a_smell_is_coached_once.py``'s.

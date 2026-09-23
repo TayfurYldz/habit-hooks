@@ -110,8 +110,7 @@ def render_markdown(guide: Path, finding: dict, environment: Environment) -> Ren
 
 def render_runner(guide: Path, runner: str, finding: dict) -> Rendered:
     # A runner nobody installed is the same first-contact mistake as a sensor's
-    # missing tool, and #114's sweep reached the sensors stage but not here — so
-    # a typo in [runners] answered with a FileNotFoundError traceback, which
+    # missing tool: a typo in [runners] answered with a FileNotFoundError traceback, which
     # `cli.run_console` does not catch. The guide is named beside the command
     # because a project routes a smell to a runner by the guide's *extension*,
     # so which file asked for this is the reader's next question.
@@ -154,7 +153,7 @@ def resolve_guide(finding: dict, config: Config, resolver: Resolver) -> Path:
     plugins = plugins_for_language(finding.get("language"), config)
     guide = resolver.first(plugins, guide_names(finding["smell"], config))
     if guide is None:
-        # Same language-filtered order: never another language's guide (#150).
+        # Same language-filtered order: never another language's guide.
         guide = resolver.guide(UNCOACHED_GUIDE, plugins)
     return guide
 

@@ -6,10 +6,8 @@ const ESLINT = "eslint";
 // The eslint rule IDs this plugin coaches, and the canonical smell each maps to.
 // A Map rather than an object literal so a lookup is safe however odd the key
 // is: a plain object answers `SMELL_BY_RULE["constructor"]` with a function off
-// Object.prototype, which would leave a finding with no smell at all. This is
-// the JavaScript shape of the jq hazard #83 named — there, indexing the same map
-// with a null rule ID aborted jq and took every eslint finding in the run with
-// it. A Map has no prototype chain and answers `undefined` for anything absent.
+// Object.prototype, which would leave a finding with no smell at all. A Map
+// has no prototype chain and answers `undefined` for anything absent.
 const SMELL_BY_RULE = new Map(
   Object.entries({
     "max-lines-per-function": "oversized-function",
@@ -32,7 +30,7 @@ const SMELL_BY_RULE = new Map(
 );
 
 // A rule the map does not name is forwarded under its own ID. This is the
-// deliberate exception to "a sensor emits vocabulary smells only" (#111): knip's
+// deliberate exception to "a sensor emits vocabulary smells only": knip's
 // issue keys are knip's, but an eslint rule ID comes from a config the project
 // wrote, so forwarding it saves them running lint separately.
 
@@ -45,9 +43,9 @@ const PARSE_ERROR = "parse-error";
 // A smell about the FILE, whose guide lists files rather than lines
 // (`includes/file_level_issues.md`). eslint still positions its message —
 // `max-lines` reports at the first line past the limit — but that is where its
-// counter tripped, not where the problem is, and carrying it is what stopped
-// the same file being recognised as one observation when the generic
-// `line-count` sensor reported the same smell about it (#140).
+// counter tripped, not where the problem is, and carrying it would
+// double-report a file the generic `line-count` sensor already reports this
+// smell about.
 //
 // `parse-error` is file-level too and is deliberately absent: its position is
 // where parsing actually failed, and no other sensor reports it about a file

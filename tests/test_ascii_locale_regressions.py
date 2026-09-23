@@ -1,11 +1,11 @@
-"""Reproduces issue #133 outside this Mac's usual locale.
+"""Reproduces the ASCII-locale decode bug outside this Mac's usual locale.
 
 ``locale.getencoding()`` cannot be monkeypatched in-process -- CPython decides
 it once, at interpreter start -- so these run the real ``habit-mapper`` entry
 point in a subprocess whose environment forces the same non-UTF-8 locale CI
 hit on Windows: ``PYTHONUTF8=0 PYTHONCOERCECLOCALE=0 LC_ALL=C``. That
 combination reproduces byte-for-byte on this Mac too (see the project
-CLAUDE.md's #133 note), which is what makes it a fair stand-in for Windows'
+CLAUDE.md's note), which is what makes it a fair stand-in for Windows'
 cp1252 default without a Windows machine to run on.
 
 Two directions, because the bug had two: a guide decoded off disk, and this
@@ -60,7 +60,7 @@ def _run_mapper_under_ascii_locale(
 def test_a_guide_containing_non_ascii_text_is_read_correctly(tmp_path: Path) -> None:
     """A UTF-8 guide decoded under a non-UTF-8 locale used to raise
     ``UnicodeDecodeError`` out of ``guide.read_text()`` before a single byte of
-    it reached stdout (#133) -- so this fails before the write side is ever
+    it reached stdout -- so this fails before the write side is ever
     reached, whatever the write side does.
     """
     write_plugin(

@@ -41,7 +41,7 @@ def test_no_sensor_files_leaves_the_whole_scope(tmp_path: Path) -> None:
 
 
 def test_an_empty_scope_runs_no_sensor(tmp_path: Path) -> None:
-    """A scope that measured nothing must not spawn a sensor — issue #93.
+    """A scope that measured nothing must not spawn a sensor.
 
     A tool handed no paths falls back to its own default (``ruff``'s is "scan
     the current directory"), reporting every legacy smell in the whole repo over
@@ -89,7 +89,7 @@ def test_a_non_empty_scope_still_runs_its_sensors(tmp_path: Path) -> None:
 def test_a_sensor_narrowed_to_no_files_does_not_run(tmp_path: Path) -> None:
     """A sensor's own ``files`` can empty a scope that measured something.
 
-    Its scope is then as empty as #93's, with the same consequence: handed no
+    Its scope is then empty, with the same consequence: handed no
     paths, the tool falls back to its own default and reports the whole repo's
     debt. The guard is per sensor because the narrowing is.
     """

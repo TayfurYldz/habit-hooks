@@ -4,7 +4,7 @@ Two sensors can see one smell — eslint's ``max-lines`` and the generic
 ``line-count`` sensor both report ``oversized-file`` — and one sensor can report
 a smell many times over, as jscpd does, a finding per clone. The mapper prints
 one block per finding, so left alone each of those became another copy of the
-same ~200-word guide (#140).
+same ~200-word guide.
 
 **The guide is the thing merged on, not the smell.** One guide printed twice is
 the whole waste being removed, so merging exactly what renders alike is correct
@@ -12,8 +12,8 @@ by construction — and merging by smell alone is not: `high-complexity` from th
 python plugin and from the typescript plugin route to *different* guides
 (``rendering.resolve_guide``, off the finding's ``language``), and folding them
 together coaches a ``.ts`` file in Python. Keying on ``language`` instead is no
-fix either, since ``generic`` declares none and would stop #140 being fixed at
-all.
+fix either, since ``generic`` declares none and would stop the waste being
+removed at all.
 
 Merging is the mapper's, not the sensors stage's: what a sensor emitted is the
 run's own record, read by ``habit-snooze``, so a snooze key must not depend on
@@ -110,7 +110,7 @@ def _issues_across(group: list[dict]) -> list[dict]:
     comments it found on one line — and three shipped sensors (``pmd``,
     ``phpmd``, ``comment``) key by file and give no column, so two of their
     issues on one line are one observation by any identity this can build.
-    Second-guessing that is not the merge's job; #140 is about two *sensors*
+    Second-guessing that is not the merge's job; merging is about two *sensors*
     reporting one thing.
     """
     issues = list(group[0].get("issues") or [])

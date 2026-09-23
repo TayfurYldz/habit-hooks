@@ -28,7 +28,7 @@ from habit_hooks.config import Config
 from scope_probe import scope as _scope
 from scope_probe import scoped_files as _scoped_files
 
-# Discovery is opt-in since #97: a case must name its source before any mode
+# Discovery is opt-in: a case must name its source before any mode
 # enumerates anything.
 _PY_SOURCE = ["**/*.py"]
 

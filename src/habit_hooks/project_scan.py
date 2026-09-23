@@ -1,14 +1,10 @@
 """Every file a project has: what git says it keeps, or what is on disk when git
 is not the thing to ask.
 
-A whole-project run used to walk the directory tree and measure whatever it
-found, while every git-derived mode asked git and so had never seen a build
-artifact in its life. One project, two universes (#142): a real pnpm monorepo
-held 321 tracked ``.ts``/``.tsx`` files and 843 on disk — 181 in ``dist/``, 326
-in a tool cache, 14 in ``.next/`` — and its owner had to hand-write
-``!**/dist/**`` into ``[files]`` before a run was usable. A default somebody has
-to patch is the wrong default, so the walk is now the fallback and git's list is
-the answer.
+A whole-project run walks the directory tree and measures whatever it
+finds, while every git-derived mode asks git and has never seen a build
+artifact in its life: one project, two universes, and a default somebody has
+to patch. The walk is therefore the fallback and git's list is the answer.
 
 What a run then makes of that list — the ``[files]`` narrowing, dropping paths
 the work tree no longer has, the opt-in that stops any of it happening at all —

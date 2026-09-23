@@ -32,7 +32,7 @@ def anchored(findings: list[dict], project_dir: Path, sensor: str) -> list[dict]
 
 
 def aliasing_notices(findings: list[dict], sensor: str) -> list[str]:
-    """One notice per path key that stands for more than one file (issue #79).
+    """One notice per path key that stands for more than one file.
 
     A key that is one of its files but not the others is a path standing in for
     files it does not name: snoozing it exempts every one of them, with nothing

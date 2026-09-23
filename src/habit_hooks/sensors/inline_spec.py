@@ -1,7 +1,7 @@
 """The declarative sensor's loading half: an entry in a plugin's config.toml.
 
 Every misspelling is answered here, at load, because a config key silently
-ignored is a documented-but-dead key (#102).
+ignored is a documented-but-dead key.
 """
 
 from __future__ import annotations

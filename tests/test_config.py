@@ -55,7 +55,7 @@ def test_a_caller_that_names_no_program_still_loads(tmp_path: Path) -> None:
     """The call a project's own transformer makes, spelled out rather than routed
     through ``_load``. A transformer is a separate process, and importing this
     function is the only way one has ever had to read ``[scope] branchBase``, so a
-    required keyword argument here broke every caller outside this repo (#109).
+    required keyword argument here broke every caller outside this repo.
     """
     assert load_config(tmp_path).scope.branchBase == "main"
 

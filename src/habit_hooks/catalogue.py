@@ -7,7 +7,7 @@ SUGGESTED = "suggested"
 
 # The reserved smell a run raises against itself when a sensor or transformer
 # broke: it turns "the run did not complete" into a finding on the pipe, so the
-# mapper coaches it and never renders the clean guide over broken tooling (#88).
+# mapper coaches it and never renders the clean guide over broken tooling.
 INCOMPLETE_RUN = "incomplete-run"
 
 DEFAULT_SEVERITY: dict[str, str] = {
@@ -42,7 +42,7 @@ DEFAULT_SEVERITY: dict[str, str] = {
 UNCOACHED_GUIDE = "uncoached.md"
 
 # What a run does with a smell this catalogue does not name — the root
-# ``uncoached`` config key (#111). The catalogue is the record of what has been
+# ``uncoached`` config key. The catalogue is the record of what has been
 # decided worth failing a build over, so a name absent from it has had no such
 # decision made about it and coaches without blocking by default.
 UNCOACHED_SUGGEST = "suggest"

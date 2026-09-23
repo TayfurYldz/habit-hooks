@@ -33,7 +33,7 @@ def report_text(sensor: Part, report: Path) -> str:
     """What the tool wrote at the path it was handed.
 
     A tool that answers in a report writes one even when it finds nothing, so
-    no report is a failed run, never a clean one (the #139 class).
+    no report is a failed run, never a clean one.
     """
     try:
         return report.read_text(encoding="utf-8", errors="replace")

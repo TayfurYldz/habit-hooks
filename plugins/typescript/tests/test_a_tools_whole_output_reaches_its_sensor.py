@@ -5,7 +5,7 @@ and answers ENOBUFS above it: a truncated stdout, a ``null`` status and an
 ``error`` the caller has to notice. A real project crosses that cap easily —
 forty files of ordinary lint findings do — and the sensor is then left with
 nothing it can parse, so a repository full of smells arrives as a broken sensor
-instead of as coaching (#142).
+instead of as coaching.
 
 The cap is the seam's question, not either caller's: knip capped its own run
 generously and eslint never capped its own at all, which is the divergence that
@@ -14,8 +14,7 @@ share comes from ``sensors/project_tool.cjs``. Every other suite in this
 directory drives a report comfortably under the cap, which is the other side of
 that boundary.
 
-eslint is driven for real, because the report that broke #142 was one eslint
-wrote. knip is driven by the recording stub, since what knip would make of a
+eslint is driven for real, because a huge eslint report was the report that broke here. knip is driven by the recording stub, since what knip would make of a
 huge tree is not the question — how much of what it printed comes back is.
 """
 

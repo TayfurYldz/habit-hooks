@@ -25,7 +25,7 @@ from .config import Config
 from .path_globs import matching
 from .project_paths import project_relative
 
-# Discovery is opt-in (#97): a project that names no source scans nothing.
+# Discovery is opt-in: a project that names no source scans nothing.
 _NO_FILES = "no [files] are configured — name what to scan in .habit-hooks/config.toml"
 NO_FILES_NOTICE = f"habit-sensors: {_NO_FILES}; nothing scanned"
 
@@ -49,7 +49,7 @@ def empty_scope_notices(
     that is set and matched nothing used to be the one silent case, so a project
     whose ``.gitignore`` covered its own source tree scanned zero files and
     rendered ✅ — a run that *measured* nothing, indistinguishable from a run
-    that *found* nothing, which is the #88 class this tool exists to prevent.
+    that *found* nothing, which is the false-clean failure this tool exists to prevent.
     """
     if named is not None:
         return [_named_file_notice(named, project_dir, config)]

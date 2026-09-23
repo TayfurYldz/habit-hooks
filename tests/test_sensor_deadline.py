@@ -3,7 +3,7 @@ must not leave the tool it wrapped running behind it.
 
 This is the deadline half of running a sensor's command: the timeout itself,
 what a killed sensor's notice says, and that the whole process group — not
-just the shell — dies with it (issue #96). The other half — an own stdin, and
+just the shell — dies with it. The other half — an own stdin, and
 reaching the project's own tools — is ``test_sensor_environment.py``. How a
 command's argv is bounded is ``test_sensor_argv.py``; how a finished failure is
 described is ``test_part_output.py``.

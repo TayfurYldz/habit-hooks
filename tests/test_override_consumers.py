@@ -3,7 +3,7 @@
 Parameterised over every field of ``SensorOverride`` and ``SmellOverride``, each
 test asserts the field maps to a probe that proves the field changes behaviour.
 Add a field without a probe and the build fails — the loader-level answer to
-"a documented key is read by nothing" (#87).
+"a documented key is read by nothing".
 """
 
 from __future__ import annotations

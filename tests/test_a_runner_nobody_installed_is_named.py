@@ -2,7 +2,7 @@
 
 ``[runners]`` lets a project route a smell to an executable guide instead of a
 Markdown one. Naming a command nobody has is a first-contact mistake — a typo,
-or a tool the reader has yet to install — and #114's rule is that those answer
+or a tool the reader has yet to install — and the rule is that those answer
 with a sentence rather than a Python stack trace. That sweep covered the sensors
 stage; the mapper's fix runner was left out, so a missing runner escaped as a
 `FileNotFoundError` through `cli.run_console`, which catches only `ToolError`.

@@ -1,7 +1,7 @@
 """The reserved ``incomplete-run`` finding the sensors stage raises against itself.
 
 A failed sensor or transformer contributes no findings, so without this the
-mapper would see ``[]`` and render the clean guide over broken tooling (#88). The
+mapper would see ``[]`` and render the clean guide over broken tooling. The
 builder turns each failure notice into an issue the mapper can coach.
 """
 

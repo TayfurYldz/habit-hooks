@@ -38,7 +38,7 @@ def test_a_named_file_outside_files_is_not_scanned(tmp_path: Path) -> None:
 def test_a_named_file_with_no_files_configured_says_none_are(tmp_path: Path) -> None:
     """The default install — ``plugins = ["generic"]``, which declares no source
     — has no ``[files]`` for the file to be outside of, so saying it is outside
-    one points at a section that does not exist. Say what to write instead (#97)."""
+    one points at a section that does not exist. Say what to write instead."""
     source_file(tmp_path)
     scoped = _scope(["--file", "src/a.py"], tmp_path, Config(files=None))
     assert scoped.files == []
@@ -63,7 +63,7 @@ def test_a_scanned_named_file_is_not_remarked_on(tmp_path: Path) -> None:
 
 def test_no_files_at_all_scans_nothing_and_says_why(tmp_path: Path) -> None:
     """No `[files]` from the project and none from its plugins is opt-in to
-    nothing: a default install scans nothing, not the whole tree, and says why (#97)."""
+    nothing: a default install scans nothing, not the whole tree, and says why."""
     source_file(tmp_path)
     scoped = _scope(["--all"], tmp_path, Config(files=None))
     assert scoped.files == []
@@ -79,7 +79,7 @@ def test_a_files_that_matched_nothing_says_so(tmp_path: Path) -> None:
     A project whose ``.gitignore`` covers its own source tree keeps no files git
     will name, so ``[files]`` — set, and correct — matches nothing. That scanned
     zero files and rendered ✅: a run that *measured* nothing, told apart from a
-    run that *found* nothing only by this line (#88).
+    run that *found* nothing only by this line.
     """
     project = repository(tmp_path / "project", ignoring="src/\n")
     written(project / "src" / "a.py")

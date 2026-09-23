@@ -1,5 +1,5 @@
-"""Whether one AST ``Call`` is a text-mode I/O call that names no encoding
-(issue #133): ``read_text``/``write_text``, ``open()``/``.open()`` in text
+"""Whether one AST ``Call`` is a text-mode I/O call that names no encoding:
+``read_text``/``write_text``, ``open()``/``.open()`` in text
 mode, or a subprocess call reading decoded output via ``text=True`` /
 ``universal_newlines=True``.
 

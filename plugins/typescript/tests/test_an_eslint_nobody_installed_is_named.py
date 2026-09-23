@@ -1,6 +1,6 @@
 """The tool this sensor spawns must answer in one line when nobody installed it.
 
-The same first-contact rule the knip sensor answers to (#114): a tool nobody
+The same first-contact rule the knip sensor answers to: a tool nobody
 installed is the one failure with an obvious fix, so it has to arrive in the
 phrase the runner coaches on (``part_output.COMMAND_NOT_FOUND``) rather than as a
 module-resolution error nothing recognises. Under the old shell recipe `bash`

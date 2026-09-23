@@ -152,8 +152,8 @@ def test_a_list_placeholder_buried_in_a_larger_element_is_refused(
 
 def test_args_an_argv_has_nowhere_to_put_are_refused_by_name(tmp_path: Path) -> None:
     """The same refusal the shell form earns, asked of the other form: args a
-    part cannot expand are args the tool never sees, and #102 refuses a config
-    key nothing consumes rather than dropping it."""
+    part cannot expand are args the tool never sees, and a config key nothing
+    consumes is refused rather than dropped."""
     part = Part(
         name="comment", directory=tmp_path, argv=["node", "comment.js"], args=["-v"]
     )

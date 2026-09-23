@@ -71,7 +71,7 @@ def test_args_a_command_has_nowhere_to_put_are_refused_by_name(tmp_path: Path) -
     """Args a command cannot expand are args the tool never sees, and dropping
     them silently is how a whole documented setting stayed dead across seven
     sensors. Refused here, where both the args and the command are known, it is
-    the same treatment #102 gives a config key nothing consumes."""
+    the same refusal a config key nothing consumes earns."""
     part = Part(
         name="comment", command="node ${dir}/comment.js", directory=tmp_path, args=["-v"]
     )

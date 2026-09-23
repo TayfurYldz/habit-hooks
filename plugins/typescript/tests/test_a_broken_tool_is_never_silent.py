@@ -1,6 +1,6 @@
 """A tool that failed always gets a sentence saying so — and only a sentence.
 
-An empty complaint is #142. ``spawnSync`` answers a stdout over its buffer with
+An empty complaint is the failure this suite exists for. ``spawnSync`` answers a stdout over its buffer with
 ENOBUFS, a ``null`` status and a *blank* stderr; the eslint sensor forwarded the
 blank, so the whole notice a reader got was the sensor's own command line —
 told that a sensor failed, and never what failed about it.

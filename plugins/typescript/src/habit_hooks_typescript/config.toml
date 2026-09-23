@@ -6,8 +6,8 @@ language = "typescript"
 # tens of thousands from other people's packages.
 files = ["**/*.ts", "**/*.tsx", "!**/node_modules/**"]
 # Programs, not data: each helper keeps a judgement a static recipe cannot
-# spell — eslint retries the project's own config before the shipped one (the
-# #171 stopgap), knip merges a production pass gated on config markers into the
+# eslint retries the project's own config before the shipped one (the
+# eslint retries the project's own config before the shipped one, knip merges a production pass gated on config markers into the
 # default one, comment is a bespoke ts-morph analyzer. `argv` as an inline
 # entry rather than a `command` string because a shell recipe cannot run where
 # there is no POSIX shell, which is every native Windows machine.
@@ -39,7 +39,7 @@ transformers = []
 # `sensors/project_tool.cjs`, which finds the package under the project's own
 # node_modules and runs its bin script with `process.execPath` — a `command`
 # detector asks the system PATH, which a global install satisfies and the run
-# can no longer reach (issue #133). ts-morph is read as a library rather than
+# can no longer reach. ts-morph is read as a library rather than
 # spawned at all, so being on PATH never said anything about it either.
 detectors = [
   { name = "node", kind = "command", install = "brew install node" },

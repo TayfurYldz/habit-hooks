@@ -9,7 +9,7 @@ win in.
 Loading takes no argument for the running binary's name — a project's own
 transformer is a separate process, and importing ``load_config`` is the only way
 one has to read ``[scope] branchBase``, so an argument here breaks every caller
-outside this repository (#109).
+outside this repository.
 """
 
 from __future__ import annotations

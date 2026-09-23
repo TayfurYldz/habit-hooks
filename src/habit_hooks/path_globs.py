@@ -19,7 +19,7 @@ def matching(paths: list[str], globs: list[str]) -> list[str]:
 
     Gitignore semantics, so a later negation overrides an earlier match and
     there is no brace expansion. An empty ``globs`` keeps nothing, which is what
-    makes discovery opt-in (#97) rather than accidentally universal.
+    makes discovery opt-in rather than accidentally universal.
     """
     spec = pathspec.PathSpec.from_lines("gitignore", globs)
     return [path for path in paths if spec.match_file(path)]

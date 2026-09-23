@@ -42,8 +42,8 @@ def test_a_spec_spelling_both_command_and_argv_is_refused_by_name(
 
 def test_a_spec_spelling_neither_is_refused_by_name(tmp_path: Path) -> None:
     """A part that states what it is and never what it does. It used to be a
-    ``KeyError`` traceback out of the loader, which is the first-contact
-    failure #114 was about."""
+    ``KeyError`` traceback out of the loader — a first-contact
+    failure."""
     with pytest.raises(ConfigError) as refusal:
         one_sensor(tmp_path, 'files = ["src/**"]')
 
@@ -162,7 +162,7 @@ def test_a_sensor_declaring_no_files_carries_none(tmp_path: Path) -> None:
 
 def test_a_sensor_spec_that_is_not_toml_is_refused_by_name(tmp_path: Path) -> None:
     """A part spec is hand-written too, so it earns the same refusal the project
-    config does (#114) rather than a ``tomllib`` traceback: one shared read means
+    config does rather than a ``tomllib`` traceback: one shared read means
     every TOML this tool opens answers a slip in it the same way."""
     spec = tmp_path / ".habit-hooks" / "fixt" / "sensors" / "s.toml"
 

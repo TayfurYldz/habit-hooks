@@ -133,9 +133,9 @@ def _recipe(kind: str, name: str, spec: dict) -> tuple[str | None, list[str] | N
     spawned as it stands, a ``command`` is text ``bash`` reads, and a spec
     saying both leaves which one runs to whichever the code happened to look at
     first — while one saying neither is a part that states what it is and never
-    what it does. Both earn the treatment #102 gives a config key nothing
-    consumes: a refusal that names the part, rather than a default nobody chose
-    or the ``KeyError`` traceback a missing ``command`` used to be (#114).
+    what it does. Both earn the refusal a config key nothing
+    consumes gets: one that names the part, rather than a default nobody chose
+    or the ``KeyError`` traceback a missing ``command`` used to be.
 
     An ``argv`` with nothing in it is the third of that family and answers in
     the same register. It reads as a recipe right up to the spawn, where the
@@ -180,7 +180,7 @@ def _refuse_an_argv_that_is_not_arguments(
     all. That one is the mistake that hides, because a string is iterable and
     nothing stumbles over it: ``argv = "ruff"`` spawns four arguments of one
     character each, and the run reports needing the ``'r'`` command. Both are the
-    first-contact class #114 refuses to answer with anything but a sentence.
+    first-contact mistake, and both are answered with a sentence.
     """
     if argv is None:
         return

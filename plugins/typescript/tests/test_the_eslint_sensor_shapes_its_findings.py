@@ -62,7 +62,7 @@ def test_a_rule_named_after_a_javascript_builtin_is_still_just_a_rule(
 ) -> None:
     """A plain object answers `map["constructor"]` with a function off
     Object.prototype, which JSON.stringify then drops — leaving a finding with no
-    smell at all. This is the JavaScript shape of the jq hazard #83 named, where
+    smell at all. This is the JavaScript shape of the jq hazard, where
     indexing the same map with a null aborted the whole sensor."""
     report = _report(("/p/src/a.ts", [_message("constructor")]))
 

@@ -136,8 +136,7 @@ def _escapes_the_project(path: str) -> bool:
     The leading separator is read off the components rather than asked of
     ``isabs``, which cannot answer for both platforms at once: ``ntpath.isabs``
     stopped counting a single leading (back)slash as rooted in CPython 3.13,
-    and ``\tools`` is still ``C:\tools`` to ``project_dir /`` on Windows
-    (#166). Once ``splitdrive`` has returned empty, an empty first component
+    (``\tools`` is still ``C:\tools`` to ``project_dir /`` on Windows). Once ``splitdrive`` has returned empty, an empty first component
     is what the older ``ntpath.isabs`` meant, and it subsumes
     ``posixpath.isabs``.
     """
@@ -180,7 +179,7 @@ def reject_invalid_detectors(value: object, where: str) -> None:
 
     The key's own shape is refused here rather than in the loader, where
     ``detectors = 42`` met a ``for`` and escaped as a ``TypeError`` at exit 1 —
-    the code reserved for an enforced finding (#114).
+    the code reserved for an enforced finding.
     """
     if not isinstance(value, list):
         raise ConfigError(

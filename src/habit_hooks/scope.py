@@ -3,10 +3,10 @@
 The scope flags are mutually exclusive; with none, the scope is derived from the
 ``[scope]`` config. Git-backed modes measure a branch from the same merge base a
 lapsing snooze asks ``git_history`` for, then widen the answer to the uncommitted
-work in progress — the staged and untracked files a diff alone would miss (#92).
+work in progress — the staged and untracked files a diff alone would miss.
 Whole-project modes ask ``project_scan`` for the files the project keeps, which
-is git's answer too, so no mode measures a universe another one cannot see
-(#142). The picked paths are then narrowed to the files the work tree still has
+is git's answer too, so no mode measures a universe another one cannot see.
+The picked paths are then narrowed to the files the work tree still has
 and ``[files]`` calls source (pathspec/gitignore globbing, no brace expansion).
 """
 
@@ -43,7 +43,7 @@ class Scope:
 def resolve_scope(args: argparse.Namespace, config: Config, project_dir: Path) -> Scope:
     """The files this run measures: the chosen mode's paths, narrowed to source.
 
-    Discovery is opt-in (#97): with no ``[files]`` at all, every mode narrows to
+    Discovery is opt-in: with no ``[files]`` at all, every mode narrows to
     nothing and the run says why. A git mode still resolves its base ref first,
     so a typo'd ref fails loudly rather than being masked by an empty opt-in.
 
@@ -114,7 +114,7 @@ def _source_files(placed: list[str], config: Config, project_dir: Path) -> list[
     dropped (a gone file has no smells left, and a submodule's own directory is
     not a file either); and ``[files]`` keeps only source, so a lockfile bump is
     out of a git-derived scope as it is out of ``--all``. No ``[files]`` and an
-    empty one keep nothing (#97).
+    empty one keep nothing.
     """
     present = [path for path in placed if (project_dir / path).is_file()]
     return matching(present, config.files or [])
@@ -123,7 +123,7 @@ def _source_files(placed: list[str], config: Config, project_dir: Path) -> list[
 def _every_file(config: Config, project_dir: Path) -> list[str]:
     """Every file the project has, once there is a ``[files]`` to narrow it to.
 
-    Discovery is opt-in (#97): with none, nothing is enumerated and git is never
+    Discovery is opt-in: with none, nothing is enumerated and git is never
     asked — a default install must not walk ``node_modules`` only to discard it.
     What counts as the project's own files, and why git rather than the disk
     answers that, is ``project_scan``.
@@ -136,7 +136,7 @@ def _every_file(config: Config, project_dir: Path) -> list[str]:
 def _with_work_in_progress(project_dir: Path, tracked: list[str]) -> list[str]:
     """``tracked`` history widened with the uncommitted work in progress: a diff
     misses the untracked file just written and, commit-to-commit, staged edits
-    too (#92). ``_source_files`` still narrows the union to present source after.
+    too. ``_source_files`` still narrows the union to present source after.
     """
     combined = [*tracked, *git_history.uncommitted_changes(project_dir)]
     return list(dict.fromkeys(combined))

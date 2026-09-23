@@ -6,7 +6,7 @@ plugin (``generic``) last — but the ``uncoached.md`` fallback used to walk the
 raw ``config.plugins`` order. A plugin of a *different* language that happened
 to be listed first therefore coached the finding: with Ruby first, Ruby's
 newly shipped ``uncoached.md`` coached an uncatalogued TypeScript/ESLint
-finding (#150). The fallback must walk the same language-filtered order, then
+finding. The fallback must walk the same language-filtered order, then
 the core's own guide.
 """
 
@@ -32,7 +32,7 @@ def test_the_uncoached_fallback_respects_the_findings_language(
 ) -> None:
     """With Ruby listed first and only Ruby and generic shipping an
     ``uncoached.md``, an uncatalogued TypeScript finding is coached by
-    generic's — never by Ruby's (#150)."""
+    generic's — never by Ruby's."""
     write_plugin(
         tmp_path,
         "ruby",
@@ -67,7 +67,7 @@ def test_the_uncoached_fallback_reaches_the_core_without_a_languageless_plugin(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """No languageless plugin configured: the fallback reaches the core's own
-    ``uncoached.md`` rather than a differently-language plugin's (#150)."""
+    ``uncoached.md`` rather than a differently-language plugin's."""
     write_plugin(
         tmp_path,
         "ruby",

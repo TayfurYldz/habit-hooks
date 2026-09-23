@@ -52,7 +52,7 @@ def command_not_found(argv: list[str]) -> subprocess.CompletedProcess[str]:
     speak for it: the spawn simply fails. Saying it here in the shell's own
     words and exit code leaves one recogniser for both forms, so the message a
     first-time user gets cannot depend on how their sensor was spelled — and
-    the commonest first-contact failure (#114) stays diagnosed on exactly the
+    first-contact failure stays diagnosed on exactly the
     platform that has no shell to fall back on.
     """
     return subprocess.CompletedProcess(
@@ -108,10 +108,7 @@ def _missing_tool(kind: str, part: Part, command: str) -> SensorError:
     """It never ran because its tool is absent — name the tool, not the search.
 
     A tool nobody installed is the commonest way a sensor fails on a machine that
-    has just met habit-hooks, and the answer used to be whatever the shell or the
-    sensor's own helper happened to print: for jscpd, twenty lines of Python
-    internals whose punchline named the binary only as a filename that could not
-    be found (#114). Naming the command and the part that wanted it is the whole
+    has just met habit-hooks. Naming the command and the part that wanted it is the whole
     diagnosis, so the rest of the output is dropped rather than quoted back.
     """
     return SensorError(

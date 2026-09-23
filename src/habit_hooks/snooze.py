@@ -25,7 +25,7 @@ __all__ = ["INDEX_PATH", "SnoozeError", "load_index", "main", "save_index"]
 
 # The transformers that filter findings through this index. `habit-sensors
 # --no-snooze` strips them so `--prune` can compare the index against a
-# snooze-free view of the run instead of one snooze already emptied (#94).
+# snooze-free view of the run instead of one snooze already emptied.
 # `snooze-until-changed` is kept as a deprecated alias: what it was opt-in for
 # is now the only behaviour.
 SNOOZE_TRANSFORMERS = frozenset({"snooze", "snooze-until-changed"})
@@ -82,7 +82,7 @@ def _prune(project_dir: Path) -> int:
 
     Never on an empty run: empty findings mean "nothing was measured", not
     "every exemption is obsolete", and emptying the index on that is the
-    false-clean class of #78/#84 (#94). The run must be fed snooze-free
+    false-clean failure this tool exists to prevent. The run must be fed snooze-free
     (`habit-sensors --no-snooze`), else every still-violating key is missing
     from stdin and would be pruned away.
     """
@@ -130,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
 def _run_snooze_command(argv: list[str]) -> int:
     """A corrupt index is a failure of the tool itself — a checked-in file a human
     edits, not a statement about the code — so it exits 2 like a rejected config
-    or an unresolvable ref (#103). The `--prune` refusal is the other kind, a
+    or an unresolvable ref. The `--prune` refusal is the other kind, a
     judgement about the run, and keeps exit 1.
     """
     try:

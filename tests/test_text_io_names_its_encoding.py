@@ -1,5 +1,5 @@
 """Every text-mode ``read_text()``/``write_text()``/``open()`` call in this
-project names its own encoding (issue #133).
+project names its own encoding.
 
 Python decodes text-mode I/O in the platform's locale unless told otherwise --
 cp1252 on Windows, and (per ``test_ascii_locale_regressions.py``) even plain
@@ -31,8 +31,8 @@ MINIMUM_TARGET_FILES = 50
 def _target_files() -> list[Path]:
     """Every ``.py`` file under this project's own text-I/O surface.
 
-    Each plugin's own ``tests/`` is included alongside its ``src/``: issue
-    #133's ASCII-locale suite run failed here first, in a plugin test helper
+    Each plugin's own ``tests/`` is included alongside its ``src/``: an
+    ASCII-locale suite run failed there first, in a plugin test helper
     the original sweep had missed by scoping to ``src/`` alone.
     """
     roots = [
@@ -59,6 +59,6 @@ def test_target_files_resolve_to_a_nontrivial_set() -> None:
 def test_every_text_io_call_in_the_repo_names_its_encoding() -> None:
     violations = [line for path in _target_files() for line in _violations_in_file(path)]
     assert violations == [], (
-        "these calls read or write text with no encoding= (issue #133):\n"
+        "these calls read or write text with no encoding=:\n"
         + "\n".join(violations)
     )

@@ -1,4 +1,4 @@
-"""A smell about the whole file arrives from eslint with no position (#140).
+"""A smell about the whole file arrives from eslint with no position.
 
 ``max-lines`` reports at the first line past the limit, and ``oversized-file``
 is not about that line — the generic ``line-count`` sensor reports the same

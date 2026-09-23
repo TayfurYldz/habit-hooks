@@ -7,14 +7,14 @@ name?". Finding, merging and resolving a config is :mod:`habit_hooks.config`.
 
 Unknown keys are rejected at every level — project *and* plugin config — with a
 ``ConfigError`` (exit 2): a key nothing consumes is a typo or a
-documented-but-dead key, and silently ignoring it is why both keep shipping
-(#102). The same rule covers a *value* nothing consumes: a misspelled
-``uncoached`` would otherwise quietly pick a policy (#111).
+documented-but-dead key, and silently ignoring it is why both keep shipping.
+The same rule covers a *value* nothing consumes: a misspelled
+``uncoached`` would otherwise quietly pick a policy.
 
 A file that is not TOML at all is the same kind of refusal, which is why reading
 one lives here too: unprotected, ``tomllib``'s own exception escaped as a
 traceback at exit **1** — the code reserved for an enforced finding — so CI read
-a missing ``]`` as a smell in the code rather than a typo in a config (#114).
+a missing ``]`` as a smell in the code rather than a typo in a config.
 
 The rejection names no binary, because all three console scripts load a config
 through here and one hardcoded name sends the other two's users to the wrong

@@ -20,7 +20,7 @@ from habit_hooks.config import Config, ScopeDefaults
 from scope_probe import scoped_files as _scoped_files
 from scope_probe import source_file as _source_file
 
-# Discovery is opt-in since #97: a git-mode test must name its source first.
+# Discovery is opt-in: a git-mode test must name its source first.
 _PY_SOURCE = ["**/*.py"]
 
 
@@ -107,7 +107,7 @@ def test_a_named_file_inside_files_is_scanned(tmp_path: Path) -> None:
 
 
 def test_an_absolute_named_file_is_placed_in_the_project(tmp_path: Path) -> None:
-    """Editor and agent hooks hand out absolute paths (#55); a raw one matches
+    """Editor and agent hooks hand out absolute paths; a raw one matches
     no relative glob, so the whole run would scan nothing and report clean."""
     absolute = str(_source_file(tmp_path))
     scoped = _scoped_files(["--file", absolute], tmp_path, Config(files=["src/**"]))
@@ -153,7 +153,7 @@ def test_an_empty_files_list_scans_nothing(tmp_path: Path) -> None:
 
 def test_explicit_files_reaches_inside_a_vendor_directory(tmp_path: Path) -> None:
     """Opt-in is exact: a project may name any path as source, including one a
-    convention would otherwise exclude — ``[files]`` is the only authority (#97)."""
+    convention would otherwise exclude — ``[files]`` is the only authority."""
     vendored = tmp_path / "node_modules" / "kept"
     vendored.mkdir(parents=True)
     (vendored / "keep.py").write_text("x = 1\n", encoding="utf-8")

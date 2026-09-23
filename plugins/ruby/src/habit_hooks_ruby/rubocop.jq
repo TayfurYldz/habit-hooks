@@ -3,7 +3,7 @@
 # group_by sorts them). A cop with no entry above is not dropped — it passes
 # through as a finding under the cop's own name, where the run's `uncoached`
 # handling catches it: a cop that fired is one the project's own `.rubocop.yml`
-# switched on (#171), so it belongs to the project, and a drop would be a clean
+# switched on, so it belongs to the project, and a drop would be a clean
 # run nobody ran.
 def smell:
   . as $cop

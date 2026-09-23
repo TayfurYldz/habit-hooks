@@ -4,7 +4,7 @@ The plugin never ran its own flat config, so nothing lined the two up. It paired
 base ``no-unused-vars`` with ``@typescript-eslint/no-unused-vars`` the wrong way
 round: the base rule cannot see type positions, so an interface's method
 parameter names — documentation, and not removable without breaking the
-TypeScript — came back as unused variables at error severity (#113).
+TypeScript — came back as unused variables at error severity.
 
 Every case runs the real eslint from the plugin's own ``node_modules``: a rule
 pairing is only true of the tool that reads it. What the sensor's smell map then

@@ -26,7 +26,7 @@ from habit_hooks.config import Config
 from platform_probe import A_MACHINE_THAT_CAN_MAKE_A_SYMLINK
 from scope_probe import scope as _scope
 
-# Discovery is opt-in since #97: a case must name its source before any mode
+# Discovery is opt-in: a case must name its source before any mode
 # enumerates anything.
 _PY_SOURCE = ["**/*.py"]
 
@@ -60,7 +60,7 @@ def test_a_tracked_symlink_to_a_directory_is_not_a_submodule(tmp_path: Path) -> 
 
     ``Path.is_dir()`` follows symlinks, so a tracked symlink to a directory
     answers it exactly as a submodule does — and a symlinked ``node_modules`` is
-    pnpm's ordinary layout, the very thing #142's reporter has. Git records the
+    pnpm's ordinary layout. Git records the
     two differently (mode ``120000`` against ``160000``), so the index is asked
     and the disk is not.
 

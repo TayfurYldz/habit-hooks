@@ -40,7 +40,7 @@ class Execution:
         # A sensor whose scope is empty measured nothing, so it does not run: a
         # tool handed no paths falls back to its own default (ruff's is "scan
         # cwd"), reporting the whole repo's debt over a scope that named none
-        # (#93) — asked per sensor, because the sensor's own ``files`` can narrow
+        # — asked per sensor, because the sensor's own ``files`` can narrow
         # the scope away too. Absorbed here, every sensor is covered without a
         # per-sensor guard.
         scoped = [sensor for sensor in sensors if self._scoped_files(sensor)]
@@ -150,7 +150,7 @@ class Execution:
         An unanchorable path is a broken sensor: no findings, one notice. Aliased
         keys leave the findings standing — they are sound, it is snoozing them
         that would not be — and still fail the run, because a warning nobody has
-        to act on is how #79 stayed invisible in the first place.
+        had to act on is the failure this exists to catch.
         """
         try:
             findings = self.run_sensor(sensor)

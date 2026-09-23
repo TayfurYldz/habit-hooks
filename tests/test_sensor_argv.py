@@ -1,6 +1,6 @@
 """How a work-tree-sized file list reaches a sensor: chunked into command lines
 the operating system will carry, measured as the shell will spell them, and
-degrading into a notice when the spawn is refused anyway (issue #96)."""
+degrading into a notice when the spawn is refused anyway."""
 
 from __future__ import annotations
 

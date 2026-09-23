@@ -51,7 +51,7 @@ def test_the_pipeline_runs_init_rather_than_piping_it_into_the_mapper(
 ) -> None:
     """Forwarded to ``habit-sensors``, everything init prints would land on the
     pipe where ``habit-mapper`` expects findings JSON — which is how ``--help``
-    once came back as a ``JSONDecodeError`` (#114)."""
+    once came back as a ``JSONDecodeError``."""
     monkeypatch.chdir(init_project)
 
     assert hooks.main(["init"]) == 0

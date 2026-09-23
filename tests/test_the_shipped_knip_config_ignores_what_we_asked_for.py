@@ -2,7 +2,7 @@
 
 A project installs the packages habit-hooks tells it to, imports none of them
 because habit-hooks is what uses them, and knip then reports every one as an
-unused dependency (#143). The answer is ``ignoreDependencies`` in the
+unused dependency. The answer is ``ignoreDependencies`` in the
 typescript plugin's shipped ``knip.json``, and this is what keeps that list
 honest in both directions.
 

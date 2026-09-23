@@ -1,8 +1,8 @@
 """Whatever went wrong, both Node sensors say so in the same words.
 
 eslint and knip each wrap a project tool, and each has to turn a run it cannot
-read into a diagnosis. #142 is what happens when they answer that separately:
-knip carried its own failure text and its own output cap, eslint carried
+read into a diagnosis. Answering that separately is what happened before the
+seam: knip carried its own failure text and its own output cap, eslint carried
 neither, and the one that carried neither shipped a notice with nothing in it.
 The answer is that both route every unusable run through the one seam
 (``sensors/project_tool.cjs``) — so these cases are deliberately paired, and a
