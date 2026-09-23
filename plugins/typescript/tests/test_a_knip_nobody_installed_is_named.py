@@ -1,19 +1,3 @@
-"""The tool this sensor spawns must answer in one line when nobody installed it.
-
-``knip.cjs`` runs knip the way the php and python plugins run their own tools,
-and an absent tool has to say so in the phrase the runner looks for
-(``part_output.COMMAND_NOT_FOUND``) — otherwise the one failure with an obvious
-fix is the one that does not get told how to fix it, while `jscpd`, `deptry` and
-`php` all do. Reported raw it used to reach the runner as
-``Error: spawnSync knip ENOENT``, which that phrase cannot match; now knip is
-looked for as the project's own package, so absence is a package that is not
-there rather than a name PATH could not resolve — and it is
-``sensors/project_tool.cjs`` that turns it back into the shell's own words.
-
-``node`` itself is present here: the missing tool is knip, not the runtime, and
-the two answer differently.
-"""
-
 from __future__ import annotations
 
 import subprocess

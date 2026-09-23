@@ -1,18 +1,7 @@
-"""The text-I/O-encoding detector's own coverage: ZOMBIES over the
-``open()``/``read_text()`` interface split and the boundary between text and
-binary mode, one call shape at a time.
-
-What each call shape means is ``text_io_encoding.py``; the repo-wide gate that
-puts the detector to every file this project owns is
-``test_text_io_names_its_encoding.py``.
-"""
 
 from __future__ import annotations
 
 from text_io_encoding import _violations_in_source
-
-# -- the detector's own cases (ZOMBIES: zero/one args, the open()/read_text()
-# interface split, and the boundary between text and binary mode) ----------
 
 
 def test_read_text_with_no_args_and_no_encoding_is_a_violation() -> None:
@@ -52,27 +41,15 @@ def test_open_with_a_binary_mode_keyword_needs_no_encoding() -> None:
 
 
 def test_a_path_containing_b_is_still_a_violation_with_no_encoding() -> None:
-    """A "b" in the *path*, not the mode, must not read as binary mode -- the
-    false negative that let ``open(".habit-hooks/config.toml")`` (this tool's
-    own config directory) slip past the gate it exists to enforce."""
     assert _violations_in_source('open("build/report.txt")') == [1]
 
 
 def test_a_call_named_open_that_is_not_open_is_still_checked() -> None:
-    """``.open()`` is checked whatever the receiver is -- this gate does not
-    try to prove the receiver is a ``Path``, matching how rare and deliberate
-    every other ``.open()`` call in this project already is (see the docstring
-    above): a false positive here costs one ``encoding=``, a false negative
-    lets the bug back in."""
     assert _violations_in_source('socket.open("r")') == [1]
 
 
 def test_an_unrelated_call_is_not_flagged() -> None:
     assert _violations_in_source("subprocess.run(cmd)") == []
-
-
-# -- subprocess text mode (a kind that only recognised read_text/write_text/open left
-# every call site of it unguarded) ---------------------------------------------
 
 
 def test_subprocess_run_with_no_text_mode_is_not_flagged() -> None:
@@ -100,7 +77,4 @@ def test_check_output_with_text_true_and_no_encoding_is_a_violation() -> None:
 
 
 def test_a_bare_run_with_text_true_and_no_encoding_is_still_checked() -> None:
-    """``run``/``Popen``/``check_output`` are checked whatever the receiver is,
-    the same as ``.open()`` above -- a project importing them bare (``from
-    subprocess import run``) must not go unguarded."""
     assert _violations_in_source("run(cmd, text=True)") == [1]

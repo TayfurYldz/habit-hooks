@@ -1,20 +1,3 @@
-"""``[sensors.pmd] args`` must reach PMD itself, not become a file to scan.
-
-Before this fix ``main()`` turned every argv token that was not the ruleset
-into a ``-d <path>`` PMD file argument, so a genuine PMD flag such as
-``--minimum-priority`` broke the run outright (picocli: "Expected parameter
-for option '--dir' but found '--minimum-priority'"). The sensor's command now
-spells ``${detector:pmd} ${args} -- ${files}``: ``sys.argv[1]`` is the file to
-run PMD by, and the wrapper splits what follows on the *last* ``--`` —
-everything before it goes to PMD verbatim, everything after becomes a file. A
-``--rulesets``/``-R`` on the PMD-flag half is still pulled out for `-R`,
-exactly as it was before this split existed.
-
-These cases are the only holder of the shipped ordering: spell
-``${detector:pmd}`` after ``${args}`` the other way round and
-``--minimum-priority`` is what gets spawned.
-"""
-
 from __future__ import annotations
 
 import json
@@ -63,13 +46,6 @@ def _run(cwd: Path, pmd: str, arguments: list[str]) -> subprocess.CompletedProce
 
 
 def test_a_pmd_flag_in_args_reaches_pmd(tmp_path: Path, pmd: str) -> None:
-    """ExcessiveParameterList reports at priority 3 and UnnecessaryImport at
-    priority 4 (verified against PMD 7.26.0), so ``--minimum-priority 3``
-    keeps the first and drops the second — proof the flag reached PMD's own
-    filtering rather than becoming a bogus ``-d`` file argument. A threshold
-    that dropped every rule would pass as trivially as one that reached
-    nothing at all, so the assertion has to be a smell that survives, not an
-    empty result."""
     (tmp_path / "Billing.java").write_text(FIVE_PARAMETER_METHOD_WITH_UNUSED_IMPORT, encoding="utf-8")
 
     without_the_flag = _run(tmp_path, pmd, ["--", "Billing.java"])

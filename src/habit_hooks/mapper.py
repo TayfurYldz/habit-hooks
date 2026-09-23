@@ -1,9 +1,3 @@
-"""habit-mapper: route findings to guides and set the exit code from severity.
-
-Rendering one finding into text lives in :mod:`habit_hooks.rendering`; this
-module is the stage around it — what arrives on stdin, what reaches stdout, and
-which exit code says so.
-"""
 
 from __future__ import annotations
 
@@ -39,12 +33,6 @@ def write_stderr(rendered: list[Rendered]) -> None:
 
 
 def coachable(findings: list[dict], config: Config, resolver: Resolver) -> list[dict]:
-    """The findings this run prints: what the project coaches, one per guide.
-
-    Two sensors seeing one smell are one finding by the time anything renders
-    (:mod:`habit_hooks.merged_findings`), and which guide each would render is
-    what decides who merges with whom.
-    """
     coached = [f for f in findings if not is_disabled(f["smell"], config)]
     return merged(coached, lambda f: resolve_guide(f, config, resolver))
 
@@ -71,30 +59,15 @@ def run(
 
 
 def read_findings() -> list[dict] | None:
-    """The findings array, or ``None`` when the stream is wholly empty.
-
-    A stage that completes always writes at least ``[]``, so zero bytes can only
-    mean it died before writing — the one failure the reserved incomplete-run finding cannot
-    travel through, because nothing travels at all.
-    """
     raw = sys.stdin.read().strip()
     return json.loads(raw) if raw else None
 
 
 def coach_incomplete_run(project_dir: Path, config_path: Path | None) -> int:
-    """Coach the empty pipe as an incomplete run, and exit as a tool failure.
-
-    Rendered directly rather than through :func:`run`, because a project's
-    ``[smells.incomplete-run] disabled`` speaks about code smells and must not
-    turn a scan that never ran into a clean one.
-    """
     config = load_config(project_dir, config_path)
     resolver = Resolver.discover(project_dir)
     finding = incomplete_run_finding([EMPTY_STDIN_NOTICE])
     rendered = render_finding(finding, config, resolver)
-    # The exit code is fixed at 2 here, so a runner-backed override of
-    # incomplete-run.md contributes its stdout only: its `blocks` cannot lower
-    # the code and its stderr is dropped.
     sys.stdout.write(block(finding, rendered.text) + "\n")
     return EXIT_TOOL_ERROR
 

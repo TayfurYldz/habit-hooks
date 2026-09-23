@@ -1,12 +1,3 @@
-"""Unit tests for what a run decides is in scope.
-
-The modes a consumer meets are pinned end to end in the executable specs
-(``docs/habit-sensors.spec.md``). These cover what is awkward to show there: the
-diagnosis each flag gives for a ref its checkout does not have, and the
-precedence between "no repository" and "no such ref". The specs run inside this
-repository's own checkout, so the no-repository case can only be pinned here.
-What an empty scope says out loud is ``test_scope_notices.py``.
-"""
 
 from __future__ import annotations
 
@@ -20,7 +11,6 @@ from habit_hooks.config import Config, ScopeDefaults
 from scope_probe import scoped_files as _scoped_files
 from scope_probe import source_file as _source_file
 
-# Discovery is opt-in: a git-mode test must name its source first.
 _PY_SOURCE = ["**/*.py"]
 
 
@@ -49,7 +39,6 @@ def test_an_unresolvable_branch_base_names_the_flag(tmp_path: Path) -> None:
 def test_a_history_shorter_than_last_scans_everything_committed(
     tmp_path: Path,
 ) -> None:
-    """A count is not a ref: fewer commits than asked for means "everything so far"."""
     edited = repository_with_committed_file(tmp_path)  # one commit
     commit_file(edited, "VALUES = [1, 2]\n")  # two
     assert _scoped_files(["--last", "5"], tmp_path, Config(files=_PY_SOURCE)) == [
@@ -82,7 +71,6 @@ def test_since_scopes_to_what_changed_after_a_commit(tmp_path: Path) -> None:
 
 
 def test_the_configured_branch_base_must_resolve(tmp_path: Path) -> None:
-    """The default path a CI checkout takes: an empty scope would read as clean."""
     repository_with_committed_file(tmp_path)
     git(tmp_path, "branch", "-m", "main", "trunk")
     git(tmp_path, "checkout", "-q", "-b", "feature")
@@ -107,8 +95,6 @@ def test_a_named_file_inside_files_is_scanned(tmp_path: Path) -> None:
 
 
 def test_an_absolute_named_file_is_placed_in_the_project(tmp_path: Path) -> None:
-    """Editor and agent hooks hand out absolute paths; a raw one matches
-    no relative glob, so the whole run would scan nothing and report clean."""
     absolute = str(_source_file(tmp_path))
     scoped = _scoped_files(["--file", absolute], tmp_path, Config(files=["src/**"]))
     assert scoped == ["src/a.py"]
@@ -123,8 +109,6 @@ def test_a_roundabout_named_file_is_placed_in_the_project(tmp_path: Path) -> Non
 def test_a_project_below_the_repository_root_scopes_its_own_paths(
     tmp_path: Path,
 ) -> None:
-    """git answers from the repository root, so `pkg/src/a.py` would be looked
-    for under the project and found nowhere — an empty scope, reported clean."""
     repository_with_committed_file(tmp_path)
     project = tmp_path / "pkg"
     project.mkdir()
@@ -136,7 +120,6 @@ def test_a_project_below_the_repository_root_scopes_its_own_paths(
 
 
 def test_a_non_ascii_path_reaches_the_sensors(tmp_path: Path) -> None:
-    """git quotes such a name unless told not to, and no file answers to that."""
     repository_with_committed_file(tmp_path)
     accented = tmp_path / "café.py"
     commit_file(accented, "VALUES = [2]\n")
@@ -146,14 +129,11 @@ def test_a_non_ascii_path_reaches_the_sensors(tmp_path: Path) -> None:
 
 
 def test_an_empty_files_list_scans_nothing(tmp_path: Path) -> None:
-    """`files = []` is a project saying its source is nothing, like `transformers = []`."""
     _source_file(tmp_path)
     assert _scoped_files(["--all"], tmp_path, Config(files=[])) == []
 
 
 def test_explicit_files_reaches_inside_a_vendor_directory(tmp_path: Path) -> None:
-    """Opt-in is exact: a project may name any path as source, including one a
-    convention would otherwise exclude — ``[files]`` is the only authority."""
     vendored = tmp_path / "node_modules" / "kept"
     vendored.mkdir(parents=True)
     (vendored / "keep.py").write_text("x = 1\n", encoding="utf-8")

@@ -1,20 +1,3 @@
-"""The route that copies the plugin's files into a project must still import.
-
-Vendoring under ``.habit-hooks/<plugin>/`` is the extras-free install the README
-advertises: the copied files win the override chain, ``${dir}`` in the sensor
-command expands to wherever they landed, and the plugin package is typically not
-installed at all — that is the point of vendoring. The sensor imports
-``pmd_ruleset`` from beside itself, which has to resolve because a loose
-script's own directory is ``sys.path[0]``, never because ``habit_hooks_java``
-happens to be importable.
-
-``-S`` is what tells those two apart: it denies the child the site-packages this
-checkout has the plugin installed into, so an import reaching for the package
-fails here exactly as it would for a project that vendored instead of
-installing. Without it the copy would pass on the installed package's modules
-and prove nothing about the files it just copied.
-"""
-
 from __future__ import annotations
 
 import json
@@ -34,7 +17,6 @@ FIVE_PARAMETER_METHOD = """class Billing {
 
 
 def _vendored_plugin(project: Path) -> Path:
-    """The plugin's files copied where a project vendoring them puts them."""
     plugin = project / ".habit-hooks" / "java"
     shutil.copytree(
         PACKAGE,

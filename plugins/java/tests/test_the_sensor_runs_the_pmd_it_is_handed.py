@@ -1,18 +1,3 @@
-"""The PMD this run resolved is the one the sensor spawns.
-
-The plugin's ``config.toml`` names its tool with ``${detector:pmd}``, so the run
-resolves it to a file and hands that file over as the helper's first argument.
-Spawning it — rather than the bare name it was resolved from — is the whole of
-what the sensor owes: a name is looked up again by whatever spawns it, and
-Windows' own lookup adds ``.exe`` and nothing else, where PMD installs as a
-``pmd.bat``.
-
-A PMD nobody installed is no longer answered here. The part carries no file for
-it, so nothing is ever spawned and the run answers as it does for any missing
-command — the notice, the failed run, and that sensor's dropped findings
-(``sensors/broken_part.py``).
-"""
-
 from __future__ import annotations
 import json
 import subprocess

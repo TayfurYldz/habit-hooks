@@ -1,14 +1,3 @@
-"""The tool this sensor spawns must answer in one line when nobody installed it.
-
-The same first-contact rule the knip sensor answers to: a tool nobody
-installed is the one failure with an obvious fix, so it has to arrive in the
-phrase the runner coaches on (``part_output.COMMAND_NOT_FOUND``) rather than as a
-module-resolution error nothing recognises. Under the old shell recipe `bash`
-said this; there is no shell now, so ``sensors/project_tool.cjs`` says it.
-
-``node`` itself is present here: the missing tool is eslint, not the runtime.
-"""
-
 from __future__ import annotations
 
 import subprocess
@@ -50,9 +39,6 @@ def test_an_eslint_nobody_installed_answers_the_way_a_shell_does(
 
 
 def test_a_scope_with_nothing_to_lint_never_reaches_for_eslint(tmp_path: Path) -> None:
-    """A scope that narrows to nothing eslint lints is a clean empty run, not a
-    missing tool: the run has to be able to say "nothing here" without needing
-    the tool installed to say it."""
     result = _run(_project(tmp_path), "--", "README.md")
 
     assert result.returncode == 0

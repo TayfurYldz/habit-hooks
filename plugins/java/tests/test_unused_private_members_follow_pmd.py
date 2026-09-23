@@ -1,5 +1,3 @@
-"""Unused private-member detection remains PMD's decision."""
-
 from __future__ import annotations
 
 import json

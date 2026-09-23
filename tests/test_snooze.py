@@ -1,10 +1,3 @@
-"""Unit tests for the snooze transform's rules.
-
-The executable spec ([habit-snooze.spec.md]) covers the command end to end;
-these pin the pieces a spec case cannot show directly — which file an issue is
-anchored to, and what a file that no longer holds the approved content does to
-the drop decision. What ``--snooze`` writes is ``test_snooze_records.py``.
-"""
 
 from __future__ import annotations
 
@@ -47,8 +40,6 @@ def test_an_entry_recording_nothing_drops_every_snoozed_issue(tmp_path: Path) ->
 
 
 def test_a_changed_file_resurfaces_only_its_own_issue(tmp_path: Path) -> None:
-    """The file was approved at one content and now holds another, so its issue
-    is due again — while a key still holding its approved content stays dropped."""
     (tmp_path / "src").mkdir()
     (tmp_path / "src/y.py").write_text("import requests\n", encoding="utf-8")
     index = {"src/x.ts": {"src/x.ts": "sha256:lapsed"}, "requests": {}}
@@ -67,21 +58,16 @@ def test_a_finding_without_issues_passes_through(tmp_path: Path) -> None:
 
 
 def test_file_run_bypasses_the_snooze_transformer(tmp_path: Path) -> None:
-    """`--file` asks for one file's full picture, so its snooze exemption — a
-    statement about the backlog, not that file — is stripped from the run."""
     config = sensors._configure(sensors.parse_args(["--file", "src/x.ts"]), tmp_path)
     assert "snooze" not in config.transformers
 
 
 def test_all_run_keeps_the_snooze_transformer(tmp_path: Path) -> None:
-    """The bypass is `--file` only: `--all` still filters through the index."""
     config = sensors._configure(sensors.parse_args(["--all"]), tmp_path)
     assert config.transformers == ["snooze"]
 
 
 def test_file_run_keeps_a_projects_non_snooze_transformer(tmp_path: Path) -> None:
-    """Only snoozing is bypassed — a project's unrelated transformer still runs,
-    so `--file` does not silently drop a step it never asked about."""
     config_dir = tmp_path / ".habit-hooks"
     config_dir.mkdir()
     (config_dir / "config.toml").write_text('transformers = ["snooze", "squash"]\n', encoding="utf-8")
@@ -92,9 +78,6 @@ def test_file_run_keeps_a_projects_non_snooze_transformer(tmp_path: Path) -> Non
 def test_an_entry_that_records_nothing_holds_without_reading_the_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Every hook run asks this, so it must not hash a file to learn that an
-    entry written before recording has nothing to compare. The anchor is handed
-    in as recorded, so a hold can only come from the empty record."""
     a_project_with(tmp_path, "src/x.ts", "export const a = 1;\n")
     monkeypatch.setattr(
         snooze_lapse,
@@ -107,8 +90,6 @@ def test_an_entry_that_records_nothing_holds_without_reading_the_file(
 def test_an_approval_covers_only_the_file_it_recorded(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The run reports one key through two files and only one was approved, so
-    only that one is spared."""
     a_project_with(tmp_path, "src/a.py", "import requests\n")
     a_project_with(tmp_path, "src/b.py", "import requests\nrequests.get()\n")
     snooze(tmp_path, monkeypatch, aliased("src/b.py"))
@@ -121,8 +102,6 @@ def test_an_approval_covers_only_the_file_it_recorded(
 def test_a_file_that_only_now_reports_a_key_is_not_covered_by_another(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The entry was approved while one file reported the key. A second file
-    picking the smell up later is new debt, and surfacing it is the point."""
     a_project_with(tmp_path, "src/a.py", "import requests\n")
     snooze(tmp_path, monkeypatch, aliased("src/a.py"))
 

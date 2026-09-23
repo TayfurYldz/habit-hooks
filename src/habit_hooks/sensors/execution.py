@@ -1,5 +1,3 @@
-"""Runs a part's command in a project directory against a scope, then parses the
-JSON findings it emits — the bin/PATH + subprocess layer of the ETL."""
 
 from __future__ import annotations
 
@@ -24,25 +22,12 @@ from .spawn import Spawner
 
 @dataclass(frozen=True)
 class Execution:
-    """Where commands run: a project directory and the scope they see.
-
-    Holds the run context and offers the command running — expanding a part's
-    placeholders, shelling out with the project bins on PATH, and parsing the
-    findings the command prints.
-    """
-
     project_dir: Path
     scope: Scope
     config_path: Path | None = None
     timeout: float = DEFAULT_SENSOR_TIMEOUT_SECONDS
 
     def run_sensors(self, sensors: list[Part]) -> Run:
-        # A sensor whose scope is empty measured nothing, so it does not run: a
-        # tool handed no paths falls back to its own default (ruff's is "scan
-        # cwd"), reporting the whole repo's debt over a scope that named none
-        # — asked per sensor, because the sensor's own ``files`` can narrow
-        # the scope away too. Absorbed here, every sensor is covered without a
-        # per-sensor guard.
         scoped = [sensor for sensor in sensors if self._scoped_files(sensor)]
         if not scoped:
             return Run()
@@ -53,16 +38,6 @@ class Execution:
         return run
 
     def _sensor_outputs(self, scoped: list[Part]) -> list[tuple[list[dict], list[str]]]:
-        """Every sensor's output, in parallel, ending them all on an interrupt.
-
-        A ``KeyboardInterrupt`` is delivered to the main thread — this one —
-        while the sensors are spawned from worker threads, which never receive
-        it. Leaving it there, the pool's shutdown would then wait for every
-        worker, each blocked until its own command's deadline: up to five
-        minutes of frozen terminal, during exactly the hang that made somebody
-        press the key. Ending the commands here unblocks the workers at once,
-        and it has to happen inside the ``with`` — its exit is the wait.
-        """
         with ThreadPoolExecutor(max_workers=len(scoped)) as pool:
             try:
                 return list(pool.map(self._safe_sensor, scoped))
@@ -73,12 +48,6 @@ class Execution:
     def apply_transformers(
         self, transformers: list[Part], findings: list[dict]
     ) -> tuple[list[dict], list[str]]:
-        """Pipe the findings through each transformer, surviving a broken one.
-
-        A failed transformer keeps the findings it was given: its stdout cannot
-        be trusted, and treating silence as "no findings" would let one crash
-        discard the whole run and report clean.
-        """
         notices = []
         for transformer in transformers:
             try:
@@ -88,12 +57,6 @@ class Execution:
         return findings, notices
 
     def _transform(self, transformer: Part, findings: list[dict]) -> list[dict]:
-        """One transformer's output, or ``SensorError`` if it cannot be trusted.
-
-        Stricter than a sensor: a transformer has no convention for exiting
-        non-zero, and must print its array explicitly. An empty stdout is a
-        crash, whereas a literal ``[]`` is a legitimate "everything dropped".
-        """
         argv = self._expand(transformer)
         payload = json.dumps(findings)
         tools = transformer.tools_that_read_its_arguments
@@ -109,14 +72,6 @@ class Execution:
             raise failure from None
 
     def run_sensor(self, sensor: Part) -> list[dict]:
-        """The sensor's findings, anchored to the project, gathered chunk by chunk.
-
-        A sensor spelled inline in its plugin's config runs the declarative
-        pipeline instead (``inline_run``). Chunked so a work-tree-sized
-        ``${files}`` never overflows one spawn, and anchored once over the whole
-        concatenation rather than per chunk, so a key aliased across chunks
-        stays one key and the snooze index stays portable.
-        """
         if sensor.inline is not None:
             return inline_run.findings_for(sensor, self)
         findings: list[dict] = []
@@ -125,7 +80,6 @@ class Execution:
         return anchored(findings, self.project_dir, sensor.name)
 
     def _sensor_findings(self, sensor: Part, argv: list[str]) -> list[dict]:
-        """One invocation's parsed findings, or ``SensorError`` if untrustworthy."""
         tools = sensor.tools_that_read_its_arguments
         result = run_part("sensor", sensor, lambda: self._spawner.run(argv, tools=tools))
         failure = part_failure("sensor", sensor, result)
@@ -145,13 +99,6 @@ class Execution:
         return lambda files: self._expand_files(part, files)
 
     def _safe_sensor(self, sensor: Part) -> tuple[list[dict], list[str]]:
-        """Its findings and whatever the run must be told about them.
-
-        An unanchorable path is a broken sensor: no findings, one notice. Aliased
-        keys leave the findings standing — they are sound, it is snoozing them
-        that would not be — and still fail the run, because a warning nobody has
-        had to act on is the failure this exists to catch.
-        """
         try:
             findings = self.run_sensor(sensor)
         except SensorError as error:
@@ -162,7 +109,6 @@ class Execution:
         ]
 
     def _expand(self, part: Part) -> list[str]:
-        """The argv over the whole scope — a transformer's, or one chunk."""
         return self._expand_files(part, self._spelled_files(part))
 
     def _spelled_files(self, part: Part) -> list[str]:
@@ -172,17 +118,10 @@ class Execution:
         return expanded(part, files, self.config_path)
 
     def _scoped_files(self, part: Part) -> list[str]:
-        """The run's scope, narrowed to this sensor's own ``files`` if it has any.
-
-        The scope is derived once (``scope.resolve_scope``); a sensor's ``files``
-        selects a subset of what that scope already picked. A sensor stating
-        none sees all of it.
-        """
         if part.files is None:
             return self.scope.files
         return matching(self.scope.files, part.files)
 
     @property
     def _spawner(self) -> Spawner:
-        """The subprocess layer, bound to this run's project and deadline."""
         return Spawner(self.project_dir, self.timeout)

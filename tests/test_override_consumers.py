@@ -1,10 +1,3 @@
-"""Guard: no override dataclass field may be documented but read by nothing.
-
-Parameterised over every field of ``SensorOverride`` and ``SmellOverride``, each
-test asserts the field maps to a probe that proves the field changes behaviour.
-Add a field without a probe and the build fails — the loader-level answer to
-"a documented key is read by nothing".
-"""
 
 from __future__ import annotations
 
@@ -20,7 +13,6 @@ from plugin_fixture import loader_for, write_plugin, write_project_config
 
 
 def _sensor_under(tmp_path: Path, override_line: str) -> list:
-    """The loaded sensors of a one-sensor fixture plugin under one override line."""
     write_plugin(
         tmp_path,
         "fixt",

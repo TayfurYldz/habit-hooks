@@ -1,14 +1,3 @@
-"""Every catalogued smell must ship a real coaching guide.
-
-The product's value is the coaching. A smell in ``catalogue.DEFAULT_SEVERITY``
-with no ``guides/<smell>.md`` falls through to the one-size ``uncoached.md``,
-silently degrading the product. This test turns that gap into a build failure so
-it cannot reopen.
-
-It routes each smell through the real ``rendering.resolve_guide`` against the
-full installed plugin set, exactly as a live run would, and asserts the resolved
-guide is not the uncoached fallback.
-"""
 
 from __future__ import annotations
 
@@ -26,7 +15,6 @@ from plugin_fixture import write_project_config
 
 @dataclass(frozen=True)
 class Routing:
-    """The guide routing for the full installed plugin set."""
 
     config: Config
     resolver: Resolver
@@ -42,7 +30,6 @@ class Routing:
 
     @property
     def languages(self) -> list[str | None]:
-        """Every language a finding can route under: ``None`` and each plugin's."""
         return [None, *sorted(set(self.config.plugin_languages.values()))]
 
     def guide_for(self, smell: str, language: str | None) -> str:
@@ -64,9 +51,6 @@ def test_every_catalogue_smell_resolves_to_a_guide(smell: str, tmp_path: Path) -
 def test_unused_variable_resolves_for_python_and_typescript_not_just_php(
     tmp_path: Path,
 ) -> None:
-    """``unused-variable`` is language-agnostic — it fires from ruff F841 and
-    eslint no-unused-vars, not just PHPMD — so its guide must live in ``generic``
-    where every language's routing reaches it."""
     routing = Routing.full_plugin_set(tmp_path)
     for language in ("python", "typescript"):
         assert (

@@ -1,9 +1,3 @@
-"""Unit tests for a ``command`` part's placeholder expansion — the shell form.
-
-Everything here is a part spelled ``command``: shell text, every value quoted
-into it, wrapped in ``bash -c`` by the time it is spawned. The other form is
-``tests/test_argv_parts.py``.
-"""
 
 from __future__ import annotations
 
@@ -25,21 +19,11 @@ def _execution(tmp_path: Path) -> Execution:
 
 
 def _shell_text(argv: list[str]) -> str:
-    """The text a ``command`` part hands ``bash -c``, checking that is the shape.
-
-    A part spelled ``command`` is shell text, so it reaches the spawn as the
-    third element of ``bash -c <text>`` — which is asserted here rather than in
-    every case, leaving each test about the expansion it is named for.
-    """
     assert argv[:2] == ["bash", "-c"]
     return argv[2]
 
 
 def test_expand_replaces_python_with_the_running_interpreter(tmp_path: Path) -> None:
-    """``${dir}`` is quoted for the shell the same as ``${python}`` is — a
-    ``tmp_path`` spelled with backslashes (Windows) needs it exactly where one
-    spelled with plain POSIX segments would not, so the expectation has to be
-    built the same way ``_shell_form`` builds it, not assumed unquoted."""
     part = Part(
         name="line-count",
         command="${python} ${dir}/line-count.py",
@@ -68,10 +52,6 @@ def test_expand_splices_the_sensor_args_in_quoted(tmp_path: Path) -> None:
 
 
 def test_args_a_command_has_nowhere_to_put_are_refused_by_name(tmp_path: Path) -> None:
-    """Args a command cannot expand are args the tool never sees, and dropping
-    them silently is how a whole documented setting stayed dead across seven
-    sensors. Refused here, where both the args and the command are known, it is
-    the same refusal a config key nothing consumes earns."""
     part = Part(
         name="comment", command="node ${dir}/comment.js", directory=tmp_path, args=["-v"]
     )
@@ -88,9 +68,6 @@ def test_args_a_command_has_nowhere_to_put_are_refused_by_name(tmp_path: Path) -
 
 
 def test_an_emptied_args_override_is_no_argument_at_all(tmp_path: Path) -> None:
-    """`[sensors.<name>] args = []` is how a project clears a default it cannot
-    use — replace-on-override makes the empty list the value, and nothing is
-    dropped by a command with nowhere to put nothing."""
     part = Part(name="comment", command="node comment.js", directory=tmp_path, args=[])
 
     assert _shell_text(_execution(tmp_path)._expand(part)) == "node comment.js"
@@ -100,16 +77,6 @@ def test_an_emptied_args_override_is_no_argument_at_all(tmp_path: Path) -> None:
 def test_a_filename_can_never_execute_a_command(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A scoped path is data. Bash must not evaluate anything inside it.
-
-    habit-hooks runs from a git hook and in CI, so a file added by a pull
-    request from a fork would otherwise run its author's command on every
-    reviewer's machine.
-
-    Proving it needs a real shell to hand the filename to, so this pins off
-    Windows to get past the part's own on-Windows refusal, and is skipped
-    where there is no shell to run it with.
-    """
     off_windows(monkeypatch)
     marker = tmp_path / "PWNED"
     part = Part(
@@ -140,8 +107,6 @@ def test_a_filename_containing_a_space_stays_one_argument(tmp_path: Path) -> Non
 
 
 def test_expand_carries_the_named_config_to_a_transformer(tmp_path: Path) -> None:
-    """A transformer is a separate process, so ``${config}`` is how the run's
-    ``--config`` reaches it — one config answer for sensors and transformers."""
     part = Part(name="snooze", command="run ${config}", directory=tmp_path, args=[])
     execution = Execution(
         project_dir=tmp_path,
@@ -155,7 +120,6 @@ def test_expand_carries_the_named_config_to_a_transformer(tmp_path: Path) -> Non
 
 
 def test_expand_drops_config_when_the_run_named_none(tmp_path: Path) -> None:
-    """No ``--config`` must expand to nothing, not a bare ``--config`` flag."""
     part = Part(name="snooze", command="run ${config}", directory=tmp_path, args=[])
 
     expanded = _shell_text(_execution(tmp_path)._expand(part))
@@ -167,9 +131,6 @@ def test_expand_drops_config_when_the_run_named_none(tmp_path: Path) -> None:
 def test_a_plugin_directory_containing_a_space_still_runs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Whether ``${dir}`` is quoted correctly for the shell that reads it is
-    the whole question, so — like the filename-execution case above — this
-    pins off Windows and needs a real shell to run it with."""
     off_windows(monkeypatch)
     directory = tmp_path / "my plugin"
     directory.mkdir()

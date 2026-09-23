@@ -1,9 +1,3 @@
-"""The reserved ``incomplete-run`` finding the sensors stage raises against itself.
-
-A failed sensor or transformer contributes no findings, so without this the
-mapper would see ``[]`` and render the clean guide over broken tooling. The
-builder turns each failure notice into an issue the mapper can coach.
-"""
 
 from __future__ import annotations
 
@@ -21,7 +15,6 @@ def test_each_notice_becomes_a_coachable_issue() -> None:
 
     assert finding["smell"] == INCOMPLETE_RUN
     assert [issue["details"]["content"] for issue in finding["issues"]] == notices
-    # The key carries the notice so the shape stays a well-formed finding.
     assert [issue["key"] for issue in finding["issues"]] == notices
 
 

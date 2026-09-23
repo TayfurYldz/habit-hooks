@@ -1,13 +1,8 @@
-"""The canonical smell catalogue (docs/smell-vocabulary.md): default severities."""
-
 from __future__ import annotations
 
 ENFORCED = "enforced"
 SUGGESTED = "suggested"
 
-# The reserved smell a run raises against itself when a sensor or transformer
-# broke: it turns "the run did not complete" into a finding on the pipe, so the
-# mapper coaches it and never renders the clean guide over broken tooling.
 INCOMPLETE_RUN = "incomplete-run"
 
 DEFAULT_SEVERITY: dict[str, str] = {
@@ -41,10 +36,6 @@ DEFAULT_SEVERITY: dict[str, str] = {
 
 UNCOACHED_GUIDE = "uncoached.md"
 
-# What a run does with a smell this catalogue does not name — the root
-# ``uncoached`` config key. The catalogue is the record of what has been
-# decided worth failing a build over, so a name absent from it has had no such
-# decision made about it and coaches without blocking by default.
 UNCOACHED_SUGGEST = "suggest"
 UNCOACHED_IGNORE = "ignore"
 UNCOACHED_ENFORCE = "enforce"
@@ -52,13 +43,6 @@ UNCOACHED_POLICIES = (UNCOACHED_SUGGEST, UNCOACHED_IGNORE, UNCOACHED_ENFORCE)
 
 
 def incomplete_run_finding(notices: list[str]) -> dict:
-    """The reserved-smell finding a failed run carries on the pipe.
-
-    Each notice becomes an issue the mapper coaches through
-    ``guides/incomplete-run.md``. It lives here, beside the smell it names,
-    because both stages raise it: the sensors stage for a broken sensor or
-    transformer, the mapper for a stage that died before writing anything.
-    """
     return {
         "smell": INCOMPLETE_RUN,
         "details": {},

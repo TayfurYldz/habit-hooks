@@ -1,12 +1,3 @@
-"""Anchor a sensor's reported paths to the project, and spot keys that alias.
-
-A sensor reports paths the way its tool does — ``ruff``, ``eslint`` and
-``ts-morph`` absolute, others relative to their own scan root — so the runner
-re-expresses every ``details.file`` relative to the project as the findings enter
-the run. Doing it here, once, is the whole point: a snooze index full of one
-machine's absolute paths matches nothing on a teammate's checkout or in CI, and a
-sensor that never heard of the convention still obeys it.
-"""
 
 from __future__ import annotations
 
@@ -19,26 +10,10 @@ from .model import SensorError
 
 
 def anchored(findings: list[dict], project_dir: Path, sensor: str) -> list[dict]:
-    """``findings`` with every reported path re-expressed relative to the project.
-
-    An issue's ``key`` is anchored the same way and by the same rule, whatever
-    spelling the sensor used for it — ``./src/a.py`` and an absolute
-    ``/…/src/a.py`` both come back as ``src/a.py``. A key that is not a path —
-    ``deptry`` keys by module, ``knip`` by export name — has nothing to resolve
-    and comes back byte for byte as the sensor wrote it, so the carve-out costs
-    no special case.
-    """
     return [_anchored_finding(finding, project_dir, sensor) for finding in findings]
 
 
 def aliasing_notices(findings: list[dict], sensor: str) -> list[str]:
-    """One notice per path key that stands for more than one file.
-
-    A key that is one of its files but not the others is a path standing in for
-    files it does not name: snoozing it exempts every one of them, with nothing
-    saying so. A key that is no file at all is the sensor grouping its issues on
-    purpose, which the contract invites it to do.
-    """
     files_by_key: defaultdict[str, set[str]] = defaultdict(set)
     for issue in _issues(findings):
         file = _reported_file(issue, sensor)
@@ -89,11 +64,6 @@ def _anchored_issue(issue: dict, project_dir: Path, sensor: str) -> dict:
 
 
 def _malformed(sensor: str, described: str) -> SensorError:
-    """Output the contract's shape does not fit — loud, named, never a traceback.
-
-    A sensor is somebody else's program. One with a typo in its output has to
-    fail like any other broken sensor, not take the whole runner down with it.
-    """
     return SensorError(f"sensor {sensor!r} emitted {described}")
 
 

@@ -1,21 +1,3 @@
-"""A sensor's own issue list survives the merge exactly as it arrived.
-
-Merging is about two *sensors* reporting one observation, so deduplication happens
-only when a later finding is folded into an earlier one. Within a single
-finding nothing is dropped: the sensor meant what it emitted, and three shipped
-sensors (``pmd``, ``phpmd``, ``comment``) key an issue by its file, give a line,
-and give no column — so two of their issues on one line are indistinguishable to
-any identity the merge can build from the place alone. Only the tool's
-``message`` tells them apart, and that is deliberately not part of the identity
-(two tools describing one thing disagree about exactly that).
-
-``knip`` used to be a fourth. It now translates knip's ``col`` into the
-``column`` the contract names, and keys by export name, so its issues are told
-apart by the place rule and it is no longer a witness for this one.
-
-Each case below is the shape its sensor really produces; the comment names the
-function that builds it.
-"""
 
 from __future__ import annotations
 
@@ -34,8 +16,6 @@ def _kept_issues(smell: str, issues: list[dict]) -> list[dict]:
 
 
 def test_two_java_variables_declared_on_one_line_are_two_issues() -> None:
-    """``int a = 1, b = 2;`` is two unused locals at one place.
-    ``pmd_sensor.issue`` keys by file and carries ``beginline``, no column."""
     issues = [
         {
             "key": "src/Order.java",
@@ -61,8 +41,6 @@ def test_two_java_variables_declared_on_one_line_are_two_issues() -> None:
 
 
 def test_two_php_variables_assigned_on_one_line_are_two_issues() -> None:
-    """``$a = 1; $b = 2;`` likewise. ``phpmd.jq`` keys by file and
-    carries ``beginLine``, no column."""
     issues = [
         {
             "key": "src/Order.php",
@@ -88,8 +66,6 @@ def test_two_php_variables_assigned_on_one_line_are_two_issues() -> None:
 
 
 def test_a_block_and_a_line_comment_on_one_line_are_two_issues() -> None:
-    """``foo(/* legacy */ x); // remove me`` is two comments to judge.
-    ``comment.cjs``'s ``issue`` keys by file and carries a line, no column."""
     issues = [
         {
             "key": "src/a.ts",
@@ -115,9 +91,6 @@ def test_a_block_and_a_line_comment_on_one_line_are_two_issues() -> None:
 
 
 def test_a_later_findings_own_repeated_place_survives_too() -> None:
-    """The rule is not "the first finding is authoritative" — every finding's
-    own list is. A second sensor's two variables on one line both stand, and
-    only what an *earlier* finding already named is dropped."""
     already_named = {
         "key": "src/Order.java",
         "details": {"file": "src/Order.java", "line": 5, "source": "pmd:UnusedLocalVariable"},

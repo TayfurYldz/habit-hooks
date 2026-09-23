@@ -1,4 +1,3 @@
-"""Resolves a plugin and its parts across the override chain — loading half of the ETL."""
 
 from __future__ import annotations
 
@@ -15,11 +14,6 @@ from .named_tools import DeclaredTools, files_for
 
 @dataclass(frozen=True)
 class PluginLoader:
-    """How plugins and parts are built: the override-chain resolver plus the config.
-
-    Holds the resolver and config and offers the lookups that turn plugin names
-    into ``Plugin`` and ``Part`` objects, honouring per-sensor overrides.
-    """
 
     resolver: Resolver
     config: Config
@@ -42,7 +36,6 @@ class PluginLoader:
         return Plugin(name, spec.get("language"), sensors, transformers)
 
     def _sensor(self, plugin: str, entry: object) -> Part:
-        """One enabled sensor: an inline table, or a spec file by that name."""
         if not isinstance(entry, dict):
             return self.resolve_part([plugin], "sensors", entry)
         part = inline_spec.part_from(
@@ -58,8 +51,6 @@ class PluginLoader:
         return self._with_its_tools("sensors", part)
 
     def _refuse_a_shadowed_spec_file(self, plugin: str, name: str) -> None:
-        """An inline entry and a spec file of one name cannot both be the
-        sensor: whichever the loader happened to look at first would win."""
         if self.resolver.in_plugin(plugin, f"sensors/{name}.toml") is not None:
             raise ConfigError(
                 f"the {plugin!r} plugin defines sensor {name!r} inline in its "
@@ -85,40 +76,15 @@ class PluginLoader:
         return self._with_its_tools(kind, part)
 
     def _with_its_tools(self, kind: str, part: Part) -> Part:
-        """``part`` knowing the file this project runs for each tool it names.
-
-        The tools are the whole run's — every active plugin's declarations
-        (``Config.plugin_detectors``) — rather than the declaring plugin's own,
-        for two reasons. It is the same list a setup clears a project's tools
-        against, so a tool a project was told it has is one its sensors can be
-        handed. And a root transformer belongs to no plugin at all: it is
-        resolved against the run's plugins as a whole (``sensors.run_sensors``),
-        so it has none of its own to ask.
-
-        The cost is that a plugin naming a tool it forgot to declare still runs
-        wherever another enabled plugin declares it, and breaks only for the
-        consumer who enables that one plugin —
-        ``test_a_plugin_declares_the_tools_it_names`` is the gate for that.
-
-        Asked as the config loads, so a recipe naming a tool no plugin declares
-        is refused before anything is spawned.
-        """
         tools = DeclaredTools(self.config.plugin_detectors, self.resolver.project_dir)
         return replace(part, detectors=files_for(part, kind[:-1], tools))
 
     def _sensor_setting(self, name: str, spec: dict, key: str) -> list[str] | None:
-        """The project's ``[sensors.<name>]`` override for ``key``, else the spec's.
-
-        One override rule for every per-sensor setting: a project value replaces
-        the sensor spec's default wholesale, and absent either it is unset.
-        """
         override = self.config.sensors.get(name)
         value = getattr(override, key) if override is not None else None
         return value if value is not None else spec.get(key)
 
     def _project_args(self, name: str) -> list[str]:
-        """The project's args override, landing in the recipe's ``${args}`` slot
-        (``command_text`` refuses one with nowhere to land) — else nothing."""
         return self._sensor_setting(name, {}, "args") or []
 
     def _disabled(self, sensor: str) -> bool:
@@ -127,22 +93,6 @@ class PluginLoader:
 
 
 def _recipe(kind: str, name: str, spec: dict) -> tuple[str | None, list[str] | None]:
-    """What the part runs: exactly one of ``command`` and ``argv``.
-
-    The two are not interchangeable and cannot be combined. An ``argv`` is
-    spawned as it stands, a ``command`` is text ``bash`` reads, and a spec
-    saying both leaves which one runs to whichever the code happened to look at
-    first — while one saying neither is a part that states what it is and never
-    what it does. Both earn the refusal a config key nothing
-    consumes gets: one that names the part, rather than a default nobody chose
-    or the ``KeyError`` traceback a missing ``command`` used to be.
-
-    An ``argv`` with nothing in it is the third of that family and answers in
-    the same register. It reads as a recipe right up to the spawn, where the
-    first element it does not have is the program — an ``IndexError`` traceback
-    out of the layer whose whole job is that other people's programs fail as
-    notices. What an ``argv`` is made of is the fourth.
-    """
     command, argv = spec.get("command"), spec.get("argv")
     if argv == []:
         raise ConfigError(
@@ -170,18 +120,6 @@ def _recipe(kind: str, name: str, spec: dict) -> tuple[str | None, list[str] | N
 def _refuse_an_argv_that_is_not_arguments(
     kind: str, name: str, argv: object
 ) -> None:
-    """Stop a part whose ``argv`` is not a list of things a spawn could carry.
-
-    Every element is an argument handed to a program as it stands, so the whole
-    has to be a list and every one of its elements a string. Neither mistake
-    used to be answered here: a number among them was a ``TypeError`` traceback
-    at exit 1 — the code reserved for an enforced finding, so a run reads a
-    mistyped spec as a smell in the code — and a bare string was not answered at
-    all. That one is the mistake that hides, because a string is iterable and
-    nothing stumbles over it: ``argv = "ruff"`` spawns four arguments of one
-    character each, and the run reports needing the ``'r'`` command. Both are the
-    first-contact mistake, and both are answered with a sentence.
-    """
     if argv is None:
         return
     if not isinstance(argv, list):

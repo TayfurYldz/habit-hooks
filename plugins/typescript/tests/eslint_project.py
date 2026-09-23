@@ -1,18 +1,3 @@
-"""Running the real eslint over a throwaway consumer project.
-
-Shared by the three suites that drive it: what the **shipped config** reports,
-what the sensor's **smell map** makes of a rule ID, and **which config wins**.
-All three need the plugin's own ``node_modules`` on PATH and a project laid out
-the way a consumer's is, and none is a spec case — a spec case runs in a temp
-project with no tools in it.
-
-Nothing here spawns a shell, and nothing spawns eslint by name: the sensor runs
-it as the JavaScript file its package's ``bin`` names, and so does this. Both are
-the same fact — a shell recipe cannot run on native Windows and a ``.cmd`` shim
-cannot be spawned there — so a fixture that reached for either would be testing
-the sensor on one platform only.
-"""
-
 from __future__ import annotations
 
 import json
@@ -29,8 +14,6 @@ ESLINT = PLUGIN / "node_modules" / "eslint" / "bin" / "eslint.js"
 
 MANIFEST = '{ "name": "demo", "version": "0.0.0" }\n'
 
-# An interface declaring two method signatures, and one genuinely unused local.
-# The parameter names are the false positives; ``unusedTax`` is the real find.
 REPOSITORY_TS = """export interface Repository {
   save(item: string): void;
   find(id: string): string;
@@ -45,7 +28,6 @@ UNUSED_LOCAL_LINE = 7
 
 
 def project(tmp_path: Path) -> Path:
-    """A consumer project with the plugin's Node tools and one TypeScript file."""
     created = tmp_path / "demo"
     (created / "src").mkdir(parents=True)
     (created / "package.json").write_text(MANIFEST, encoding="utf-8")
@@ -55,8 +37,6 @@ def project(tmp_path: Path) -> Path:
 
 
 def run(project: Path, argv: list[str]) -> subprocess.CompletedProcess[str]:
-    """``argv`` with the project's tool bins on PATH, as the runner spawns a
-    sensor (``sensors/spawn.py``)."""
     path = f"{project / 'node_modules' / '.bin'}{os.pathsep}{os.environ['PATH']}"
     return subprocess.run(
         argv,
@@ -74,11 +54,6 @@ def report(
     files: tuple[str, ...] = ("src/repository.ts",),
     config: Path = SHIPPED_CONFIG,
 ) -> str:
-    """What eslint itself prints about ``files`` under ``config``, whole.
-
-    The sensor's own answer measured against this one is how a suite asks
-    whether anything was lost on the way back from the tool.
-    """
     result = run(
         project,
         [
@@ -97,7 +72,6 @@ def report(
 
 
 def messages(project: Path, config: Path) -> list[dict]:
-    """What eslint says about the project's one file under ``config``."""
     return json.loads(report(project, config=config))[0]["messages"]
 
 
@@ -105,13 +79,6 @@ def sensor_argv(
     files: tuple[str, ...] = ("src/repository.ts",),
     args: tuple[str, ...] = (),
 ) -> list[str]:
-    """The eslint sensor's argv, expanded as the runner expands it.
-
-    Read from the plugin config's inline entry rather than restated here, so
-    the suite and the shipped recipe cannot drift apart. ``${dir}`` is the
-    plugin config's directory, so ``${dir}/sensors/eslint.cjs`` expands to the
-    helper inside the package.
-    """
     config = tomllib.loads((PACKAGE / "config.toml").read_text(encoding="utf-8"))
     entry = next(e for e in config["sensors"] if e.get("name") == "eslint")
     argv = [entry["tool"], *entry["args"]]
@@ -128,7 +95,6 @@ def sensor_run(
     files: tuple[str, ...] = ("src/repository.ts",),
     args: tuple[str, ...] = (),
 ) -> subprocess.CompletedProcess[str]:
-    """What the eslint sensor does over ``files``, as the runner does it."""
     return run(project, sensor_argv(files, args))
 
 
@@ -137,7 +103,6 @@ def sensor_findings(
     files: tuple[str, ...] = ("src/repository.ts",),
     args: tuple[str, ...] = (),
 ) -> list[dict]:
-    """The eslint sensor's findings for ``files``, defaulting to the fixture's one."""
     result = sensor_run(project, files, args)
     assert result.stdout, result.stderr
     return json.loads(result.stdout)

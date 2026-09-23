@@ -1,9 +1,3 @@
-"""Turn one finding into the coaching text the mapper prints.
-
-Guide resolution, severity, and the two render paths (a Jinja2 ``.md`` template
-or a configured fix runner) live here; :mod:`habit_hooks.mapper` owns the stage
-around them — reading stdin, ordering the blocks, and the exit code.
-"""
 
 from __future__ import annotations
 
@@ -43,11 +37,6 @@ def _declared_severity(smell: str, config: Config) -> str | None:
 
 
 def _is_uncoached(smell: str, config: Config) -> bool:
-    """A smell nobody has decided about: not catalogued, and not declared here.
-
-    A ``[smells.<name>] severity`` is that decision, so it takes the smell out of
-    the ``uncoached`` policy's reach in all three of its values.
-    """
     return smell not in DEFAULT_SEVERITY and _declared_severity(smell, config) is None
 
 
@@ -62,8 +51,6 @@ def severity_of(smell: str, config: Config) -> str:
     declared = _declared_severity(smell, config)
     if declared:
         return declared
-    # Only ``enforce`` lets an uncoached smell block; under ``ignore`` the
-    # finding never reaches here, having been dropped as disabled.
     uncoached = ENFORCED if config.uncoached == UNCOACHED_ENFORCE else SUGGESTED
     return DEFAULT_SEVERITY.get(smell, uncoached)
 
@@ -72,21 +59,11 @@ def guide_names(smell: str, config: Config) -> list[str]:
     override = config.smells.get(smell)
     if override and override.guide:
         return [override.guide]
-    # Look up ``<smell>.md`` for any smell — catalogued or not — so a custom
-    # smell paired with a shipped guide is coached (render_finding falls back to
-    # uncoached.md only when no plugin supplies one).
     extensions = ["md", *config.runners.keys()]
     return [f"{smell}.{ext}" for ext in extensions]
 
 
 def plugins_for_language(language: str | None, config: Config) -> list[str]:
-    """``config.plugins`` reordered to coach a finding of ``language``.
-
-    Documented rule: take the first plugin whose declared language matches, in
-    ``plugins`` order, then fall back to the languageless plugin (``generic``)
-    last. A plugin that declares a *different* language does not coach the
-    finding, so its guide is left out.
-    """
     languages = config.plugin_languages
     matching = [
         p for p in config.plugins if language is not None and languages.get(p) == language
@@ -109,18 +86,13 @@ def render_markdown(guide: Path, finding: dict, environment: Environment) -> Ren
 
 
 def render_runner(guide: Path, runner: str, finding: dict) -> Rendered:
-    # A runner nobody installed is the same first-contact mistake as a sensor's
-    # missing tool: a typo in [runners] answered with a FileNotFoundError traceback, which
-    # `cli.run_console` does not catch. The guide is named beside the command
-    # because a project routes a smell to a runner by the guide's *extension*,
-    # so which file asked for this is the reader's next question.
     try:
         result = subprocess.run(
             [runner, str(guide)],
             input=json.dumps(finding),
             capture_output=True,
             encoding="utf-8",
-            errors="replace",  # sensors.spawn's policy
+            errors="replace",
         )
     except OSError as refusal:
         raise ToolError(
@@ -144,22 +116,14 @@ def _refuse_unconfigured_runner(smell: str, guide: Path, extension: str) -> NoRe
 
 
 def resolve_guide(finding: dict, config: Config, resolver: Resolver) -> Path:
-    """The guide a finding renders, off its smell and its language.
-
-    Public because the mapper asks it *before* rendering: findings that would
-    print the same guide are merged into one (:mod:`habit_hooks.merged_findings`),
-    and only this answers which those are.
-    """
     plugins = plugins_for_language(finding.get("language"), config)
     guide = resolver.first(plugins, guide_names(finding["smell"], config))
     if guide is None:
-        # Same language-filtered order: never another language's guide.
         guide = resolver.guide(UNCOACHED_GUIDE, plugins)
     return guide
 
 
 def _runner_for(config: Config, guide: Path, smell: str) -> str:
-    """The configured runner command for a non-``.md`` guide, or refuse by name."""
     extension = guide.suffix.lstrip(".")
     runner = config.runners.get(extension)
     if runner is None:
@@ -192,8 +156,4 @@ def banner(finding: dict) -> str:
 
 
 def block(finding: dict, text: str) -> str:
-    """One finding's printed block: its banner, then the guide's text.
-
-    Shared so a run's blocks and a coached incomplete run cannot drift apart.
-    """
     return f"{banner(finding)}\n\n{text.strip()}"

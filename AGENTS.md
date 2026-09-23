@@ -2,7 +2,7 @@
 
 ## Rules
 - The core shouldn't know about the plugins in any way. This also applies to documentation. 
-- Comments and docstrings state a non-obvious why in one or two lines; the story lives in issues and commits. The `comment` sensor enforces this on our own source — the pre-existing stock is snoozed in `.habit-hooks/snooze.json`, so any new comment shows up in every dogfooding run until it is fixed or consciously re-snoozed.
+- Comments almost never exist: what and why live in names and structure, per plugins/generic/src/habit_hooks_generic/guides/non-essential-comment.md. A comment survives only for a non-obvious why code cannot carry — a worked-around tool bug, a spec. The `non-essential-comment` sensor enforces this. Snooze is one-time, at rule introduction: a finding on a file you touch is fixed, never re-approved.
 
 ## Contributing
 - PR descriptions should be short, and designed to be readable by a human in under 30 seconds.
@@ -91,7 +91,11 @@ A transform maps a tool-supplied string — an eslint rule ID, a ruff code — t
 
 jscpd's `initIgnore` turns each line of `<cwd>/.gitignore` into globs, and a line containing a slash becomes `**/<line>/**` — matched against the **absolute** paths a config-derived `path` produces, filesystem prefix and all. A checkout at `…/habit-hooks/.claude/worktrees/agent-x/` therefore ignores its entire self against this repo's own `.claude/worktrees/` line: zero files scanned, zero clones, exit 0, a clean run. Proven by two fixtures identical but for their path (ordinary → the planted clone; under `.claude/worktrees/` → nothing), and by running `jscpd` bare in a worktree, which is equally blind. It is the tool's behaviour, not the sensor's — and the sensor reproducing it exactly is the point of the precedence rule above.
 
-The consequence for us: **inside an agent worktree `uv run habit-hooks --all` proves nothing about jscpd.** An ordinary checkout and CI are unaffected (no ignored segment in their paths). To check duplication from inside a worktree, run jscpd with positional relative paths, as the fallback branch does.
+The consequence for us: **inside an agent worktree `uv run habit-hooks --all` proves nothing about jscpd.** An ordinary checkout and CI are unaffected (no ignored segment in their paths). To check duplication from inside a worktree, run jscpd with positional relative paths, as the fallback branch does — and the reason `path` travels as positionals in `config_arguments` at all: jscpd resolves a config's relative `path` against the config file's directory, not the project's.
+
+### A PMD `-R` spelling has two ways to analyse nothing
+
+Never put a file positional directly after a `-R` value — PMD 7's picocli reads it as another ruleset and analyses nothing (hence short `-R` + per-file `-d` in `pmd_sensor.py`). And a new attached spelling (`-R=`) must be added to `ATTACHED_RULESET_PREFIXES` longest-first, or PMD silently unions two rulesets.
 
 ### A ruff.toml in a scanned subtree hijacks ruff's config discovery
 

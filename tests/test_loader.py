@@ -1,9 +1,3 @@
-"""Unit tests for the plugin loader's per-sensor override handling.
-
-The loader turns a plugin's ``config.toml`` and its ``sensors/<name>.toml`` specs
-into ``Part`` objects, applying the project's ``[sensors.<name>]`` overrides. Each
-override key it reads must reach the ``Part`` the runner then executes.
-"""
 
 from __future__ import annotations
 
@@ -21,8 +15,6 @@ from plugin_fixture import (
 
 
 def test_an_argv_spec_reaches_the_part_as_a_list(tmp_path: Path) -> None:
-    """The other way to spell a recipe: an argument list, spawned as it stands
-    rather than read by a shell."""
     part = one_sensor(tmp_path, 'argv = ["ruff", "check", "${files}"]')
 
     assert part.argv == ["ruff", "check", "${files}"]
@@ -32,8 +24,6 @@ def test_an_argv_spec_reaches_the_part_as_a_list(tmp_path: Path) -> None:
 def test_a_spec_spelling_both_command_and_argv_is_refused_by_name(
     tmp_path: Path,
 ) -> None:
-    """Which of the two runs would otherwise be settled by whichever the code
-    looked at first — so it is refused where the author can still see both."""
     with pytest.raises(ConfigError) as refusal:
         one_sensor(tmp_path, 'command = "ruff"\nargv = ["ruff"]')
 
@@ -41,9 +31,6 @@ def test_a_spec_spelling_both_command_and_argv_is_refused_by_name(
 
 
 def test_a_spec_spelling_neither_is_refused_by_name(tmp_path: Path) -> None:
-    """A part that states what it is and never what it does. It used to be a
-    ``KeyError`` traceback out of the loader — a first-contact
-    failure."""
     with pytest.raises(ConfigError) as refusal:
         one_sensor(tmp_path, 'files = ["src/**"]')
 
@@ -51,9 +38,6 @@ def test_a_spec_spelling_neither_is_refused_by_name(tmp_path: Path) -> None:
 
 
 def test_a_spec_spelling_an_empty_argv_is_refused_by_name(tmp_path: Path) -> None:
-    """It reads as a recipe all the way to the spawn, where the first element it
-    has not got is the program — an ``IndexError`` traceback out of the layer
-    whose whole job is that other people's programs fail as notices."""
     with pytest.raises(ConfigError) as refusal:
         one_sensor(tmp_path, "argv = []")
 
@@ -63,11 +47,6 @@ def test_a_spec_spelling_an_empty_argv_is_refused_by_name(tmp_path: Path) -> Non
 def test_a_spec_spelling_an_argv_element_that_is_not_text_is_refused_by_name(
     tmp_path: Path,
 ) -> None:
-    """Every element is an argument handed to a program as it stands, so a
-    number among them is a ``TypeError`` traceback at exit 1 — the code reserved
-    for an enforced finding, so a run reads a mistyped spec as a smell in the
-    code. The refusal names the element, because a long argv gives a reader
-    nothing else to go on."""
     with pytest.raises(ConfigError) as refusal:
         one_sensor(tmp_path, 'argv = ["ruff", 1]')
 
@@ -77,10 +56,6 @@ def test_a_spec_spelling_an_argv_element_that_is_not_text_is_refused_by_name(
 def test_a_spec_spelling_an_argv_that_is_not_a_list_is_refused_by_name(
     tmp_path: Path,
 ) -> None:
-    """A bare string is the mistake that hides: it is iterable, so nothing
-    stumbles over it — every character becomes an argument, and the run reports
-    that it "needs the 'r' command". A number beside it is the traceback the
-    element check already refuses, one level up."""
     with pytest.raises(ConfigError) as refusal:
         one_sensor(tmp_path, 'argv = "ruff"')
 
@@ -88,8 +63,6 @@ def test_a_spec_spelling_an_argv_that_is_not_a_list_is_refused_by_name(
 
 
 def test_an_argv_of_one_element_is_a_part_that_runs(tmp_path: Path) -> None:
-    """The other side of that boundary: one element is a program and nothing
-    else, which is a whole recipe — the refusal is about none, not about few."""
     part = one_sensor(tmp_path, 'argv = ["ruff"]')
 
     assert part.argv == ["ruff"]
@@ -98,8 +71,6 @@ def test_an_argv_of_one_element_is_a_part_that_runs(tmp_path: Path) -> None:
 def test_a_transformer_missing_its_recipe_is_named_a_transformer(
     tmp_path: Path,
 ) -> None:
-    """The refusal names the kind it refused, so a reader is looking for the
-    right file — a transformer has no ``[sensors.<name>]`` to edit."""
     write_plugin(
         tmp_path,
         "fixt",
@@ -133,11 +104,6 @@ def test_args_override_reaches_the_part(tmp_path: Path) -> None:
 
 
 def test_an_emptied_args_override_clears_the_specs_default(tmp_path: Path) -> None:
-    """``args = []`` is a value, not an absence, so it clears what the plugin
-    shipped. That is the only way out for a consumer whose run is refused over a
-    plugin's own unusable ``args`` default (``command_text.reject_unusable_args``),
-    so the loader must not read the empty list as "nothing set" and fall through.
-    """
     one_sensor(tmp_path, 'command = "echo"\nargs = ["--from-spec"]')
     write_project_config(tmp_path, 'plugins = ["fixt"]\n[sensors.s]\nargs = []')
 
@@ -161,9 +127,6 @@ def test_a_sensor_declaring_no_files_carries_none(tmp_path: Path) -> None:
 
 
 def test_a_sensor_spec_that_is_not_toml_is_refused_by_name(tmp_path: Path) -> None:
-    """A part spec is hand-written too, so it earns the same refusal the project
-    config does rather than a ``tomllib`` traceback: one shared read means
-    every TOML this tool opens answers a slip in it the same way."""
     spec = tmp_path / ".habit-hooks" / "fixt" / "sensors" / "s.toml"
 
     with pytest.raises(SystemExit) as failure:

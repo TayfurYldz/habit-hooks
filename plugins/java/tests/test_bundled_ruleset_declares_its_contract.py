@@ -1,5 +1,3 @@
-"""The bundled PMD fallback pins behavior that PMD's defaults must not move."""
-
 from __future__ import annotations
 
 import xml.etree.ElementTree as ElementTree

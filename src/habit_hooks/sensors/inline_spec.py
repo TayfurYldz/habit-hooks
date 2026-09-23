@@ -1,8 +1,3 @@
-"""The declarative sensor's loading half: an entry in a plugin's config.toml.
-
-Every misspelling is answered here, at load, because a config key silently
-ignored is a documented-but-dead key.
-"""
 
 from __future__ import annotations
 
@@ -20,12 +15,6 @@ _PLACEHOLDER_OR_PATH = ("$", "/", "\\")
 
 
 def name_of(entry: dict) -> str:
-    """The sensor's name: the table's ``name``, or its tool when that is a name.
-
-    A tool spelled as a placeholder or a path cannot stand in for one — a notice
-    quoting ``sensor '${python}'`` names nothing the reader wrote, so there the
-    ``name`` is required.
-    """
     tool = _a_string("tool", entry.get("tool"))
     name = entry.get("name", tool)
     if not isinstance(name, str) or not name:
@@ -39,14 +28,6 @@ def name_of(entry: dict) -> str:
 
 
 def unique_sensors(plugin: str, entries: list) -> list:
-    """``entries``, refused when the same inline sensor name is enabled twice.
-
-    A name twice in the list is two sensors claiming one identity — a snooze or
-    an override on it would reach whichever loaded first — so the config is
-    refused at load, naming the name. Only inline tables are refused: two
-    plain spec-file strings of one name loaded before inline sensors existed
-    (duplicating findings), and keep loading exactly as they did.
-    """
     seen: set[str] = set()
     for entry in entries:
         if not isinstance(entry, dict):
@@ -62,8 +43,6 @@ def unique_sensors(plugin: str, entries: list) -> list:
 
 
 def part_from(plugin: str, config_path: Path, entry: dict) -> Part:
-    """The entry as a runnable part: ``argv`` from the tool and arguments, the
-    recipe's settings held beside it, ``${dir}`` the plugin config's directory."""
     name = name_of(entry)
     where = f"sensor {name!r} in the {plugin!r} plugin config"
     reject_unknown(ENTRY_KEYS, entry, where)
@@ -80,16 +59,6 @@ def part_from(plugin: str, config_path: Path, entry: dict) -> Part:
 
 
 def refuse_unusable_report(part: Part) -> None:
-    """Stop the load when ``report`` and the args that spell ``${report}``
-    disagree.
-
-    ``${report}`` is how the framework passes the report file in, so a recipe
-    that never spells it would hand the tool nothing and read back an empty
-    report as no findings — a clean run nobody ran. The other mismatch is as
-    silent: a recipe that spells ``${report}`` without asking for a report is
-    handed nothing to fill it with, and the tool receives the placeholder as a
-    literal argument.
-    """
     if part.inline is None:
         return
     argv = part.argv or []

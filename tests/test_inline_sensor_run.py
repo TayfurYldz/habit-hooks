@@ -1,5 +1,3 @@
-"""The declarative sensor's one pipeline, end to end: a fixture tool prints a
-made-up JSON shape and exits a chosen code; the entry turns it into findings."""
 
 from __future__ import annotations
 
@@ -41,7 +39,6 @@ def inline_run(project: Path, entry: str, files: dict[str, str]):
 
 
 def an_entry(body: str, extra: str = "") -> tuple[str, dict[str, str]]:
-    """The entry TOML and plugin files for a fake tool running ``body``."""
     return (
         f'{{ tool = "${{python}}", name = "lint", args = ["${{dir}}/tool.py"]'
         f"{extra} }}",
@@ -61,8 +58,6 @@ def test_a_transform_maps_a_made_up_shape_into_grouped_findings(tmp_path: Path) 
 
 
 def test_without_a_transform_stdout_is_already_the_findings(tmp_path: Path) -> None:
-    """And keys the framework has no vocabulary for pass through untouched:
-    mapping tool shapes to smells is the transform's job, never the runner's."""
     extra = {**FINDING, "extra": "kept"}
     entry, files = an_entry(f"print({json.dumps([extra])!r})\n")
 

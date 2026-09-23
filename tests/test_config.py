@@ -1,11 +1,3 @@
-"""Unit tests for loading a project's own TOML config.
-
-These pin the loader's behaviour on the file a project writes: its defaults when
-there is none, and the nested construction when there is. What the active plugins
-contribute to it is ``test_plugin_defaults.py``; refusing a config — an unknown
-key, an unknown value, a file that is not TOML at all — is
-``test_config_schema.py``.
-"""
 
 from __future__ import annotations
 
@@ -52,11 +44,6 @@ def test_missing_config_yields_the_scope_defaults(tmp_path: Path) -> None:
 
 
 def test_a_caller_that_names_no_program_still_loads(tmp_path: Path) -> None:
-    """The call a project's own transformer makes, spelled out rather than routed
-    through ``_load``. A transformer is a separate process, and importing this
-    function is the only way one has ever had to read ``[scope] branchBase``, so a
-    required keyword argument here broke every caller outside this repo.
-    """
     assert load_config(tmp_path).scope.branchBase == "main"
 
 
@@ -121,7 +108,6 @@ def test_populated_smell_override_loads(tmp_path: Path) -> None:
 
 
 def test_a_valid_config_still_loads_after_the_unknown_key_guard(tmp_path: Path) -> None:
-    """The guard must not reject any key the loader actually consumes."""
     _load_populated(tmp_path)  # must not raise
 
 

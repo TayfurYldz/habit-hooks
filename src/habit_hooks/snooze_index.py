@@ -1,13 +1,3 @@
-"""The checked-in snooze index: load it safely, save it atomically.
-
-Split from ``snooze.py`` so the index file I/O — parsing a JSON file a human
-edits, and replacing it without tearing under concurrent hook runs — lives apart
-from the transform and its CLI.
-
-An entry is a key and the content approved for each file it covers. An
-entry that records nothing stays a bare key, so an index written before that
-keeps loading and a project migrates one ``--snooze`` at a time.
-"""
 
 from __future__ import annotations
 
@@ -17,19 +7,13 @@ from pathlib import Path
 
 INDEX_PATH = Path(".habit-hooks") / "snooze.json"
 
-# The files an entry was approved against, each mapped to the content it held
-# then. Empty for an entry written before that field existed, and for one whose anchor is no
-# file to read.
 Anchors = dict[str, str]
 
-# What `load_index` hands the rest of the tool: every snoozed key, with what it
-# was approved against.
 Index = dict[str, Anchors]
 
 
 class SnoozeError(Exception):
-    """A malformed snooze index — a checked-in file a human edits, so it fails by
-    name rather than as a traceback or, worse, a silent misread."""
+    pass
 
 
 def load_index(project_dir: Path) -> Index:
@@ -40,13 +24,6 @@ def load_index(project_dir: Path) -> Index:
 
 
 def _parse_index(path: Path) -> Index:
-    """The index is a JSON list of entries: a bare key, or that key with the
-    content approved for each file it covers. Anything else fails by name.
-
-    Left untyped, ``null`` iterated as ``None``, a bare ``"src/a.py"`` iterated
-    per character, and ``{"key": "reason"}`` survived only to be flattened to a
-    bare list on the next ``--snooze`` — each a silent way to mean nothing.
-    """
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -59,12 +36,6 @@ def _parse_index(path: Path) -> Index:
 
 
 def _entry(path: Path, item: object) -> tuple[str, Anchors]:
-    """One entry as a mapping pair: a bare key, or that key with its anchors.
-
-    A key beside a field the index has no meaning for is refused rather than
-    read and dropped on the next write — the silent flattening above, in the
-    shape it takes now that an entry can be an object.
-    """
     if isinstance(item, str):
         return item, {}
     if (
@@ -103,22 +74,12 @@ def save_index(entries: Index, project_dir: Path) -> None:
 
 
 def _written(key: str, anchors: Anchors) -> str | dict:
-    """An entry recording nothing stays the bare key it always was, so an index
-    nothing has approved into keeps the shape its project knows. Anchors are
-    sorted along with the keys, so a file written on one line still reviews as a
-    stable diff."""
     if not anchors:
         return key
     return {"key": key, "anchors": dict(sorted(anchors.items()))}
 
 
 def _replace_atomically(path: Path, content: str) -> None:
-    """Write a sibling temp file, then ``os.replace`` it over ``path``.
-
-    Two concurrent hook runs that read-modify-write the index otherwise tear it;
-    the rename is atomic on POSIX, so a reader sees the old file or the whole new
-    one. The pid keeps the two writers' temp files apart.
-    """
     tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     tmp.write_text(content, encoding="utf-8")
     os.replace(tmp, path)

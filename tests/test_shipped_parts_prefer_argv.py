@@ -1,14 +1,3 @@
-"""Every shipped sensor and transformer spells ``argv``.
-
-``argv`` is spawned with no shell in between, and is the only form that runs on
-native Windows — a ``command`` string is text for ``bash``, which Windows has
-not got (and where ``bash`` resolves, it is usually the WSL launcher, answering
-from another filesystem entirely). ``command`` stays in the contract for a
-third-party plugin that needs syntax a list cannot carry, and is refused at run
-time off POSIX; nothing this repo ships needs it any more. A new part added as
-a ``command`` string would be dead on Windows without anything saying so — this
-is the gate that notices.
-"""
 
 from __future__ import annotations
 
@@ -20,7 +9,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _shipped_part_specs() -> list[Path]:
-    """Every sensor/transformer spec this repo ships, core and every plugin."""
     patterns = (
         "plugins/*/src/*/sensors/*.toml",
         "src/habit_hooks/sensors/*.toml",

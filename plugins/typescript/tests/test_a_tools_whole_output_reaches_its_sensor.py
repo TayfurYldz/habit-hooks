@@ -1,23 +1,3 @@
-"""However much a tool prints, all of it reaches the sensor that ran it.
-
-Node's ``spawnSync`` caps each captured stream at 1 MB unless told otherwise,
-and answers ENOBUFS above it: a truncated stdout, a ``null`` status and an
-``error`` the caller has to notice. A real project crosses that cap easily —
-forty files of ordinary lint findings do — and the sensor is then left with
-nothing it can parse, so a repository full of smells arrives as a broken sensor
-instead of as coaching.
-
-The cap is the seam's question, not either caller's: knip capped its own run
-generously and eslint never capped its own at all, which is the divergence that
-let the bug ship in one of them. So both are asked here, and the answer they
-share comes from ``sensors/project_tool.cjs``. Every other suite in this
-directory drives a report comfortably under the cap, which is the other side of
-that boundary.
-
-eslint is driven for real, because a huge eslint report was the report that broke here. knip is driven by the recording stub, since what knip would make of a
-huge tree is not the question — how much of what it printed comes back is.
-"""
-
 from __future__ import annotations
 
 import json
@@ -27,19 +7,12 @@ from pathlib import Path
 import eslint_project
 from node_tool_stub import install
 
-# What `spawnSync` allows per stream when nobody says otherwise.
 NODE_DEFAULT_MAX_BUFFER = 1024 * 1024
 
 SENSORS = Path(__file__).parents[1] / "src" / "habit_hooks_typescript" / "sensors"
 
-# Each line earns two messages from the shipped config — `no-var` and `eqeqeq` —
-# and eslint reports every one with the file's absolute path, so the fixture is
-# sized to clear the cap by a third rather than to sit on it: where the fixture
-# lives moves the byte count.
 SMELLY_LINES_PER_FILE = 60
 SMELLY_FILES = 40
-
-# Enough unused files for knip's report to cross the cap by the same margin.
 DEAD_FILE_COUNT = 30_000
 DEAD_FILE = "src/generated/never-imported/module-{number:05d}.ts"
 

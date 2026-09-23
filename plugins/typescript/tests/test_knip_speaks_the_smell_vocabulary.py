@@ -1,17 +1,3 @@
-"""The knip sensor emits catalogue smells only, never knip's own issue keys.
-
-A key the plugin cannot translate used to be forwarded under knip's own name,
-where it had no guide and no catalogue severity — so `binaries` turned an
-untouched repository red with boilerplate that named neither the tool nor the
-rule. Translating the tool's vocabulary is the sensor's job: the four
-dead-code keys knip's `--production` pass already coached gained a smell, and
-anything still untranslated is dropped here.
-
-knip itself is stubbed. These cases are about the mapping, and a stub report
-states the exact issue shape knip 5 emits (including the `enumMembers` object
-map) without a fixture tree that coaxes the real tool into producing it.
-"""
-
 from __future__ import annotations
 
 import json
@@ -44,7 +30,6 @@ def _findings(tmp_path: Path, report: dict) -> list[dict]:
 
 
 def _report(**keys: object) -> dict:
-    """One knip issue row on `src/helper.ts` carrying `keys`."""
     return {"files": [], "issues": [{"file": "src/helper.ts", "owners": [], **keys}]}
 
 
@@ -52,9 +37,6 @@ def _occurrence(name: str) -> list[dict]:
     return [{"name": name, "line": 3, "col": 1}]
 
 
-# The keys knip reports that this plugin has no smell for. `unlisted` and
-# `unresolved` name real defects and get a smell of their own once one exists;
-# until then they are dropped with the rest.
 UNTRANSLATED_KEYS = ["binaries", "duplicates", "catalog", "unlisted", "unresolved"]
 
 TRANSLATED_KEYS = [
@@ -86,7 +68,6 @@ def test_a_translated_key_arrives_as_its_smell(
 
 
 def test_an_unused_enum_member_arrives_as_unused_class_member(tmp_path: Path) -> None:
-    """knip reports enum members as an object map keyed by the parent symbol."""
     report = _report(enumMembers={"Colour": _occurrence("Green")})
 
     findings = _findings(tmp_path, report)
@@ -101,8 +82,6 @@ def test_an_unused_enum_member_arrives_as_unused_class_member(tmp_path: Path) ->
 def test_dropping_an_untranslated_key_leaves_its_neighbours_alone(
     tmp_path: Path,
 ) -> None:
-    """The drop is per key, not per report: a run that also names a translated
-    key still reports it."""
     report = _report(binaries=_occurrence("habit-hooks"))
     report["files"] = ["src/orphan.ts"]
 
@@ -115,15 +94,6 @@ def test_dropping_an_untranslated_key_leaves_its_neighbours_alone(
 def test_a_column_is_reported_under_the_name_the_contract_gives_it(
     tmp_path: Path,
 ) -> None:
-    """knip spells it `col`; every other sensor and the contract spell it `column`.
-
-    `docs/sensor-interface.spec.md` names `line` / `column` as an issue's
-    location, and forwarding knip's own spelling left that location invisible to
-    everything downstream that asks for it by name — a guide rendering a
-    position, and the mapper deciding whether two issues name one place.
-    Translating the tool's vocabulary is this sensor's job, and a field name is
-    vocabulary like any other.
-    """
     findings = _findings(
         tmp_path,
         {
