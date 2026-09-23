@@ -133,6 +133,11 @@ DEP002 = [
     "habit-hooks-ruby",
 ]
 
+[tool.ruff]
+# Scenario samples are planted violations — fixture data the plugins' approved
+# scenarios run real tools over, never source to lint.
+extend-exclude = ["scenarios"]
+
 [tool.ruff.lint]
 # Dogfood the python plugin's recommended structural thresholds
 # (plugins/python/src/habit_hooks_python/ruff.toml). extend-select turns the
