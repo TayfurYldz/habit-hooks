@@ -1,13 +1,3 @@
-"""The scenario format, proven by an exemplar plugin that ships one scenario.
-
-No real plugin ships scenarios yet (they gain them as their sensors migrate to
-the inline form), so the exemplar below is built the way ``plugin_fixture``
-builds throwaway plugins — under ``.habit-hooks/exemplar/``, resolved by the
-real loader — and its "tool" is a stub executable every machine can run. Each
-test breaks one rule of the format and holds that the runner names it; the
-drift test holds that a mismatch shows both sides, because a diff a reader
-cannot read is a gate nobody obeys.
-"""
 
 from __future__ import annotations
 
@@ -111,13 +101,6 @@ def _shipped() -> list[tuple[str, Path]]:
 
 @pytest.fixture(autouse=True)
 def _repo_tools_on_the_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The repo's own devDependencies are this machine's tools.
-
-    A shipped scenario names its tool in scenario.toml, and a tool the machine
-    cannot reach is a skip — but `pnpm install` at the root put jscpd in the
-    repo's ``node_modules/.bin``, so that directory goes on the scenario's PATH
-    before the question is asked. A checkout without it keeps the honest skip.
-    """
     repo_bin = Path(__file__).resolve().parents[1] / "node_modules" / ".bin"
     if repo_bin.is_dir():
         monkeypatch.setenv(

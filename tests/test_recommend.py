@@ -1,11 +1,3 @@
-"""Unit tests for what the plugin recommendation tells you to do.
-
-Installing a plugin does not switch it on — a plugin runs only when the project's
-``plugins`` list names it. A hint that says `pip install` to someone who has
-already installed it is a loop with no exit, so each hint names the step its
-reader is actually missing. Which languages count as used at all is
-``docs/habit-sensors.spec.md``.
-"""
 
 from __future__ import annotations
 
@@ -35,31 +27,18 @@ def _hints(project_dir: Path, plugins: PluginStatus) -> list[str]:
 
 
 def test_an_uninstalled_plugin_is_named_with_both_steps(tmp_path: Path) -> None:
-    """Nothing to install it from and nothing enabling it: say both, once, so
-    following the hint is enough — the reader is not sent back for a second line."""
     assert _hints(tmp_path, PluginStatus(set(), _on_hand())) == [INSTALL_AND_ENABLE]
 
 
 def test_an_installed_but_unenabled_plugin_is_told_to_enable_it(tmp_path: Path) -> None:
-    """The dead end: `pip install habit-hooks-python` has already been run, so
-    repeating it is the one instruction that cannot change the outcome."""
     assert _hints(tmp_path, PluginStatus(set(), _on_hand("python"))) == [ENABLE_ONLY]
 
 
 def test_an_active_language_is_not_recommended(tmp_path: Path) -> None:
-    """An enabled plugin declaring the language answers for it — nothing to say."""
     assert _hints(tmp_path, PluginStatus({"python"}, _on_hand("python"))) == []
 
 
 def test_an_unused_language_is_not_recommended(tmp_path: Path) -> None:
-    """No `*.py` in scope and no `pyproject.toml`: no signal, no hint.
-
-    The file in scope is `.cbl`, because cobol is this suite's standing name
-    for a language habit-hooks has no plugin for (`test_initialise`,
-    `test_uv_tool_command`, `test_installed_wheel_smoke`). It was `.rb` until
-    the ruby plugin shipped. A file that stops being unrecognised is a case
-    that stops asking its question, and it passes either way while it does.
-    """
     assert (
         recommendations(tmp_path, ["src/app.cbl"], PluginStatus(set(), _on_hand()))
         == []
@@ -67,8 +46,6 @@ def test_an_unused_language_is_not_recommended(tmp_path: Path) -> None:
 
 
 def test_a_java_project_is_recommended_java(tmp_path: Path) -> None:
-    """A `pom.xml` or `build.gradle` — the two build tools that own the
-    ecosystem — counts as java, as does any `.java` file in scope."""
     (tmp_path / "pom.xml").write_text("<project/>", encoding="utf-8")
     assert recommendations(tmp_path, [], PluginStatus(set(), _on_hand())) == [
         "habit-sensors: detected java; "
@@ -84,13 +61,6 @@ def test_a_java_project_is_recommended_java(tmp_path: Path) -> None:
 
 
 def test_a_ruby_project_is_recommended_ruby(tmp_path: Path) -> None:
-    """A `Gemfile` or a `.rubocop.yml` counts as ruby, as does any `.rb` file.
-
-    `.rubocop.yml` is a signal and not just the tool's config because it is the
-    one file that says a project already lints its Ruby, the reader most
-    likely to want this plugin. A gemless script directory is still caught by
-    the extension.
-    """
     (tmp_path / "Gemfile").write_text("source 'https://rubygems.org'\n", encoding="utf-8")
     assert recommendations(tmp_path, [], PluginStatus(set(), _on_hand())) == [
         "habit-sensors: detected ruby; "
@@ -106,10 +76,6 @@ def test_a_ruby_project_is_recommended_ruby(tmp_path: Path) -> None:
 
 
 def test_a_vendored_plugin_counts_as_installed(tmp_path: Path) -> None:
-    """``Resolver.has_plugin`` is the question, so a plugin vendored under
-    ``.habit-hooks/<name>/`` — the install route the README offers where extras
-    cannot reach — is on hand exactly as an installed package is, and its reader
-    is told to enable it rather than to install what they already have."""
     write_plugin(tmp_path, "python", {"config.toml": 'language = "python"'})
     resolver = Resolver.discover(tmp_path)
     assert resolver.has_plugin("python")

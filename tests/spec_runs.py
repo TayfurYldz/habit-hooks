@@ -1,9 +1,3 @@
-"""Run a spec body through the harness and report a status per case.
-
-Shared by the marker tests and the context tests: both drive whole spec bodies
-through the real engine rather than asserting on parsed structures, because
-what a marker or a nesting rule *means* is only visible once a case has run.
-"""
 
 from __future__ import annotations
 
@@ -22,7 +16,6 @@ from harness import (
 
 
 def _status(test, where: Path, repo_root: Path) -> str:
-    """Run one parsed test in its own dir; return "skip"/"pass"/"fail"."""
     if test.skip:
         return "skip"
     where.mkdir()
@@ -34,12 +27,6 @@ def _status(test, where: Path, repo_root: Path) -> str:
 
 
 def run(text: str, tmp_path: Path, repo_root: Path | None = None) -> list[str]:
-    """Parse + run a spec body, returning a status per test.
-
-    The skip sits here rather than on either test module so the parser tests --
-    which execute nothing -- still run everywhere. Only a test that reaches a
-    step needs a POSIX shell.
-    """
     if not STEPS_RUN_ON_THIS_PLATFORM:
         pytest.skip(POSIX_SHELL_ONLY)
     root = repo_root or tmp_path

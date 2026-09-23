@@ -1,13 +1,3 @@
-"""Unit tests for the argument budget split between platforms.
-
-``test_sensor_argv.py`` proves a sensor's own chunking end to end against
-this platform's budget; this covers the platform switch underneath it
-directly, so the Windows branch runs from here too, not only from a real
-Windows machine. ``git_history.changed_paths`` never names a budget of its
-own — it lives or dies by ``within_argument_limits``' default doing the same
-platform check as everyone else, which is what the transition tests below
-are for.
-"""
 
 from __future__ import annotations
 
@@ -21,7 +11,6 @@ from habit_hooks.argv_budget import (
     within_argument_limits,
 )
 
-# Two paths that together clear Windows' budget but stay well under POSIX's.
 BORDERLINE_ARGUMENTS = ["a" * 15_000, "b" * 6_000]
 
 

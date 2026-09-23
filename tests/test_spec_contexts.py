@@ -1,10 +1,3 @@
-"""How a spec's nested contexts inherit, isolate and skip.
-
-A spec file is a tree of headings: an ancestor's steps are preamble to every
-leaf below it, siblings never see each other's state, and only leaves are
-tests. Separate from the marker tests because these are the rules *between*
-cases rather than what any one step does.
-"""
 
 import pytest
 
@@ -13,7 +6,6 @@ from harness import SpecError, parse_spec
 from spec_runs import run
 
 
-# --- contexts --------------------------------------------------------------
 
 
 def test_sibling_contexts_are_isolated(tmp_path):
@@ -22,7 +14,6 @@ def test_sibling_contexts_are_isolated(tmp_path):
         "## A\n```bash\necho hi > shared.txt\n```\n"
         "## B\n```bash\ncat shared.txt\n```\n"
     )
-    # B runs in a fresh dir, so shared.txt is absent and B fails.
     assert run(spec, tmp_path) == ["pass", "fail"]
 
 
@@ -53,12 +44,10 @@ def test_skip_inherited_from_ancestor(tmp_path):
 
 
 def test_missing_required_block_is_spec_error():
-    # ✏️ with no following block is malformed (caught while pairing markers).
     with pytest.raises(SpecError):
         parse_spec("# T\n✏️X\n```bash\ntrue\n```\n")
 
 
 def test_stdin_missing_block_is_spec_error():
-    # ⌨️ likewise requires its payload block before the command runs.
     with pytest.raises(SpecError):
         parse_spec("# T\n⌨️\n```bash\ncat\n```\n")

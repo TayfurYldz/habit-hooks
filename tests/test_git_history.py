@@ -1,10 +1,3 @@
-"""Unit tests for the one place that asks git about a branch's history.
-
-A scoped run and a lapsing snooze put the same question to git, so they share
-one implementation; these pin what that implementation answers, including the
-silences each caller then interprets differently. How each caller phrases its failure is pinned next door, in
-``test_scope.py`` and ``test_snooze.py``.
-"""
 
 from __future__ import annotations
 
@@ -29,7 +22,6 @@ def test_a_repository_is_placed(tmp_path: Path) -> None:
 def test_git_that_cannot_be_run_places_nothing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """No git on PATH must degrade like no repository, never as a traceback."""
     repository_with_committed_file(tmp_path)
 
     def no_git(*_args: object, **_options: object) -> object:
@@ -67,8 +59,6 @@ def test_a_branch_forks_at_its_merge_base(tmp_path: Path) -> None:
 def test_histories_with_no_common_ancestor_fall_back_to_the_tip(
     tmp_path: Path,
 ) -> None:
-    """An orphan branch shares no commit with the base, so git names no merge
-    base at all — and comparing against nothing would scope a run to nothing."""
     repository_with_committed_file(tmp_path)
     git(tmp_path, "checkout", "-q", "--orphan", "unrelated")
     (tmp_path / "other.py").write_text("VALUES = [9]\n", encoding="utf-8")
@@ -83,7 +73,6 @@ def test_histories_with_no_common_ancestor_fall_back_to_the_tip(
 
 
 def test_the_empty_tree_precedes_every_commit(tmp_path: Path) -> None:
-    """The state a repository's whole history is measured against."""
     repository_with_committed_file(tmp_path)
     before_anything = git_history.empty_tree(tmp_path)
     assert git_history.changed_paths(tmp_path, [before_anything, "HEAD"]) == ["src.py"]
@@ -96,7 +85,6 @@ def test_no_pathspecs_asks_about_the_whole_tree(tmp_path: Path) -> None:
 
 
 def test_paths_are_named_in_the_projects_own_terms(tmp_path: Path) -> None:
-    """git answers from the repository root; a project below it asks in its own."""
     repository_with_committed_file(tmp_path)
     project = tmp_path / "app"
     project.mkdir()
@@ -107,7 +95,6 @@ def test_paths_are_named_in_the_projects_own_terms(tmp_path: Path) -> None:
 
 
 def test_a_non_ascii_path_comes_back_unquoted(tmp_path: Path) -> None:
-    """Quoted (`"caf\\303\\251.py"`) it would match no file anyone can name."""
     repository_with_committed_file(tmp_path)
     accented = tmp_path / "café.py"
     commit_file(accented, "VALUES = [2]\n")
@@ -116,7 +103,6 @@ def test_a_non_ascii_path_comes_back_unquoted(tmp_path: Path) -> None:
 
 
 def test_uncommitted_changes_unite_the_three_kinds_of_work(tmp_path: Path) -> None:
-    """Staged and unstaged edits and a brand-new file, all named once."""
     committed = repository_with_committed_file(tmp_path)
     commit_file(tmp_path / "tracked.py", "VALUES = [0]\n")
     committed.write_text("VALUES = [1, 2]\n", encoding="utf-8")

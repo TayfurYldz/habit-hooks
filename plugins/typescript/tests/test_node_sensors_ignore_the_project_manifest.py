@@ -1,23 +1,3 @@
-"""The shipped Node helpers must run whatever the consumer's package.json says.
-
-Node does not read a ``.js`` file to decide its module system: it walks up from
-the script to the nearest ``package.json`` and reads ``"type"`` there. A
-CommonJS helper named ``.js`` therefore dies on its first line —
-``ReferenceError: require is not defined in ES module scope`` — in any project
-declaring ``"type": "module"``, the default a new TypeScript project is
-scaffolded with. Two of this plugin's three sensors were gone on the first run.
-
-The helper is only inside the consumer's manifest scope when it sits under the
-project directory, which is exactly what the two layouts here do
-(``plugin_layouts``): the vendoring route the README advertises
-(``.habit-hooks/<plugin>/``) and a project-local ``.venv/``. ``.cjs`` settles the
-question inside the file, where the consumer's manifest cannot reach it.
-
-Every case runs the **shipped** helper, copied byte for byte, under both
-manifests. The CommonJS half is the control: same files, same project, one key
-removed, so a failure under ``"type": "module"`` is the manifest's doing and
-nothing else.
-"""
 
 from __future__ import annotations
 
@@ -48,7 +28,6 @@ under_either_manifest = pytest.mark.parametrize(
 
 
 def _project(tmp_path: Path, manifest: str) -> Path:
-    """A consumer project declaring `manifest`, with the plugin's Node tools."""
     project = tmp_path / "demo"
     (project / "src").mkdir(parents=True)
     (project / "package.json").write_text(manifest, encoding="utf-8")
@@ -79,8 +58,6 @@ def _with_a_non_essential_comment(project: Path) -> None:
 
 
 def _with_a_too_wide_signature(project: Path) -> None:
-    """Four parameters, which the shipped config caps at three — so a finding
-    here also proves the copy reached the config copied beside it."""
     (project / "src" / "helper.ts").write_text(
         "export function charge(a: number, b: number, c: number, d: number): number {\n"
         "  return a + b + c + d;\n"
@@ -111,20 +88,10 @@ def _keys_of(result: subprocess.CompletedProcess[str], smell: str) -> list[str]:
 
 
 def _the_helper_file(project: Path) -> Path:
-    """The fixture's one source file."""
     return project / "src" / "helper.ts"
 
 
 def _as_eslint_spells(file: Path) -> list[str]:
-    """How the eslint helper keys a file: absolute, in the platform's own
-    spelling, which on Windows separates with ``\\``.
-
-    Its neighbour keys the very same file ts-morph's way — absolute with forward
-    slashes on every platform (``as_ts_morph_spells``) — so one expected answer
-    cannot serve both, and a case sharing one silently asserts the host's own
-    separator. Neither spelling reaches a user: the runner anchors both to
-    ``src/helper.ts`` at the sensor boundary (``sensors/finding_paths``).
-    """
     return [str(file.resolve())]
 
 
@@ -172,7 +139,6 @@ def test_vendored_eslint_helper_reports_a_smell(tmp_path: Path, manifest: str) -
 def test_venv_installed_comment_helper_reports_a_comment(
     tmp_path: Path, manifest: str
 ) -> None:
-    """A project-local venv puts the helper under the consumer's manifest too."""
     project = _project(tmp_path, manifest)
     _with_a_non_essential_comment(project)
 

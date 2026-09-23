@@ -1,10 +1,3 @@
-"""Ask the scope resolver what a mode decides is in scope: argv in, answer out.
-
-The scope test modules — ``test_scope.py`` (a mode's diagnostics),
-``test_scope_notices.py`` (what an empty scope says) and
-``test_scope_work_in_progress.py`` (which uncommitted work each mode measures) —
-put the same question to ``resolve_scope``, so the phrasing lives here once.
-"""
 
 from __future__ import annotations
 
@@ -16,7 +9,6 @@ from habit_hooks.sensors import parse_args
 
 
 def source_file(project_dir: Path) -> Path:
-    """A source file at ``src/a.py``, returned by its absolute path."""
     (project_dir / "src").mkdir(exist_ok=True)
     source = project_dir / "src" / "a.py"
     source.write_text("x = 1\n", encoding="utf-8")

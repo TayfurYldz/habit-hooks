@@ -1,4 +1,3 @@
-"""Marker codepoints. Any U+FE0F variation selector is ignored when matching."""
 
 FILE = "\U0001F4C4"  # 📄
 ENV = "✏"  # ✏️

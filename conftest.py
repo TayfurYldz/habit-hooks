@@ -1,10 +1,3 @@
-"""Collect the executable specs (``docs/**/*.spec.md`` and ``plugins/*/docs/*.spec.md``, both under pytest's ``testpaths``) as pytest tests.
-
-Each leaf spec case (per ``docs/executable_spec.md``) becomes one pytest item,
-so ``uv run pytest`` reports the specs alongside the harness's own unit tests
-with native pass/skip/fail. The engine lives in ``tests/harness.py`` (importable
-via the ``pythonpath`` set in ``pyproject.toml``).
-"""
 
 from __future__ import annotations
 
@@ -27,8 +20,6 @@ _REPO_ROOT = Path(__file__).parent
 
 
 def _case_root() -> Path:
-    """One level below the repo root, so a case dir created inside it sits two
-    levels down and the specs' ``../../habit-mapper`` launcher shim resolves."""
     root = _REPO_ROOT / ".spec-runs"
     root.mkdir(exist_ok=True)
     return root

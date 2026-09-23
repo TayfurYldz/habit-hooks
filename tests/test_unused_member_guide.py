@@ -1,4 +1,3 @@
-"""Shared unused-member coaching follows the line-level issue contract."""
 
 from __future__ import annotations
 

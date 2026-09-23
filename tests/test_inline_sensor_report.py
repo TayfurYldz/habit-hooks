@@ -1,5 +1,3 @@
-"""``report = true``: a fresh file handed through ``${report}``, and a missing
-report read as a run that never delivered, not a clean one."""
 
 from __future__ import annotations
 
@@ -10,7 +8,6 @@ from test_inline_sensor_run import FINDING, GROUPING, MADE_UP, inline_run
 
 
 def report_entry(body: str, extra: str) -> tuple[str, dict[str, str]]:
-    """The entry TOML and plugin files for a fake tool running ``body``."""
     return (
         '{ tool = "${python}", name = "lint", '
         'args = ["${dir}/tool.py", "${report}"]'

@@ -1,11 +1,3 @@
-"""Shared fixtures for the ``habit-hooks init`` install-running tests.
-
-Nothing here installs anything real: every command is the running interpreter
-running a tiny script that leaves a marker behind, so a case can ask what init
-ran without asking the network — and without a shell, which ``_succeeded``
-no longer uses at all. Split from a single test module once it grew a second
-concern (whether a command is ever handed to a shell) worth its own file.
-"""
 
 from __future__ import annotations
 
@@ -36,17 +28,12 @@ FAILING = (
 
 
 class Terminal(io.StringIO):
-    """stdin as a person sitting at one, which ``io.StringIO`` alone is not."""
 
     def isatty(self) -> bool:
         return True
 
 
 def needing(project_dir: Path, *entries: str) -> None:
-    """A project whose only plugin declares tools nothing on this machine has,
-    each installed by a small script that records that it ran — ``mark.py``
-    writes its one argument to ``ran.log`` and succeeds; ``fail.py`` writes
-    nothing and does not."""
     (project_dir / "mark.py").write_text(
         "import sys\n"
         f"open({RAN!r}, 'a', encoding='utf-8').write(sys.argv[1] + '\\n')\n",

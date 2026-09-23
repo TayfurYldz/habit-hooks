@@ -1,4 +1,3 @@
-"""Parse markdown elements into runnable SpecCases (the leaf execution contexts)."""
 
 from __future__ import annotations
 
@@ -34,7 +33,6 @@ def _file_step(arg: str) -> tuple[object, bool | None]:
 
 
 def build_marker(marker: Marker) -> tuple[object, bool | None]:
-    """(step, fence): fence is None=no block, True=required, False=optional."""
     kind, arg = marker.kind, marker.arg
     if kind == "file":
         return _file_step(arg)
@@ -48,7 +46,6 @@ def build_marker(marker: Marker) -> tuple[object, bool | None]:
 
 
 class StepBuilder:
-    """Pairs marker elements with their payload fences into ordered steps."""
 
     def __init__(self):
         self.steps: list[object] = []
@@ -104,7 +101,6 @@ class _Node:
 
 
 class TreeBuilder:
-    """Builds the heading tree; each node owns the elements directly beneath it."""
 
     def __init__(self):
         self.nodes: list[_Node] = []
@@ -143,13 +139,11 @@ def _ancestry(leaf: _Node) -> list[_Node]:
 
 
 def _leaf_case(leaf: _Node) -> SpecCase:
-    """A leaf's test case: its ancestors' preambles, in order, then its own steps."""
     chain = _ancestry(leaf)
     steps = [step for node in chain for step in StepBuilder().build(node.elements)]
     return SpecCase(leaf.name, any(n.skip for n in chain), steps)
 
 
 def parse_spec(text: str) -> list[SpecCase]:
-    """The markdown's leaf contexts, each as a runnable test case."""
     nodes = TreeBuilder().build(read_elements(text))
     return [_leaf_case(node) for node in nodes if not node.has_child]

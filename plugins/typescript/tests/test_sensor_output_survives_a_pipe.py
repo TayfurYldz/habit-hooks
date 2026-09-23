@@ -1,19 +1,3 @@
-"""The JS sensors must deliver complete JSON when stdout is a pipe.
-
-Node's writes to a pipe are asynchronous, so a sensor that calls
-``process.exit()`` straight after ``process.stdout.write`` is killed before the
-write drains and its output is cut at the pipe buffer (~64KB). The runner always
-captures sensor output through a pipe (``execution._run``), so any payload past
-that boundary arrives as invalid JSON. Redirecting to a file hides the bug —
-file writes are synchronous — hence the pipe here, and a fixture big enough to
-cross the boundary.
-
-All three sensors, because the hazard is Node's and not any one helper's: each
-writes its findings and then lets the process end on its own. The comment sensor
-is driven by a real source file; the two that wrap a third-party tool are driven
-by a stub printing a report of the right size, since what the tool would have
-made of a big tree is not the question.
-"""
 
 from __future__ import annotations
 
@@ -27,8 +11,6 @@ PIPE_BUFFER_BYTES = 64 * 1024
 PLUGIN = Path(__file__).parents[1]
 SENSORS = PLUGIN / "src" / "habit_hooks_typescript" / "sensors"
 
-# Each issue yields ~200 bytes of JSON, so this clears the buffer several times
-# over — a fixture that stays under it passes whether or not the bug is present.
 ISSUE_COUNT = 1500
 
 
@@ -94,8 +76,6 @@ def _sole_finding(result: subprocess.CompletedProcess[str], smell: str) -> dict:
 def test_comment_sensor_emits_complete_json_through_a_pipe(tmp_path: Path) -> None:
     source = _source_with_many_comments(tmp_path)
 
-    # The helper resolves ts-morph from the directory it is run in, as it does in
-    # a consumer project, so the run needs one that has it.
     result = _run(["node", str(SENSORS / "comment.cjs"), str(source)], PLUGIN)
 
     assert len(_sole_finding(result, "non-essential-comment")["issues"]) == ISSUE_COUNT

@@ -1,11 +1,3 @@
-"""Unit tests for what the active plugins contribute to a project's config.
-
-``files``, ``[runners]`` and ``detectors`` are the root keys a plugin supplies:
-what it calls source, what it can run a fix with, and what it needs installed.
-Each merges across the ``plugins`` list in order, and the project's own config
-settles the two it may also name. Loading the project's own config is
-``test_config.py``; refusing a config is ``test_config_schema.py``.
-"""
 
 from __future__ import annotations
 
@@ -21,7 +13,6 @@ def _project(tmp_path: Path, body: str) -> Path:
 
 
 def _plugin(project_dir: Path, name: str, body: str) -> None:
-    """A fixture plugin, shadowing any installed one of that name."""
     write_plugin(project_dir, name, {"config.toml": body})
 
 
@@ -30,7 +21,6 @@ def _load(project_dir: Path) -> Config:
 
 
 def test_plugin_files_merge_in_plugins_order_without_repeating(tmp_path: Path) -> None:
-    """Order is load-bearing: pathspec reads the list in order."""
     project = _project(tmp_path, 'plugins = ["alpha", "beta"]')
     _plugin(project, "alpha", 'files = ["src/**", "shared/**"]')
     _plugin(project, "beta", 'files = ["shared/**", "lib/**"]')
@@ -38,12 +28,6 @@ def test_plugin_files_merge_in_plugins_order_without_repeating(tmp_path: Path) -
 
 
 def test_one_plugins_exclusion_survives_another_plugins_globs(tmp_path: Path) -> None:
-    """A positive glob names a language; an exclusion names a directory nobody's
-    language lives in. pathspec is last-match-wins, so an exclusion left among the
-    positives binds only what precedes it — and the next plugin's `**/*.py` hands
-    back the dependency the plugin before it just excluded (`node_modules` ships
-    Python: node-gyp alone has 58 files). Every exclusion goes last, so which
-    plugin the project happened to list first cannot decide what is scanned."""
     project = _project(tmp_path, 'plugins = ["alpha", "beta"]')
     _plugin(project, "alpha", 'files = ["**/*.ts", "!**/node_modules/**"]')
     _plugin(project, "beta", 'files = ["**/*.py"]')
@@ -64,7 +48,6 @@ def test_a_plugin_declaring_no_files_states_no_opinion(tmp_path: Path) -> None:
 
 
 def test_plugin_runners_merge_under_the_project(tmp_path: Path) -> None:
-    """A plugin ships its own ``[runners]``; the project's win per extension."""
     project = _project(tmp_path, 'plugins = ["alpha"]\n[runners]\npy = "python3"')
     _plugin(project, "alpha", '[runners]\npy = "python2"\nlua = "lua"')
     assert _load(project).runners == {"py": "python3", "lua": "lua"}
@@ -77,7 +60,6 @@ def test_plugin_runners_apply_when_the_project_declares_none(tmp_path: Path) -> 
 
 
 def test_the_first_plugin_wins_a_runner_extension(tmp_path: Path) -> None:
-    """``plugins`` order is a priority, as it is for guide lookup."""
     project = _project(tmp_path, 'plugins = ["alpha", "beta"]')
     _plugin(project, "alpha", '[runners]\npy = "alpha-py"')
     _plugin(project, "beta", '[runners]\npy = "beta-py"')
@@ -103,8 +85,6 @@ def test_a_plugin_declaring_no_detectors_contributes_none(tmp_path: Path) -> Non
 
 
 def test_a_declared_detector_keeps_its_kind_and_install_command(tmp_path: Path) -> None:
-    """All three fields travel: what to look for, how to look for it, and the
-    command that installs it — the last is the whole point of declaring it."""
     project = _project(tmp_path, 'plugins = ["alpha"]')
     _plugin(project, "alpha", _declaring(_entry("ts-morph", "node-module")))
     assert _detectors(project) == [
@@ -113,9 +93,6 @@ def test_a_declared_detector_keeps_its_kind_and_install_command(tmp_path: Path) 
 
 
 def test_a_declared_detector_keeps_the_search_paths_it_named(tmp_path: Path) -> None:
-    """The directories a plugin's tools live in are the plugin's to name —
-    bundler's ``bin`` is not every project's — so they travel with the detector
-    to every lookup that asks for it."""
     bundled = (
         '{ name = "rubocop", kind = "command", install = "gem install rubocop", '
         'search_paths = ["bin"] }'
@@ -140,8 +117,6 @@ def test_plugin_detectors_merge_in_plugins_order(tmp_path: Path) -> None:
 
 
 def test_two_plugins_naming_one_detector_declare_it_once(tmp_path: Path) -> None:
-    """Two languages needing the same tool must not ask twice; the first plugin
-    to name it decides how it is installed, as it does for a runner."""
     other = '{ name = "jq", kind = "command", install = "other" }'
     project = _project(tmp_path, 'plugins = ["alpha", "beta"]')
     _plugin(project, "alpha", _declaring(_entry("jq")))
@@ -150,8 +125,6 @@ def test_two_plugins_naming_one_detector_declare_it_once(tmp_path: Path) -> None
 
 
 def test_one_name_under_two_kinds_is_two_detectors(tmp_path: Path) -> None:
-    """``eslint`` on PATH and ``eslint`` resolvable by node are different
-    questions with different answers, so the kind is part of the identity."""
     project = _project(tmp_path, 'plugins = ["alpha"]')
     _plugin(project, "alpha", _declaring(_entry("eslint"), _entry("eslint", "node-module")))
     assert [d.kind for d in _detectors(project)] == ["command", "node-module"]

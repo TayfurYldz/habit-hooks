@@ -1,9 +1,3 @@
-"""Unit tests for the project's own names for things: its paths, and its tools.
-
-The spec cases cover what a sensor sees; these cover the two things a spec
-cannot reach — the shapes a path arrives in, and a project reached through a
-symlink, which is how a macOS temp directory (and many a CI checkout) is reached.
-"""
 
 from __future__ import annotations
 
@@ -32,7 +26,6 @@ def test_a_relative_path_keeps_its_meaning_and_loses_its_detours(
 
 
 def test_the_project_itself_is_not_a_path_under_it(tmp_path: Path) -> None:
-    """As a key it would stand for every file at once; as a pathspec, match them."""
     assert project_relative("", tmp_path) is None
     assert project_relative(".", tmp_path) is None
     assert project_relative(str(tmp_path), tmp_path) is None
@@ -44,7 +37,6 @@ def test_a_path_escaping_the_project_cannot_be_anchored(tmp_path: Path) -> None:
 
 
 def test_a_project_reached_through_a_symlink_still_anchors(tmp_path: Path) -> None:
-    """The tool resolved the path; the project did not. Both name one file."""
     real = tmp_path / "real"
     real.mkdir()
     through_link = tmp_path / "link"
@@ -56,8 +48,6 @@ def test_a_project_reached_through_a_symlink_still_anchors(tmp_path: Path) -> No
 def test_a_symlinked_source_directory_keeps_the_project_s_own_name_for_it(
     tmp_path: Path,
 ) -> None:
-    """The lexical answer wins when there is one, so a monorepo's linked source
-    tree stays the path the project (and git) knows it by."""
     shared = tmp_path / "shared-lib"
     shared.mkdir()
     (tmp_path / "src").mkdir()
@@ -69,8 +59,6 @@ def test_a_symlinked_source_directory_keeps_the_project_s_own_name_for_it(
 def test_the_project_s_own_tool_bins_come_first_on_its_search_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A project's pinned tools beat the machine's, and one answer serves both
-    the run that spawns them and the setup that reports them missing."""
     monkeypatch.setenv("PATH", "/usr/bin")
     off_windows(monkeypatch)
 
@@ -84,14 +72,6 @@ def test_the_project_s_own_tool_bins_come_first_on_its_search_path(
 def test_the_project_s_bin_is_searched_only_where_a_detector_names_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``bin`` is bundler's answer to ``node_modules/.bin``, but it is also a
-    directory a project may keep its own scripts under — where those two can
-    hold nothing else — so a script named after a tool there would outrank a
-    real install beside it. The plugin whose tools live there names the
-    directory on its detector instead
-    (``detectors.search_paths``), and only the lookups that ask for that tool
-    search it.
-    """
     monkeypatch.setenv("PATH", "/usr/bin")
 
     assert str(tmp_path / "bin") not in tool_search_path(tmp_path).split(os.pathsep)
@@ -100,7 +80,6 @@ def test_the_project_s_bin_is_searched_only_where_a_detector_names_it(
 def test_a_venv_keeps_its_executables_under_bin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """CPython's own layout, everywhere except Windows."""
     off_windows(monkeypatch)
 
     assert venv_bin_dir(tmp_path / ".venv") == tmp_path / ".venv" / "bin"
@@ -117,9 +96,6 @@ def test_a_windows_venv_keeps_its_executables_under_scripts(
 def test_the_search_path_reaches_a_windows_venv_s_scripts_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Asked through ``tool_search_path`` rather than directly — proof the two
-    do not drift apart, since a run and a missing-tools report both go through
-    ``tool_search_path``, never ``venv_bin_dir`` alone."""
     monkeypatch.setenv("PATH", "/usr/bin")
     on_windows(monkeypatch)
 
@@ -151,7 +127,6 @@ def test_a_windows_venv_s_interpreter_gains_an_exe_suffix(
 def test_a_windows_venv_s_console_script_gains_the_same_suffix(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Not just the interpreter — a plugin's own console script too."""
     on_windows(monkeypatch)
 
     assert (

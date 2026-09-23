@@ -1,11 +1,3 @@
-"""The ``${args}`` slot of an inline sensor's recipe.
-
-An inline entry's ``args`` are its recipe — spelled once, for every run — so a
-project's ``[sensors.<name>]`` args override lands in the recipe's ``${args}``
-slot, exactly as a spec file's ``args`` default receives one: the shipped
-threshold flag of a program sensor arrives through it, and an override replaces
-the default without touching the rest of the recipe.
-"""
 
 from __future__ import annotations
 

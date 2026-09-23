@@ -1,16 +1,3 @@
-"""A project that declares no dependencies has none that go unused.
-
-deptry raises ``DependencySpecificationNotFoundError`` when it finds no
-``pyproject.toml`` carrying a ``[project]``/``[tool.poetry.dependencies]``/
-``[tool.pdm]`` section and none of its requirements filenames either — its own
-search across PEP 621, poetry, pdm and deptry's configurable requirements
-names, in one place, so this sensor recognises that answer rather than
-re-implementing the search (see "A wrapped tool's own config wins" in
-CLAUDE.md). A project with nothing declared has, honestly, zero declared but
-unused dependencies, and that must read as a clean run, not a broken one —
-kept distinct here from every other way deptry can fail, which still has to
-fail loud.
-"""
 
 from __future__ import annotations
 
@@ -45,8 +32,6 @@ def test_a_project_declaring_no_dependencies_is_a_clean_run(
 def test_deptry_still_answers_a_missing_declaration_with_that_error(
     tmp_path: Path, deptry: str
 ) -> None:
-    """The sensor recognises deptry's exception by name, so a deptry that stops
-    raising it must fail here rather than silently retire that branch."""
     (tmp_path / "app.py").write_text("import os\n", encoding="utf-8")
 
     result = subprocess.run(

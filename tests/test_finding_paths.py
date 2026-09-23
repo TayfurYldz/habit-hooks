@@ -1,10 +1,3 @@
-"""Unit tests for the guards around the anchoring boundary.
-
-The spec cases cover what a well-formed sensor gets. These cover the two things
-they cannot reach: the spellings under which a key and its file are the same
-path, and what a *malformed* sensor must get instead of a traceback out of the
-runner — this boundary reads output from tools nobody here wrote.
-"""
 
 from __future__ import annotations
 
@@ -42,7 +35,6 @@ def test_an_absolute_key_beside_a_relative_file_is_still_that_file(
 
 
 def test_a_key_that_names_no_file_is_still_left_alone(tmp_path: Path) -> None:
-    """The carve-out survives: `deptry` keys by module, `knip` by export name."""
     findings = _finding({"key": "requests", "details": {"file": "pyproject.toml"}})
 
     assert _anchored_issues(findings, tmp_path)[0]["key"] == "requests"
@@ -78,8 +70,6 @@ def test_an_issue_that_is_not_an_object_fails_by_name(tmp_path: Path) -> None:
 def test_issues_that_is_not_a_list_fails_by_name(
     issues: object, tmp_path: Path
 ) -> None:
-    """Including the shapes that are not even iterable — a `for` over one of
-    those is a `TypeError` nobody catches."""
     findings = [{"smell": "oversized-file", "details": {}, "issues": issues}]
 
     with pytest.raises(SensorError, match="'alpha'"):

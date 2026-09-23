@@ -1,9 +1,3 @@
-"""Run deptry and print ``unused-dependency`` findings.
-
-deptry's stdout is unreliable when piped, so this wrapper runs it against a temp
-JSON report, reads that report, and shapes each ``DEP002`` (a declared but unused
-dependency) into the canonical finding.
-"""
 
 from __future__ import annotations
 
@@ -15,15 +9,6 @@ from pathlib import Path
 
 
 def run_deptry(deptry: str, report: Path) -> subprocess.CompletedProcess[str]:
-    """What deptry said, spawned as the file this sensor was handed for it.
-
-    ``sensors/deptry.toml`` names ``${detector:deptry}``, so the run resolves
-    deptry to a file before this helper starts and passes it as the first
-    argument — a console script the project's own venv installed, which
-    habit-hooks' venv may not hold at all and Windows spells ``deptry.exe``. A
-    deptry nobody installed never reaches here: the run answers for it as the
-    missing command it is, in one line rather than a traceback.
-    """
     return subprocess.run(
         [deptry, ".", "--json-output", str(report)],
         capture_output=True,
@@ -37,16 +22,6 @@ def deptry_crashed(result: subprocess.CompletedProcess[str], report: Path) -> bo
 
 
 def deptry_found_no_declaration(result: subprocess.CompletedProcess[str]) -> bool:
-    """Whether deptry crashed because it found no dependency declaration to check.
-
-    deptry raises ``DependencySpecificationNotFoundError`` when it finds no
-    dependency declaration to check. Asking the tool this way, instead of
-    reimplementing its PEP 621/poetry/pdm search, keeps the answer from
-    drifting off deptry's own. A project with none declared genuinely has
-    zero declared-but-unused dependencies — a clean result, not a swallowed
-    failure. Matching on the exception's class name, only inside the
-    already-crashed branch, keeps every other crash failing loud.
-    """
     return "DependencySpecificationNotFoundError" in result.stderr
 
 

@@ -1,15 +1,3 @@
-"""Resolve plugin files across the override chain.
-
-A plugin's files are looked up project-override
-(``.habit-hooks/<plugin>/``) before package default (the plugin's installed
-package data). Plugins are installed packages, discovered at runtime through the
-``habit_hooks.plugins`` entry-point group; the configured ``plugins`` list
-selects and orders them. Plugins are walked in the configured order, so an
-earlier plugin's guide wins over a later one's.
-
-A plugin that a project configures but neither overrides under ``.habit-hooks/``
-nor installs as a package raises a clear error naming it and its install command.
-"""
 
 from __future__ import annotations
 
@@ -23,27 +11,13 @@ from .cli import ToolError
 
 PLUGIN_ENTRY_POINT_GROUP = "habit_hooks.plugins"
 
-# The core ships baseline guides (clean.md, uncoached.md) as the final fallback, so
-# the mapper still coaches and never crashes when no configured plugin supplies them
-# (for example a project that drops the generic plugin).
 CORE_GUIDES = Path(__file__).parent / "guides"
 
-# The core package root, searched last for a `<kind>/<name>.toml` part. It is what
-# lets the default `transformers = ["snooze"]` resolve whichever plugins a project
-# happens to configure; the two `transformers/snooze*.toml` specs are the only
-# parts shipped here.
 CORE_PACKAGE_DIR = Path(__file__).parent
 
 
 @cache
 def installed_plugin_dirs() -> dict[str, Path]:
-    """Map each installed plugin's name to its package data directory.
-
-    Discovered through the ``habit_hooks.plugins`` entry-point group: each entry
-    point's name is the plugin name and its value the import package whose
-    bundled files (``config.toml``, ``sensors/``, ``guides/``, …) are the
-    plugin's defaults.
-    """
     dirs: dict[str, Path] = {}
     for entry_point in entry_points(group=PLUGIN_ENTRY_POINT_GROUP):
         dirs[entry_point.name] = Path(str(files(entry_point.value)))
@@ -52,20 +26,6 @@ def installed_plugin_dirs() -> dict[str, Path]:
 
 @cache
 def installed_plugin_distributions() -> dict[str, str]:
-    """Map each installed plugin's name to the distribution that ships it.
-
-    Kept apart from :func:`installed_plugin_dirs` because it answers a different
-    question — where a plugin's files are against what to ask an index for — and
-    because every caller of that one wants the directory alone. Nothing obliges
-    a plugin to name its distribution after its entry point, so this is read off
-    the installation rather than spelled ``habit-hooks-<name>``: guessing is an
-    install command that fails on a name no index has heard of.
-
-    An entry point without a distribution is left out — typing's case rather
-    than a real one, and one nothing here can answer for. It degrades to that
-    same guess, silently and for that plugin alone, which is why the suite holds
-    this map to covering exactly the plugins ``installed_plugin_dirs`` does.
-    """
     return {
         entry_point.name: entry_point.dist.name
         for entry_point in entry_points(group=PLUGIN_ENTRY_POINT_GROUP)
@@ -75,12 +35,6 @@ def installed_plugin_distributions() -> dict[str, str]:
 
 @dataclass(frozen=True)
 class Resolver:
-    """The override chain layout: where plugin files are looked up.
-
-    Holds the project (override) root and the installed plugins' package-data
-    roots, and offers the lookups that walk them — project override before
-    package default.
-    """
 
     project_dir: Path
     package_dirs: dict[str, Path]
@@ -95,17 +49,9 @@ class Resolver:
         return [override] if package is None else [override, package]
 
     def has_plugin(self, plugin: str) -> bool:
-        """Whether this plugin's files resolve at all — vendored or installed.
-
-        The question behind both "you configured a plugin that is not there"
-        (:meth:`require_plugin`) and its mirror image, "you have a plugin you
-        never switched on" (``recommend``), so the two can never disagree about
-        what counts as having one.
-        """
         return self.in_plugin(plugin, "config.toml") is not None
 
     def require_plugin(self, plugin: str) -> None:
-        """Fail clearly if a configured plugin is neither overridden nor installed."""
         if self.has_plugin(plugin):
             return
         raise ToolError(
@@ -114,7 +60,6 @@ class Resolver:
         )
 
     def in_plugin(self, plugin: str, relative: str) -> Path | None:
-        """First existing ``<plugin>/<relative>``, project override before package."""
         for base in self.plugin_dirs(plugin):
             candidate = base / relative
             if candidate.is_file():
@@ -122,12 +67,6 @@ class Resolver:
         return None
 
     def part(self, plugins: list[str], relative: str) -> Path | None:
-        """First existing ``<plugin>/<relative>`` across plugins, else the core's own.
-
-        The core fallback keeps a default part (``transformers/snooze.toml``)
-        resolvable no matter which plugins a project configures, mirroring the
-        guide fallback in :meth:`first`.
-        """
         for plugin in plugins:
             found = self.in_plugin(plugin, relative)
             if found is not None:
@@ -139,10 +78,6 @@ class Resolver:
         return self.first(plugins, [guide])
 
     def first(self, plugins: list[str], candidates: list[str]) -> Path | None:
-        """First existing guide, walking plugins then override-before-package; within
-        one directory the candidate names are tried in order. Falls back last to the
-        core's built-in baseline guides, so the mapper still coaches (never crashes)
-        when no configured plugin supplies the guide."""
         for plugin in plugins:
             for base in self.plugin_dirs(plugin):
                 for name in candidates:

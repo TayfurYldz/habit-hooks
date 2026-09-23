@@ -1,9 +1,3 @@
-"""What each marker in the spec grammar means, one marker at a time.
-
-The grammar contract is ``docs/executable_spec.md``. Normalisation sits here
-too: it is how a screen marker decides two outputs are the same, so it is part
-of what a marker means rather than a separate concern.
-"""
 
 
 from harness import normalize, parse_spec
@@ -11,7 +5,6 @@ from harness import normalize, parse_spec
 from spec_runs import run
 
 
-# --- normalisation ---------------------------------------------------------
 
 
 def test_normalize_strips_ansi_and_trailing():
@@ -22,7 +15,6 @@ def test_normalize_trims_per_line_and_drops_trailing_blanks():
     assert normalize("a   \nb\t\n\n\n") == "a\nb"
 
 
-# --- markers ---------------------------------------------------------------
 
 
 def test_command_and_screen_pass(tmp_path):
@@ -92,26 +84,21 @@ def test_stderr_marker_mismatch_fails(tmp_path):
 
 
 def test_stderr_with_screen_failure(tmp_path):
-    # 🖥️ and 🚨 sit on adjacent lines with no blank between, so markdown-it
-    # groups them into one paragraph — both markers must still be extracted.
     spec = "# T\n```bash\necho bad >&2; exit 1\n```\n🖥️ ❌ 1\n🚨\n```text\nbad\n```\n"
     assert run(spec, tmp_path) == ["pass"]
 
 
 def test_adjacent_marker_lines_parse_separately():
-    # Regression guard for the parser swap: two markers in one paragraph.
     steps = parse_spec("# T\n```bash\ntrue\n```\n🖥️ ✅\n🚨\n")[0].steps
     assert [type(s).__name__ for s in steps] == ["Command", "Screen", "Stderr"]
 
 
 def test_variation_selector_ignored(tmp_path):
-    # 🖥 without U+FE0F must behave like 🖥️.
     spec = "# T\n```bash\necho hi\n```\n\U0001F5A5 ✅\n```text\nhi\n```\n"
     assert run(spec, tmp_path) == ["pass"]
 
 
 def test_bash_block_never_consumed_as_payload(tmp_path):
-    # The ```bash following ⌨️'s json must run, not be eaten as stdin.
     spec = "# T\n⌨️\n```json\nin\n```\n```bash\ncat\n```\n🖥️ ✅\n```text\nin\n```\n"
     assert run(spec, tmp_path) == ["pass"]
 

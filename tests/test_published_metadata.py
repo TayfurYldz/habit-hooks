@@ -1,13 +1,3 @@
-"""Every published package's PyPI page has something on it.
-
-All six packages went out with an empty PyPI page: no README, no keywords, no
-classifiers, no project links — nothing for a search engine to rank on. A
-`pyproject.toml` missing this metadata still builds and installs fine, so
-nothing else in the suite would have caught it.
-
-Parametrised over the package directories, so a plugin added without this
-metadata fails here rather than shipping another blank page.
-"""
 
 from __future__ import annotations
 

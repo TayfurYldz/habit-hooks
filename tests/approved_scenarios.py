@@ -1,13 +1,3 @@
-"""The approved-output scenario runner: one gate for every scenario any plugin ships.
-
-    scenarios/<sensor>/
-      sample/          the sample codebase the sensor runs over — it is the run's scope
-      approved.json    the findings the sensor must produce — JSON only, never guide strings
-      scenario.toml    optional: ``tool = "<name>"``, so a machine without it skips
-
-``check`` runs the sensor through the plugin's own config and diffs the
-findings against ``approved.json``; a drift prints both sides.
-"""
 
 from __future__ import annotations
 
@@ -31,7 +21,6 @@ SCENARIO_KEYS = frozenset({"tool"})
 
 
 def _staged(plugin: str, scenario: Path, project: Path) -> Config:
-    """The project ready to run: sample copied in, only this plugin enabled."""
     if not (scenario / "sample").is_dir():
         _refuses(
             scenario,
@@ -53,7 +42,6 @@ def _staged(plugin: str, scenario: Path, project: Path) -> Config:
 
 
 def scenarios_in(plugin_dir: Path) -> list[Path]:
-    """Every scenario a plugin ships: each directory under its ``scenarios/``."""
     scenarios = plugin_dir / "scenarios"
     if not scenarios.is_dir():
         return []
@@ -61,7 +49,6 @@ def scenarios_in(plugin_dir: Path) -> list[Path]:
 
 
 def check(plugin: str, scenario: Path, project: Path) -> None:
-    """Run the scenario's sensor over its sample and hold it to its approval."""
     config = _staged(plugin, scenario, project)
     loader = PluginLoader(Resolver.discover(project), config)
     sensor = _sensor_named(plugin, scenario, loader)
@@ -92,13 +79,6 @@ def _sensor_named(plugin: str, scenario: Path, loader: PluginLoader) -> Part:
 
 
 def _skip_when_tool_absent(scenario: Path, config: Config, project: Path) -> None:
-    """Skip a scenario whose tool this machine has not installed.
-
-    Asked with the same detector machinery a run's setup uses, so a skip and a
-    missing-tool notice can never disagree about what is installed. A tool no
-    plugin declares is a broken scenario, not a skip: it would silently vanish
-    from every machine, including the ones that have it.
-    """
     meta = scenario / "scenario.toml"
     if not meta.is_file():
         return
@@ -131,7 +111,6 @@ def _tool_named_in(scenario: Path, spec: dict) -> str:
 
 
 def _scoped_paths(project: Path) -> list[str]:
-    """Every file of the sample as the run sees it: project-relative, POSIX."""
     return sorted(
         path.relative_to(project).as_posix()
         for path in project.rglob("*")

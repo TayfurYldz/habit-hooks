@@ -1,4 +1,3 @@
-"""Unit tests for the one place that asks what platform this run is on."""
 
 from __future__ import annotations
 

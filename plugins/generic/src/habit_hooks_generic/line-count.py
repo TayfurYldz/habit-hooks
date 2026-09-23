@@ -1,4 +1,3 @@
-"""Emit an ``oversized-file`` finding for every file longer than ``--max`` lines."""
 
 from __future__ import annotations
 

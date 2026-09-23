@@ -1,10 +1,3 @@
-"""The exemplar plugin: a throwaway sensor wrapping a stub tool, one scenario.
-
-Every rule test in ``test_approved_scenarios.py`` breaks this scenario in one
-way and holds that the runner names the rule; the approval test runs it green.
-Its tool is a stub executable every machine can run, so the exemplar never
-skips for a missing tool.
-"""
 
 from __future__ import annotations
 
@@ -58,8 +51,6 @@ _WINDOWS_STUB = (
 
 
 def exemplar_scenario(project: Path) -> Path:
-    """A throwaway plugin shipping one approved scenario, under
-    ``.habit-hooks/exemplar/`` so the real resolver and loader reach it."""
     plugin = project / ".habit-hooks" / "exemplar"
     _write(plugin / "config.toml", PLUGIN_TOML)
     _write(plugin / "map.jq", TRANSFORM + "\n")
@@ -77,7 +68,6 @@ def _write(path: Path, body: str) -> None:
 
 
 def _write_stub_tool(bin_dir: Path) -> None:
-    """The always-present tool: prints one violation per file argument."""
     if os.name == "nt":
         helper = bin_dir / "_stub_lint.py"
         _write(helper, _WINDOWS_STUB)

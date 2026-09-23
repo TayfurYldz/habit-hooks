@@ -1,16 +1,3 @@
-"""NcssCount and CyclomaticComplexity report classes as well as methods and
-constructors, off one rule each. The catalogue has a smell only for an
-over-complex or oversized *method* — `high-complexity`'s guide says "extract
-one function per branch" — so a class-level violation of either rule must be
-dropped, not forwarded as if it named a function.
-
-The bundled ruleset only sets `methodReportLevel`, leaving
-`CyclomaticComplexity`'s `classReportLevel` at PMD's default of 80: a class of
-many simple methods trips it, and before this fix `smell_of` filtered
-class-level violations for `NcssCount` only, so the class-level
-`CyclomaticComplexity` slipped through as `high-complexity` with no
-over-complex function anywhere in the file.
-"""
 
 from __future__ import annotations
 
@@ -57,8 +44,6 @@ def test_a_constructor_level_cyclomatic_complexity_violation_is_high_complexity(
 
 
 def test_a_class_level_ncss_count_violation_is_still_dropped() -> None:
-    """The behaviour the original filter already had, kept while the filter
-    generalises from one rule to two."""
     entry = _entry("NcssCount", "The class 'Fat' has an NCSS line count of 200.")
 
     assert smell_of(entry) is None
@@ -71,8 +56,6 @@ def test_a_method_level_ncss_count_violation_is_still_oversized_function() -> No
 
 
 def test_an_enum_level_ncss_count_violation_is_dropped() -> None:
-    """PMD also words this one as 'The enum', 'The interface' and 'The
-    record' — none of them a method or a constructor."""
     entry = _entry("NcssCount", "The enum 'Kind' has an NCSS line count of 90.")
 
     assert smell_of(entry) is None
@@ -107,9 +90,6 @@ def test_empty_catch_block_still_maps_to_swallowed_exception() -> None:
 
 
 def test_a_class_level_violation_never_reaches_findings() -> None:
-    """The whole shape a real PMD run would produce: a class-level
-    complexity violation sitting beside a real method-level one — only the
-    method-level violation survives into the findings the mapper sees."""
     entries = [
         _entry(
             "CyclomaticComplexity",

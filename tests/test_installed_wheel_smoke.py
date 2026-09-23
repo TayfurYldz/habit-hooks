@@ -1,16 +1,3 @@
-"""Whether an installed core can still find and run its plugins.
-
-This is the test that would have caught the original "installed runs cannot
-locate plugins" bug: it runs the real ``habit-sensors`` console script out of a
-throwaway venv — no source tree, no editable install, no ``plugins/`` sibling
-directory on disk — against a fixture with a known smell. A genuine finding must
-come out, never the plugin-not-found error.
-
-What each *plugin* had to bring with it is ``test_installed_plugin_packaging``.
-Building and installing is ``wheelhouse``, the install itself ``conftest``, the
-environment a run lands in ``installed_env``, and the projects
-``installed_projects``; this module is only what an installed run must produce.
-"""
 
 from __future__ import annotations
 
@@ -23,8 +10,6 @@ from installed_env import run_and_collect_findings, without_python_on_path
 from installed_projects import MAX_ALLOWED_LINES, OVERSIZED_LINES, oversized_project
 from wheelhouse import build_wheels, install_by_name, installed_packages
 
-# A plugin no wheel in this repo provides, so "you configured a plugin that is
-# not there" keeps meaning that however many plugins we ship.
 UNSHIPPED_PLUGIN = "cobol"
 
 
@@ -71,10 +56,6 @@ def test_installed_generic_plugin_emits_a_real_finding(
 def test_bundled_python_sensor_runs_without_python_on_path(
     installed_habit_sensors: Path, tmp_path: Path
 ) -> None:
-    """The bundled line-count sensor invokes a Python helper script. With a bare
-    ``python`` in the command this fails on any environment that ships only
-    ``python3`` (or none). The ``${python}`` placeholder must run it via the
-    interpreter behind ``habit-sensors`` regardless of PATH."""
     project = oversized_project(tmp_path, "no-python-proj")
 
     findings = run_and_collect_findings(

@@ -1,5 +1,3 @@
-"""The file a declared detector is resolved to, and the literal filenames
-the tool is handed."""
 
 from __future__ import annotations
 

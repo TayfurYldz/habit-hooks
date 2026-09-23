@@ -1,14 +1,3 @@
-"""A project's ruleset has to be recognised in every spelling PMD accepts.
-
-The bundled ruleset is only the answer to "this project has none", so a project
-that names its own must get theirs *instead* of ours. That only happens if the
-sensor takes their `-R` out of the args: PMD accepts the option more than once
-and unions what it is given, so a spelling the sensor fails to recognise does
-not fall back to ours — it hands PMD both, and the run reports the smells that
-project's ruleset was written to exclude. Silently, at exit 0.
-
-picocli takes five spellings, and `-R=x` / `-Rx` were the two that got through.
-"""
 
 from __future__ import annotations
 
@@ -67,9 +56,6 @@ def test_a_conventional_ruleset_beats_the_bundled_one(tmp_path: Path) -> None:
 def test_a_ruleset_option_with_nothing_after_it_is_left_for_pmd_to_refuse(
     tmp_path: Path,
 ) -> None:
-    """A bare `-R` names nothing, so it is not a ruleset this sensor can honour.
-    Passing it through is what makes PMD say so; swallowing it would run the
-    bundled ruleset under a project's config that was meant to replace it."""
     ruleset, remaining = ruleset_of(["-R"], tmp_path)
 
     assert ruleset.name == BUNDLED
