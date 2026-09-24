@@ -28,7 +28,7 @@ jobs:
       - name: Lint (ruff)
         # --config is required: plugins/python ships files literally named
         # ruff.toml (sensor specs), which ruff's upward discovery would load as
-        # its own config and reject. See CLAUDE.md.
+        # its own config and reject. See AGENTS.md.
         run: uv run ruff check --config pyproject.toml src tests plugins
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -43,7 +43,7 @@ jobs:
         #
         # pnpm, not npm: only pnpm implements the install cooldown that .npmrc's
         # minimum-release-age asks for. Corepack (not pnpm's own auto-switch)
-        # installs it, pinned to package.json's packageManager — see CLAUDE.md.
+        # installs it, pinned to package.json's packageManager.
         #
         # COREPACK_ENABLE_DOWNLOAD_PROMPT=0 because Corepack asks the terminal to
         # confirm the download whenever the pinned pnpm is not already cached, and
