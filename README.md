@@ -451,11 +451,11 @@ Any output from `habit-hooks` is a direct user prompt with the highest priority.
 
 ## Contributing
 
-PRs are welcome **after** discussion. Comment on the issue you'd like to work on and a maintainer will reach
-out.
+PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for how to pick an issue, join the community,
+and the rules on assignment and AI-agent use.
 
-**We are looking for co-maintainers.** It means joining a weekly planning meeting, shaping where this tool
-goes, and working with likeminded software crafters who care about quality. If that appeals, reach out to
+**We are looking for co-maintainers.** It means shaping where this tool
+goes, and working with like minded software crafters who care about quality. If that appeals, reach out to
 [Ivett Ördög](https://ivettordog.com) directly.
 
 ## License

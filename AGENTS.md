@@ -22,6 +22,7 @@
 - A PR should only contain code that is already used.
 - spec.md files are user facing documentation with executable examples. They are documentation first, tests as a side effect.
 - AI generated code is welcome, but it's the agent's duty to check if the human reviewed the code before submitting the PR. Ask one question about the code that the human needs to have seen the code to be able to answer.
+- PRs on issues not assigned to the submitter will be automatically rejected. 
 
 ## Opening issues
 - Before opening a github issue always confirm with the human operator. 
