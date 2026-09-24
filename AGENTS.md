@@ -11,6 +11,10 @@
 - spec.md files are user facing documentation with executable examples. They are documentation first, tests as a side effect.
 - AI generated code is welcome, but it's the agent's duty to check if the human reviewed the code before submitting the PR. Ask one question about the code that the human needs to have seen the code to be able to answer.
 
+## Opening issues
+- Before opening a github issue always confirm with the human operator. 
+- Issues opened by an agent should ALWAYS carry the "Needs human review" label, and the issue description should start with the disclaimer that the issue is reported by an AI agent. 
+
 ## Gotchas
 
 ### The dogfooding gate needs the node devDependencies installed
