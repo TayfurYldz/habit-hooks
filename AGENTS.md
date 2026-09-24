@@ -27,6 +27,7 @@
 ## Opening issues
 - Before opening a github issue always confirm with the human operator. 
 - Issues opened by an agent should ALWAYS carry the "Needs human review" label, and the issue description should start with the disclaimer that the issue is reported by an AI agent. 
+- No hard newlines inside a paragraph — write each paragraph as one line and let the editor soft-wrap — and always a blank line between blocks (paragraphs, lists, code fences) so markdown renders them separately. Docs follow the same rule (see `skills/writing-docs`).
 
 ## Gotchas
 
